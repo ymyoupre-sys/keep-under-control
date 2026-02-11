@@ -212,7 +212,6 @@ const App = {
         const type = document.getElementById('apply-type').value;
         const leaderId = document.getElementById('leader-select').value;
         const body = document.getElementById('apply-body').value;
-        if (!leaderId || !body) { alert('入力不備があります'); return; }
 
         try {
             await addDoc(collection(db, "applications"), {
@@ -256,8 +255,6 @@ const App = {
                 deadlineStr = `${targetTime.getHours()}:${String(targetTime.getMinutes()).padStart(2, '0')} まで（${min}分以内）`;
             }
         }
-
-        if (!targetId || !body) { alert('入力不備があります'); return; }
 
         try {
             await addDoc(collection(db, "applications"), {
@@ -375,3 +372,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
