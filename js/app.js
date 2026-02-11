@@ -1,4 +1,3 @@
-// Firebase SDK
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, updateDoc, serverTimestamp, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
@@ -13,9 +12,9 @@ const firebaseConfig = {
   appId: "1:999632394190:web:085efbde0239f098c27d9f"
 };
 
-// ▼▼▼ ここにあなたのGASのURLを埋め込みました ▼▼▼
+// ▼▼▼ あなたのGASのURLを確認して貼ってください ▼▼▼
 const gasUrl = "https://script.google.com/macros/s/AKfycbymJdy2UHwg4P7P68fq_c58uw4VWelvd4Vnb3ZjsTvv0VucveufJxND4Dw5pkNDH1kG/exec"; 
-// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -26,7 +25,6 @@ let currentUser = null;
 let allUsers = [];
 
 const App = {
-    // 初期化
     async init() {
         try {
             const [usersResp, formResp] = await Promise.all([
@@ -36,15 +34,7 @@ const App = {
             allUsers = await usersResp.json();
             const formData = await formResp.json();
             
-            const select = document.getElementById('user-select');
-            select.innerHTML = '<option value="">ユーザーを選択...</option>'; 
-            allUsers.forEach(u => {
-                const option = document.createElement('option');
-                option.value = u.id;
-                option.text = `${u.name} (${u.group})`;
-                select.appendChild(option);
-            });
-
+            // 申請種別の生成
             const typeSelect = document.getElementById('apply-type');
             typeSelect.innerHTML = ''; 
             formData.types.forEach(type => {
@@ -53,12 +43,23 @@ const App = {
                 opt.text = type;
                 typeSelect.appendChild(opt);
             });
-            
             document.getElementById('apply-body').placeholder = formData.templates.default;
+
+            // ★追加：自動ログインチェック
+            this.checkSession();
+
         } catch (e) { console.error(e); }
     },
 
-    // 通知許可とトークン保存
+    // ★追加：セッション確認
+    checkSession() {
+        const storedUser = localStorage.getItem('app_user');
+        if (storedUser) {
+            currentUser = JSON.parse(storedUser);
+            this.showMainScreen();
+        }
+    },
+
     async requestNotificationPermission() {
         try {
             const permission = await Notification.requestPermission();
@@ -68,7 +69,6 @@ const App = {
                     serviceWorkerRegistration: await navigator.serviceWorker.register('./sw.js')
                 });
                 if (token) {
-                    // トークンを保存
                     await setDoc(doc(db, "user_tokens", currentUser.id), {
                         token: token,
                         userId: currentUser.id,
@@ -78,23 +78,48 @@ const App = {
             }
         } catch (err) { console.error(err); }
         
-        // フォアグラウンド受信
         onMessage(messaging, (payload) => {
             alert(`【新着通知】\n${payload.notification.title}\n${payload.notification.body}`);
         });
     },
 
-    // ログイン
+    // ログイン処理（完全一致に変更）
     login() {
-        const userId = document.getElementById('user-select').value;
-        if (!userId) return;
-        currentUser = allUsers.find(u => u.id === userId);
+        const inputName = document.getElementById('login-name-input').value.trim();
+        if (!inputName) return;
+
+        // 名前で完全一致検索
+        currentUser = allUsers.find(u => u.name === inputName);
+        
+        if (!currentUser) {
+            alert('ユーザーが見つかりません。名簿と完全に一致する名前を入力してください。');
+            return;
+        }
+
+        // セッション保存
+        localStorage.setItem('app_user', JSON.stringify(currentUser));
+        
+        this.showMainScreen();
+    },
+
+    // ★追加：ログアウト処理
+    logout() {
+        if(confirm('ログアウトしますか？')) {
+            localStorage.removeItem('app_user');
+            location.reload(); // 画面リロードして初期状態に戻す
+        }
+    },
+
+    // メイン画面表示処理（共通化）
+    showMainScreen() {
         document.getElementById('login-screen').classList.add('d-none');
         document.getElementById('main-screen').classList.remove('d-none');
+        document.getElementById('logout-btn').classList.remove('d-none'); // ログアウトボタン表示
         document.getElementById('current-user-name').textContent = currentUser.name;
+
         this.setupLeaderSelect();
         this.startListening();
-        this.requestNotificationPermission(); 
+        this.requestNotificationPermission();
     },
 
     setupLeaderSelect() {
@@ -109,30 +134,21 @@ const App = {
         });
     },
 
-    // ★追加機能：通知送信ヘルパー
     async sendPush(targetUserId, title, body) {
         try {
-            // Firestoreから相手のトークンを取得
             const tokenDoc = await getDoc(doc(db, "user_tokens", targetUserId));
             if (tokenDoc.exists()) {
                 const token = tokenDoc.data().token;
-                // GAS経由で送信
                 await fetch(gasUrl, {
                     method: 'POST',
-                    mode: 'no-cors', // CORSエラー回避
+                    mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ token: token, title: title, body: body })
                 });
-                console.log('通知送信リクエスト完了');
-            } else {
-                console.log('相手の通知トークンがありません');
             }
-        } catch (e) {
-            console.error('通知送信失敗:', e);
-        }
+        } catch (e) { console.error(e); }
     },
 
-    // 申請送信
     async submitApplication() {
         const type = document.getElementById('apply-type').value;
         const leaderId = document.getElementById('leader-select').value;
@@ -149,12 +165,12 @@ const App = {
                 type: type,
                 body: body,
                 status: 'pending',
+                comment: '', // コメント用フィールド初期化
                 timestamp: serverTimestamp(),
                 createdAt: new Date().toLocaleString()
             });
             
-            // ★リーダーへ通知送信
-            this.sendPush(leaderId, '新しい申請が届きました', `${currentUser.name}さんからの${type}`);
+            this.sendPush(leaderId, '新しい申請', `${currentUser.name}さんからの${type}`);
 
             alert('申請しました！');
             document.getElementById('apply-body').value = '';
@@ -162,7 +178,6 @@ const App = {
         } catch (e) { alert('エラー'); console.error(e); }
     },
 
-    // 一覧監視
     startListening() {
         const q = query(collection(db, "applications"), orderBy("timestamp", "desc"));
         onSnapshot(q, (snapshot) => {
@@ -182,17 +197,30 @@ const App = {
                 if (data.status === 'rejected') { badgeClass = 'status-rejected'; statusText = '否決'; }
 
                 let actionButtons = '';
-                // ボタン部分の修正：applicantIdも渡すようにする
-                if (currentUser.id === data.leaderId && data.status === 'pending') {
-                    actionButtons = `
-                        <div class="mt-3 d-flex gap-2">
-                            <button onclick="app.updateStatus('${docId}', 'approved', '${data.applicantId}')" class="btn btn-success btn-sm flex-grow-1">承認</button>
-                            <button onclick="app.updateStatus('${docId}', 'rejected', '${data.applicantId}')" class="btn btn-danger btn-sm flex-grow-1">否決</button>
-                        </div>
-                    `;
+                // ボタン表示ロジック
+                if (currentUser.id === data.leaderId) {
+                    // まだ承認待ちの場合
+                    if (data.status === 'pending') {
+                        actionButtons = `
+                            <div class="mt-3 d-flex gap-2">
+                                <button onclick="app.updateStatus('${docId}', 'approved', '${data.applicantId}')" class="btn btn-success btn-sm flex-grow-1">承認</button>
+                                <button onclick="app.updateStatus('${docId}', 'rejected', '${data.applicantId}')" class="btn btn-danger btn-sm flex-grow-1">否決</button>
+                            </div>
+                        `;
+                    } 
+                    // ★追加：既に承認/否決済みの場合（取り消しボタンを表示）
+                    else {
+                        actionButtons = `
+                            <div class="mt-3">
+                                <button onclick="app.undoStatus('${docId}', '${data.applicantId}')" class="btn btn-outline-secondary btn-sm w-100">判定を取り消す</button>
+                            </div>
+                        `;
+                    }
                 }
                 
                 let decidedTime = data.decidedAt ? `<div class="text-muted small mt-1">処理日時: ${data.decidedAt}</div>` : '';
+                // ★追加：コメントがあれば表示
+                let commentHtml = data.comment ? `<div class="alert alert-light mt-2 mb-0 p-2 small"><i class="bi bi-chat-left-text"></i> ${data.comment}</div>` : '';
 
                 card.innerHTML = `
                     <div class="d-flex justify-content-between align-items-start mb-2">
@@ -202,6 +230,7 @@ const App = {
                     <h6 class="mb-1">${data.type}</h6>
                     <div class="small text-muted mb-2">申請者: ${data.applicantName}</div>
                     <p class="mb-0 bg-light p-2 rounded">${data.body}</p>
+                    ${commentHtml}
                     ${decidedTime}
                     ${actionButtons}
                 `;
@@ -210,18 +239,40 @@ const App = {
         });
     },
 
-    // 承認・否決処理（引数にapplicantIdを追加）
+    // ★修正：承認・否決処理（コメント入力付き）
     async updateStatus(docId, status, applicantId) {
-        if (!confirm('確定しますか？')) return;
+        // コメント入力プロンプトを表示
+        const actionName = status === 'approved' ? '承認' : '否決';
+        const comment = prompt(`${actionName}の理由やコメントがあれば入力してください（任意）`);
+        
+        if (comment === null) return; // キャンセルされたら何もしない
+
         try {
             await updateDoc(doc(db, "applications", docId), {
                 status: status,
+                comment: comment, // コメント保存
                 decidedAt: new Date().toLocaleString()
             });
 
-            // ★申請者へ通知送信
             const msg = status === 'approved' ? '承認されました' : '否決されました';
-            this.sendPush(applicantId, `申請が${msg}`, 'アプリで詳細を確認してください');
+            const body = comment ? `コメント: ${comment}` : 'アプリで確認してください';
+            this.sendPush(applicantId, `申請が${msg}`, body);
+
+        } catch (e) { console.error(e); }
+    },
+
+    // ★追加：判定取り消し処理
+    async undoStatus(docId, applicantId) {
+        if (!confirm('現在の判定を取り消して、承認待ちに戻しますか？')) return;
+
+        try {
+            await updateDoc(doc(db, "applications", docId), {
+                status: 'pending',
+                decidedAt: null, // 日時クリア
+                comment: null    // コメントクリア
+            });
+
+            this.sendPush(applicantId, '判定が取り消されました', '申請が再度「承認待ち」に戻りました');
 
         } catch (e) { console.error(e); }
     }
