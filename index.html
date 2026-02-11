@@ -13,7 +13,6 @@
         .status-pending { background-color: #ffc107; color: #000; }
         .status-approved { background-color: #28a745; color: #fff; }
         .status-rejected { background-color: #dc3545; color: #fff; }
-        /* 命令用の色定義 */
         .status-request { background-color: #17a2b8; color: #fff; } 
     </style>
 </head>
@@ -33,7 +32,7 @@
             <div class="card p-4 shadow-sm">
                 <h5 class="text-center mb-4">利用開始</h5>
                 <div class="mb-3">
-                    <label class="form-label">苗字</label>
+                    <label class="form-label">名前</label>
                     <input type="text" id="login-name-input" class="form-control" placeholder="例：鈴木">
                     <div class="form-text">登録された名前と完全に一致する必要があります</div>
                 </div>
@@ -50,7 +49,7 @@
                     <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-request">命令作成</button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-list">申請一覧</button>
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-list">一覧</button>
                 </li>
             </ul>
 
@@ -76,7 +75,7 @@
 
                 <div class="tab-pane fade" id="tab-request">
                     <div class="card p-3 shadow-sm border-0">
-                        <h6 class="mb-3 border-bottom pb-2">奴隷へ命令を出す</h6>
+                        <h6 class="mb-3 border-bottom pb-2">奴隷へ命令を送る</h6>
                         
                         <div class="mb-3">
                             <label class="form-label">命令の種類</label>
@@ -95,10 +94,14 @@
                                 <input class="form-check-input" type="radio" name="deadlineMode" id="mode-date" value="date" checked onchange="app.toggleDeadlineMode()">
                                 <label class="form-check-label" for="mode-date">日時を指定</label>
                             </div>
-                            <div id="deadline-date-area" class="d-flex gap-1 mb-3">
-                                <select id="dl-month" class="form-select form-select-sm"></select>月
-                                <select id="dl-day" class="form-select form-select-sm"></select>日
-                                <select id="dl-hour" class="form-select form-select-sm"></select>時 まで
+                            
+                            <div id="deadline-date-area" class="d-flex align-items-center gap-1 mb-3">
+                                <select id="dl-month" class="form-select form-select-sm" style="width: auto;"></select>
+                                <span>月</span>
+                                <select id="dl-day" class="form-select form-select-sm" style="width: auto;"></select>
+                                <span>日</span>
+                                <select id="dl-hour" class="form-select form-select-sm" style="width: auto;"></select>
+                                <span>時 まで</span>
                             </div>
 
                             <div class="form-check mb-2">
