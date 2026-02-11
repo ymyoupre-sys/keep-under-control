@@ -194,7 +194,7 @@ const App = {
                 let badgeClass = 'status-pending';
                 let statusText = '承認待ち';
                 if (data.status === 'approved') { badgeClass = 'status-approved'; statusText = '承認済み'; }
-                if (data.status === 'rejected') { badgeClass = 'status-rejected'; statusText = '否決'; }
+                if (data.status === 'rejected') { badgeClass = 'status-rejected'; statusText = '却下'; }
 
                 let actionButtons = '';
                 // ボタン表示ロジック
@@ -204,11 +204,11 @@ const App = {
                         actionButtons = `
                             <div class="mt-3 d-flex gap-2">
                                 <button onclick="app.updateStatus('${docId}', 'approved', '${data.applicantId}')" class="btn btn-success btn-sm flex-grow-1">承認</button>
-                                <button onclick="app.updateStatus('${docId}', 'rejected', '${data.applicantId}')" class="btn btn-danger btn-sm flex-grow-1">否決</button>
+                                <button onclick="app.updateStatus('${docId}', 'rejected', '${data.applicantId}')" class="btn btn-danger btn-sm flex-grow-1">却下</button>
                             </div>
                         `;
                     } 
-                    // ★追加：既に承認/否決済みの場合（取り消しボタンを表示）
+                    // ★追加：既に承認/却下済みの場合（取り消しボタンを表示）
                     else {
                         actionButtons = `
                             <div class="mt-3">
@@ -239,10 +239,10 @@ const App = {
         });
     },
 
-    // ★修正：承認・否決処理（コメント入力付き）
+    // ★修正：承認・却下処理（コメント入力付き）
     async updateStatus(docId, status, applicantId) {
         // コメント入力プロンプトを表示
-        const actionName = status === 'approved' ? '承認' : '否決';
+        const actionName = status === 'approved' ? '承認' : '却下';
         const comment = prompt(`${actionName}の理由やコメントがあれば入力してください（任意）`);
         
         if (comment === null) return; // キャンセルされたら何もしない
@@ -254,7 +254,7 @@ const App = {
                 decidedAt: new Date().toLocaleString()
             });
 
-            const msg = status === 'approved' ? '承認されました' : '否決されました';
+            const msg = status === 'approved' ? '承認されました' : '却下されました';
             const body = comment ? `コメント: ${comment}` : 'アプリで確認してください';
             this.sendPush(applicantId, `申請が${msg}`, body);
 
@@ -280,3 +280,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
