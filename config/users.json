@@ -1,0 +1,6 @@
+[
+  { "id": "user1", "name": "鈴木（Aリーダー）", "group": "A", "role": "leader" },
+  { "id": "user2", "name": "田中（Aメンバー）", "group": "A", "role": "member" },
+  { "id": "user3", "name": "佐藤（Bリーダー）", "group": "B", "role": "leader" },
+  { "id": "user4", "name": "高橋（Bメンバー）", "group": "B", "role": "member" }
+]
