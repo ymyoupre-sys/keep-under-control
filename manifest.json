@@ -1,6 +1,6 @@
 {
-  "name": "許可申請アプリ",
-  "short_name": "許可申請",
+  "name": "申請/命令アプリ",
+  "short_name": "申請/命令",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#007BFF",
@@ -18,3 +18,4 @@
     }
   ]
 }
+
