@@ -1,11 +1,9 @@
 // Firebase SDKの読み込み
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, updateDoc, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
-import { setDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-
-// Your web app's Firebase configuration
+// Firebase設定
 const firebaseConfig = {
   apiKey: "AIzaSyCWy_BjB9tr02viCSfAx93qeJyX4G0e2iw",
   authDomain: "keep-under-control.firebaseapp.com",
@@ -49,9 +47,9 @@ const App = {
                 select.appendChild(option);
             });
 
-            // ★追加：申請種別プルダウン生成
+            // 申請種別プルダウン生成
             const typeSelect = document.getElementById('apply-type');
-            typeSelect.innerHTML = ''; // HTMLの直書きを消去
+            typeSelect.innerHTML = ''; 
             formData.types.forEach(type => {
                 const opt = document.createElement('option');
                 opt.value = type;
@@ -59,15 +57,16 @@ const App = {
                 typeSelect.appendChild(opt);
             });
             
-            // テンプレート反映（プレースホルダーとして）
+            // テンプレート反映
             document.getElementById('apply-body').placeholder = formData.templates.default;
 
         } catch (e) {
             alert('設定ファイルの読み込みに失敗しました');
             console.error(e);
         }
-      
-      // 通知許可の要求とトークン保存
+    }, // ★ここが修正ポイント：initを閉じてカンマを追加
+
+    // 通知許可の要求とトークン保存
     async requestNotificationPermission() {
         try {
             const permission = await Notification.requestPermission();
@@ -82,8 +81,7 @@ const App = {
 
                 if (token) {
                     console.log('FCM Token:', token);
-                    // Firestoreの user_tokens コレクションに保存
-                    // ドキュメントIDをユーザーIDにして上書き保存
+                    // Firestoreにトークンを保存
                     await setDoc(doc(db, "user_tokens", currentUser.id), {
                         token: token,
                         userId: currentUser.id,
@@ -99,7 +97,7 @@ const App = {
             console.error('通知設定エラー:', err);
         }
         
-        // フォアグラウンド（アプリを開いている時）の通知受信設定
+        // フォアグラウンド通知設定
         onMessage(messaging, (payload) => {
             console.log('フォアグラウンド通知:', payload);
             alert(`【新着通知】\n${payload.notification.title}\n${payload.notification.body}`);
@@ -118,11 +116,13 @@ const App = {
         document.getElementById('main-screen').classList.remove('d-none');
         document.getElementById('current-user-name').textContent = currentUser.name;
 
-        // リーダー一覧のセット（自分と同じグループのリーダーのみ）
+        // リーダー一覧のセット
         this.setupLeaderSelect();
         
-        // データ監視開始（リアルタイム更新）
+        // データ監視開始
         this.startListening();
+        
+        // 通知許可を求める
         this.requestNotificationPermission(); 
     },
 
@@ -157,18 +157,17 @@ const App = {
             await addDoc(collection(db, "applications"), {
                 applicantId: currentUser.id,
                 applicantName: currentUser.name,
-                groupId: currentUser.group,     // グループでフィルタするため保存
+                groupId: currentUser.group,
                 leaderId: leaderId,
                 type: type,
                 body: body,
-                status: 'pending',              // pending, approved, rejected
+                status: 'pending',
                 timestamp: serverTimestamp(),
                 createdAt: new Date().toLocaleString()
             });
             
             alert('申請しました！');
-            document.getElementById('apply-body').value = ''; // 入力欄クリア
-            // 自動で一覧タブへ移動
+            document.getElementById('apply-body').value = '';
             document.querySelector('[data-bs-target="#tab-list"]').click();
         } catch (e) {
             console.error(e);
@@ -188,22 +187,17 @@ const App = {
                 const data = docSnap.data();
                 const docId = docSnap.id;
 
-                // 【重要】自分のグループ以外のデータは表示しないフィルタリング
                 if (data.groupId !== currentUser.group) return;
 
-                // カード作成
                 const card = document.createElement('div');
                 card.className = 'card shadow-sm p-3 border-0';
                 
-                // ステータスバッジの色決定
                 let badgeClass = 'status-pending';
                 let statusText = '承認待ち';
                 if (data.status === 'approved') { badgeClass = 'status-approved'; statusText = '承認済み'; }
                 if (data.status === 'rejected') { badgeClass = 'status-rejected'; statusText = '否決'; }
 
-                // HTML生成
                 let actionButtons = '';
-                // 自分が「指定されたリーダー」かつ「承認待ち」の場合のみボタンを表示
                 if (currentUser.id === data.leaderId && data.status === 'pending') {
                     actionButtons = `
                         <div class="mt-3 d-flex gap-2">
@@ -213,7 +207,6 @@ const App = {
                     `;
                 }
 
-                // 承認/否決日時があれば表示
                 let decidedTime = data.decidedAt ? `<div class="text-muted small mt-1">処理日時: ${data.decidedAt}</div>` : '';
 
                 card.innerHTML = `
@@ -249,9 +242,5 @@ const App = {
     }
 };
 
-// グローバルに公開（HTMLからonclickで呼べるようにする）
 window.app = App;
 window.onload = () => App.init();
-
-
-
