@@ -1,6 +1,9 @@
 // Firebase SDKの読み込み
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
+import { setDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -208,4 +211,5 @@ const App = {
 // グローバルに公開（HTMLからonclickで呼べるようにする）
 window.app = App;
 window.onload = () => App.init();
+
 
