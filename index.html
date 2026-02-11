@@ -19,7 +19,10 @@
     <nav class="navbar navbar-dark theme-bg sticky-top mb-3">
         <div class="container-fluid">
             <span class="navbar-brand mb-0 h1">申請アプリ</span>
-            <span id="current-user-name" class="text-white small"></span>
+            <div class="d-flex align-items-center gap-2">
+                <span id="current-user-name" class="text-white small"></span>
+                <button id="logout-btn" onclick="app.logout()" class="btn btn-sm btn-outline-light d-none">ログアウト</button>
+            </div>
         </div>
     </nav>
 
@@ -27,15 +30,16 @@
         <div id="login-screen">
             <div class="card p-4 shadow-sm">
                 <h5 class="text-center mb-4">利用開始</h5>
-                <select id="user-select" class="form-select mb-3">
-                    <option value="">ユーザーを選択...</option>
-                </select>
+                <div class="mb-3">
+                    <label class="form-label">お名前（フルネーム）</label>
+                    <input type="text" id="login-name-input" class="form-control" placeholder="例：鈴木一郎">
+                    <div class="form-text">登録された名前と完全に一致する必要があります</div>
+                </div>
                 <button onclick="app.login()" class="btn btn-primary w-100" style="background-color: #007BFF;">ログイン</button>
             </div>
         </div>
 
         <div id="main-screen" class="d-none">
-            
             <ul class="nav nav-tabs nav-fill mb-3" role="tablist">
                 <li class="nav-item">
                     <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-apply">申請作成</button>
@@ -50,11 +54,7 @@
                     <div class="card p-3 shadow-sm border-0">
                         <div class="mb-3">
                             <label class="form-label">申請の種類</label>
-                            <select id="apply-type" class="form-select">
-                                <option>交通費申請</option>
-                                <option>備品購入申請</option>
-                                <option>有給休暇申請</option>
-                            </select>
+                            <select id="apply-type" class="form-select"></select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">提出先リーダー</label>
@@ -63,7 +63,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">内容詳細</label>
-                            <textarea id="apply-body" class="form-control" rows="4" placeholder="金額や理由などを入力"></textarea>
+                            <textarea id="apply-body" class="form-control" rows="4"></textarea>
                         </div>
                         <button onclick="app.submitApplication()" class="btn btn-primary w-100" style="background-color: #007BFF;">申請を送る</button>
                     </div>
@@ -78,8 +78,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
-
