@@ -18,6 +18,8 @@ const firebaseConfig = {
 // Firebase初期化
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const messaging = getMessaging(app);
+const vapidKey = "BPfPbUKmRMqsHoTbS7SqOGb_t9bt9f72J4x5rOFaRRuY-uL8oqa-M6ASyg_vh8jn3WRDmiifyHPQJM3c45y9nSI";
 
 // アプリの状態管理
 let currentUser = null;
@@ -64,6 +66,44 @@ const App = {
             alert('設定ファイルの読み込みに失敗しました');
             console.error(e);
         }
+      
+      // 通知許可の要求とトークン保存
+    async requestNotificationPermission() {
+        try {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                console.log('通知許可されました');
+                
+                // トークン取得
+                const token = await getToken(messaging, { 
+                    vapidKey: vapidKey,
+                    serviceWorkerRegistration: await navigator.serviceWorker.register('./sw.js')
+                });
+
+                if (token) {
+                    console.log('FCM Token:', token);
+                    // Firestoreの user_tokens コレクションに保存
+                    // ドキュメントIDをユーザーIDにして上書き保存
+                    await setDoc(doc(db, "user_tokens", currentUser.id), {
+                        token: token,
+                        userId: currentUser.id,
+                        userName: currentUser.name,
+                        updatedAt: serverTimestamp()
+                    });
+                    console.log('トークンをサーバーに保存しました');
+                }
+            } else {
+                console.log('通知が拒否されました');
+            }
+        } catch (err) {
+            console.error('通知設定エラー:', err);
+        }
+        
+        // フォアグラウンド（アプリを開いている時）の通知受信設定
+        onMessage(messaging, (payload) => {
+            console.log('フォアグラウンド通知:', payload);
+            alert(`【新着通知】\n${payload.notification.title}\n${payload.notification.body}`);
+        });
     },
 
     // ログイン処理
@@ -83,6 +123,7 @@ const App = {
         
         // データ監視開始（リアルタイム更新）
         this.startListening();
+        this.requestNotificationPermission(); 
     },
 
     setupLeaderSelect() {
@@ -211,5 +252,6 @@ const App = {
 // グローバルに公開（HTMLからonclickで呼べるようにする）
 window.app = App;
 window.onload = () => App.init();
+
 
 
