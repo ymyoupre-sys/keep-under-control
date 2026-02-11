@@ -1,6 +1,7 @@
 [
-  { "id": "user1", "name": "鈴木（Aリーダー）", "group": "A", "role": "leader" },
-  { "id": "user2", "name": "田中（Aメンバー）", "group": "A", "role": "member" },
-  { "id": "user3", "name": "佐藤（Bリーダー）", "group": "B", "role": "leader" },
-  { "id": "user4", "name": "高橋（Bメンバー）", "group": "B", "role": "member" }
+  { "id": "user1", "name": "本多", "group": "A", "role": "leader" },
+  { "id": "user2", "name": "山根", "group": "A", "role": "member" },
+  { "id": "user3", "name": "xx", "group": "B", "role": "leader" },
+  { "id": "user4", "name": "xxxx", "group": "B", "role": "member" }
 ]
+
