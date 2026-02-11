@@ -4,7 +4,7 @@
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>許可申請アプリ</title>
+    <title>許可申請/命令アプリ</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -13,7 +13,6 @@
         :root {
             --primary-color: #007BFF;
             --bg-color: #f8f9fa;
-            --border-color: #dee2e6; /* 枠線の色を統一 */
         }
         body { 
             background-color: var(--bg-color); 
@@ -22,70 +21,24 @@
             color: #333;
         }
         
-        /* ▼▼▼ デザイン統一：タブとカードの結合 ▼▼▼ */
-        /* タブのコンテナ：下線（カードの上線代わり）を引く */
-        .nav-tabs {
-            border-bottom: 1px solid var(--border-color);
-            padding-left: 12px; /* 少し右へ */
-            gap: 4px; /* タブ同士の間隔 */
+        /* フォント設定（入力欄は標準フォント） */
+        input, select, textarea, .form-control, .form-select {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+            font-weight: 400 !important;
         }
         
-        /* タブ（非アクティブ） */
-        .nav-link {
-            border: 1px solid transparent; /* 枠線分のスペース確保 */
-            border-bottom: none;
-            border-radius: 8px 8px 0 0; /* 上側だけ丸く */
-            color: #6c757d;
-            font-weight: 700;
-            padding: 10px 20px;
-            background-color: transparent;
-            margin-bottom: -1px; /* 下線に重ねる */
-            transition: all 0.2s;
-        }
-        
-        /* ホバー時 */
-        .nav-link:hover {
-            background-color: #e9ecef;
-            color: #495057;
-            border-color: #e9ecef #e9ecef var(--border-color);
+        /* ▼▼▼ 修正：グローバルのパディング設定が sm サイズを邪魔しないように調整 ▼▼▼ */
+        .form-control:not(.form-control-sm), .form-select:not(.form-select-sm) { 
+            padding: 10px 12px; 
+            border-radius: 8px;
         }
 
-        /* アクティブなタブ（カードと一体化） */
-        .nav-link.active {
-            background-color: #fff;
-            color: var(--primary-color) !important;
-            /* 上・左・右に枠線、下は白（透明）にしてカードと繋げる */
-            border-color: var(--border-color) var(--border-color) #fff; 
-            border-bottom-width: 2px; /* 下の白線を確実に被せる */
-            z-index: 5; /* 線より手前に */
-        }
-        
-        /* カード本体 */
-        .tab-content .card { 
-            border: 1px solid var(--border-color); /* タブと同じ色の枠線 */
-            border-top: none; /* 上線はタブの下線に任せる */
-            border-radius: 0 12px 12px 12px; /* 左上は直角（タブと接続）、他は丸く */
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03); /* 上品な影 */
-            margin-top: 0;
-            background-color: #fff;
-        }
-
-        /* ▼▼▼ プルダウンの数字重なり修正 ▼▼▼ */
-        /* 幅を確保して矢印アイコンと数字が被らないようにする */
-        .date-select {
-            min-width: 75px; /* 最低幅を確保 */
-            text-align: center; /* 数字を真ん中に */
-            padding-right: 25px; /* 矢印アイコン分のスペース */
-        }
-
-        /* その他UI調整 */
+        /* 共通パーツ */
         .navbar { box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .btn { border-radius: 8px; font-weight: 500; padding: 10px; }
-        .form-control, .form-select { border-radius: 8px; border-color: #e0e0e0; padding: 10px 12px; }
         .form-control:focus, .form-select:focus { box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); border-color: var(--primary-color); }
         .form-label { font-weight: 700; color: #444; margin-bottom: 8px; }
         
-        /* プレースホルダー色 */
         ::placeholder { color: #ced4da !important; opacity: 1; }
         ::-webkit-input-placeholder { color: #ced4da !important; }
         
@@ -97,12 +50,63 @@
         .status-approved { background-color: #d4edda; color: #155724; }
         .status-rejected { background-color: #f8d7da; color: #721c24; }
         .status-request { background-color: #d1ecf1; color: #0c5460; } 
+        
+        /* ▼▼▼ 新しいカードタブデザイン（Bootstrap標準構造） ▼▼▼ */
+        /* メインカード */
+        .main-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            background-color: #fff;
+        }
+        /* ヘッダー部分（タブ置き場） */
+        .main-card .card-header {
+            background-color: transparent;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 0;
+            padding-top: 12px;
+        }
+        /* タブのスタイル */
+        .main-card .nav-tabs {
+            border-bottom: none;
+            gap: 2px;
+        }
+        .main-card .nav-link {
+            border: none;
+            border-bottom: 3px solid transparent; /* 下線アニメーション用 */
+            color: #6c757d;
+            font-weight: 700;
+            padding: 10px 16px;
+            transition: all 0.2s;
+            background: transparent;
+        }
+        .main-card .nav-link:hover {
+            color: #495057;
+            background-color: rgba(0,0,0,0.02);
+        }
+        /* アクティブなタブ */
+        .main-card .nav-link.active {
+            color: var(--primary-color) !important;
+            background-color: transparent;
+            border-bottom-color: var(--primary-color); /* アクティブ時は青い下線 */
+        }
+        /* コンテンツ部分 */
+        .main-card .card-body {
+            padding: 20px;
+        }
+        
+        /* 日時プルダウンの調整 */
+        .date-select-sm {
+            width: auto !important; /* 強制的に中身に合わせる */
+            min-width: 60px;
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-dark theme-bg sticky-top mb-4">
         <div class="container-fluid">
-            <span class="navbar-brand mb-0 h1 fw-bold">許可申請アプリ</span>
+            <span class="navbar-brand mb-0 h1 fw-bold">許可申請/命令アプリ</span>
             <div class="d-flex align-items-center gap-2">
                 <span id="current-user-name" class="text-white small fw-bold"></span>
                 <button id="logout-btn" onclick="app.logout()" class="btn btn-sm btn-outline-light d-none" style="border-radius: 20px; padding: 4px 12px;">ログアウト</button>
@@ -124,90 +128,101 @@
         </div>
 
         <div id="main-screen" class="d-none">
-            <ul class="nav nav-tabs mb-0" role="tablist">
-                <li class="nav-item">
-                    <button class="nav-link active" id="btn-tab-apply" data-bs-toggle="tab" data-bs-target="#tab-apply">申請作成</button>
-                </li>
-                <li class="nav-item d-none" id="nav-item-request">
-                    <button class="nav-link" id="btn-tab-request" data-bs-toggle="tab" data-bs-target="#tab-request">命令作成</button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link" id="btn-tab-list" data-bs-toggle="tab" data-bs-target="#tab-list">申請一覧</button>
-                </li>
-            </ul>
-
-            <div class="tab-content">
-                <div class="tab-pane fade show active" id="tab-apply">
-                    <div class="card p-4">
-                        <div class="mb-3">
-                            <label class="form-label">申請の種類</label>
-                            <select id="apply-type" class="form-select"></select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">提出先主人</label>
-                            <select id="leader-select" class="form-select"></select>
-                            <div class="form-text">同じグループの主人のみ表示されます</div>
-                        </div>
-                        <div class="mb-4">
-                            <label class="form-label">内容詳細</label>
-                            <textarea id="apply-body" class="form-control" rows="5"></textarea>
-                        </div>
-                        <button onclick="app.submitApplication()" class="btn btn-primary w-100 py-3 fw-bold shadow-sm">申請を送る</button>
-                    </div>
+            
+            <div class="card main-card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" id="btn-tab-apply" data-bs-toggle="tab" data-bs-target="#tab-apply">申請作成</button>
+                        </li>
+                        <li class="nav-item d-none" id="nav-item-request">
+                            <button class="nav-link" id="btn-tab-request" data-bs-toggle="tab" data-bs-target="#tab-request">命令作成</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" id="btn-tab-list" data-bs-toggle="tab" data-bs-target="#tab-list">申請一覧</button>
+                        </li>
+                    </ul>
                 </div>
 
-                <div class="tab-pane fade" id="tab-request">
-                    <div class="card p-4">
-                        <h6 class="mb-4 pb-2 border-bottom fw-bold text-primary">奴隷へ命令を送る</h6>
+                <div class="card-body">
+                    <div class="tab-content">
                         
-                        <div class="mb-3">
-                            <label class="form-label">命令の種類</label>
-                            <select id="request-type" class="form-select"></select>
+                        <div class="tab-pane fade show active" id="tab-apply">
+                            <div class="mb-3">
+                                <label class="form-label">申請の種類</label>
+                                <select id="apply-type" class="form-select"></select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">提出先主人</label>
+                                <select id="leader-select" class="form-select"></select>
+                                <div class="form-text">同じグループの主人のみ表示されます</div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">内容詳細</label>
+                                <textarea id="apply-body" class="form-control" rows="5"></textarea>
+                            </div>
+                            <button onclick="app.submitApplication()" class="btn btn-primary w-100 py-3 fw-bold shadow-sm">申請を送る</button>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">命令先</label>
-                            <select id="target-select" class="form-select"></select>
-                        </div>
-
-                        <div class="mb-4 bg-light p-3 rounded-3 border">
-                            <label class="form-label text-dark">期限設定</label>
+                        <div class="tab-pane fade" id="tab-request">
+                            <h6 class="mb-4 pb-2 border-bottom fw-bold text-primary">奴隷へ命令を送る</h6>
                             
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="deadlineMode" id="mode-date" value="date" checked onchange="app.toggleDeadlineMode()">
-                                <label class="form-check-label fw-normal" for="mode-date">日時を指定</label>
+                            <div class="mb-3">
+                                <label class="form-label">命令の種類</label>
+                                <select id="request-type" class="form-select"></select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">命令先</label>
+                                <select id="target-select" class="form-select"></select>
+                            </div>
+
+                            <div class="mb-4 bg-light p-3 rounded-3 border">
+                                <label class="form-label text-dark">期限設定</label>
+                                
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="deadlineMode" id="mode-date" value="date" checked onchange="app.toggleDeadlineMode()">
+                                    <label class="form-check-label fw-normal" for="mode-date">日時を指定</label>
+                                </div>
+                                
+                                <div id="deadline-date-area" class="d-flex align-items-center gap-2 mb-3 ps-2">
+                                    <div class="d-flex align-items-center">
+                                        <select id="dl-month" class="form-select form-select-sm date-select-sm"></select>
+                                        <span class="small fw-bold ms-1">月</span>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <select id="dl-day" class="form-select form-select-sm date-select-sm"></select>
+                                        <span class="small fw-bold ms-1">日</span>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <select id="dl-hour" class="form-select form-select-sm date-select-sm"></select>
+                                        <span class="small fw-bold ms-1">時まで</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="deadlineMode" id="mode-relative" value="relative" onchange="app.toggleDeadlineMode()">
+                                    <label class="form-check-label fw-normal" for="mode-relative">今から〇分以内</label>
+                                </div>
+                                <div id="deadline-relative-area" class="d-none ps-2">
+                                    <select id="dl-minutes" class="form-select form-select-sm" style="max-width: 200px;">
+                                        </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">内容詳細</label>
+                                <textarea id="request-body" class="form-control" rows="3" placeholder="命令内容を入力"></textarea>
                             </div>
                             
-                            <div id="deadline-date-area" class="d-flex align-items-center gap-1 mb-3 ps-2">
-                                <select id="dl-month" class="form-select form-select-sm date-select"></select>
-                                <span class="small fw-bold">月</span>
-                                <select id="dl-day" class="form-select form-select-sm date-select"></select>
-                                <span class="small fw-bold">日</span>
-                                <select id="dl-hour" class="form-select form-select-sm date-select"></select>
-                                <span class="small fw-bold">時 まで</span>
-                            </div>
-
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="deadlineMode" id="mode-relative" value="relative" onchange="app.toggleDeadlineMode()">
-                                <label class="form-check-label fw-normal" for="mode-relative">今から〇分以内</label>
-                            </div>
-                            <div id="deadline-relative-area" class="d-none ps-2">
-                                <select id="dl-minutes" class="form-select" style="max-width: 200px;">
-                                    </select>
-                            </div>
+                            <button onclick="app.submitRequest()" class="btn btn-info text-white w-100 py-3 fw-bold shadow-sm">命令を送る/button>
                         </div>
 
-                        <div class="mb-4">
-                            <label class="form-label">内容詳細</label>
-                            <textarea id="request-body" class="form-control" rows="3" placeholder="命令内容を入力"></textarea>
+                        <div class="tab-pane fade" id="tab-list">
+                            <div id="application-list" class="d-grid gap-3"></div>
                         </div>
                         
-                        <button onclick="app.submitRequest()" class="btn btn-info text-white w-100 py-3 fw-bold shadow-sm">命令を送る</button>
                     </div>
-                </div>
-
-                <div class="tab-pane fade" id="tab-list">
-                    <div id="application-list" class="d-grid gap-3"></div>
                 </div>
             </div>
         </div>
