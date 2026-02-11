@@ -60,21 +60,18 @@ const App = {
                 });
             }
 
-            // 期限入力欄のプルダウン生成（エラー防止のためtry-catch）
             try {
                 this.initDeadlineInputs();
-            } catch(e) { console.log('期限入力欄の初期化スキップ'); }
+            } catch(e) { console.log('期限入力欄初期化スキップ'); }
 
-            // 画面描画でエラーが出ても、ログインチェックは必ず実行する
             this.checkSession();
 
         } catch (e) { console.error('初期化エラー:', e); }
     },
 
     initDeadlineInputs() {
-        // HTML要素が存在するかチェックしてから実行
         const mSel = document.getElementById('dl-month');
-        if (!mSel) return; // 要素がなければ何もしない
+        if (!mSel) return;
 
         for(let i=1; i<=12; i++) mSel.add(new Option(i, i));
         mSel.value = new Date().getMonth() + 1;
@@ -99,8 +96,8 @@ const App = {
         const dateArea = document.getElementById('deadline-date-area');
         const relArea = document.getElementById('deadline-relative-area');
         
-        if (dateArea) dateArea.className = isDate ? 'd-flex gap-1 mb-3' : 'd-none';
-        if (relArea) relArea.className = isDate ? 'd-none' : 'd-block mb-3';
+        if (dateArea) dateArea.className = isDate ? 'd-flex align-items-center gap-1 mb-3 ps-2' : 'd-none';
+        if (relArea) relArea.className = isDate ? 'd-none' : 'd-block mb-3 ps-2';
     },
 
     checkSession() {
@@ -109,9 +106,7 @@ const App = {
             try {
                 currentUser = JSON.parse(storedUser);
                 this.showMainScreen();
-            } catch(e) {
-                console.error('ログイン復帰失敗', e);
-            }
+            } catch(e) { console.error('ログイン復帰失敗', e); }
         }
     },
 
@@ -144,7 +139,6 @@ const App = {
         currentUser = allUsers.find(u => u.name === inputName);
         if (!currentUser) { alert('ユーザーが見つかりません'); return; }
         
-        // セッション保存
         localStorage.setItem('app_user', JSON.stringify(currentUser));
         this.showMainScreen();
     },
@@ -163,22 +157,28 @@ const App = {
         if (logoutBtn) logoutBtn.classList.remove('d-none');
         document.getElementById('current-user-name').textContent = currentUser.name;
 
-        // リーダーなら命令タブを表示
-        const reqTab = document.getElementById('nav-item-request');
-        if (reqTab && currentUser.role === 'leader') {
-            reqTab.classList.remove('d-none');
+        // 主人なら命令タブを表示 & 初期アクティブにする
+        const reqTabItem = document.getElementById('nav-item-request');
+        if (reqTabItem && currentUser.role === 'leader') {
+            reqTabItem.classList.remove('d-none');
+
+            // ★追加ロジック：主人なら初期タブを「命令作成」に切り替え
+            // 1. 申請タブを非アクティブ化
+            document.getElementById('btn-tab-apply').classList.remove('active');
+            document.getElementById('tab-apply').classList.remove('show', 'active');
+            
+            // 2. 命令タブをアクティブ化
+            document.getElementById('btn-tab-request').classList.add('active');
+            document.getElementById('tab-request').classList.add('show', 'active');
         }
 
-        try {
-            this.setupSelects();
-        } catch(e) { console.error('プルダウン生成エラー', e); }
+        try { this.setupSelects(); } catch(e) { console.error(e); }
 
         this.startListening();
         this.requestNotificationPermission();
     },
 
     setupSelects() {
-        // 申請用のリーダー選択
         const leaderSelect = document.getElementById('leader-select');
         if (leaderSelect) {
             leaderSelect.innerHTML = '';
@@ -186,7 +186,6 @@ const App = {
                 .forEach(u => leaderSelect.add(new Option(u.name, u.id)));
         }
 
-        // 命令用のターゲット選択
         const targetSelect = document.getElementById('target-select');
         if (targetSelect) {
             targetSelect.innerHTML = '';
@@ -241,7 +240,6 @@ const App = {
         const targetId = document.getElementById('target-select').value;
         const body = document.getElementById('request-body').value;
         
-        // 期限計算
         let deadlineStr = "";
         const modeDate = document.getElementById('mode-date');
         if (modeDate && modeDate.checked) {
@@ -275,7 +273,6 @@ const App = {
                 timestamp: serverTimestamp(),
                 createdAt: new Date().toLocaleString()
             });
-            
             this.sendPush(targetId, '新しい命令', `${currentUser.name}さんから：${type}`);
             alert('命令を送信しました！');
             document.getElementById('request-body').value = '';
@@ -297,39 +294,40 @@ const App = {
 
                 const isRequest = data.category === 'request';
                 const card = document.createElement('div');
-                card.className = 'card shadow-sm p-3 border-0';
+                card.className = 'card shadow-sm p-4 border-0 mb-3'; // padding増やして余白をリッチに
                 
                 if (isRequest) {
-                    // --- 命令表示 ---
                     const badgeClass = 'status-request';
                     const statusText = `命令：${data.deadline || '期限なし'}`;
                     
                     card.innerHTML = `
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <span class="badge ${badgeClass}">${statusText}</span>
-                            <small class="text-muted">${data.createdAt}</small>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="status-badge ${badgeClass}">${statusText}</span>
+                            <small class="text-muted fw-bold" style="font-size: 0.75rem;">${data.createdAt}</small>
                         </div>
-                        <h6 class="mb-1">命令：${data.type}</h6>
-                        <div class="small text-muted mb-2">命令者: ${data.applicantName} <br> 対象: ${data.targetId === currentUser.id ? 'あなた' : '他のメンバー'}</div>
-                        <p class="mb-0 bg-light p-2 rounded">${data.body}</p>
+                        <h6 class="mb-2 fw-bold text-dark">${data.type}</h6>
+                        <div class="small text-muted mb-3">
+                            <span class="fw-bold">命令者:</span> ${data.applicantName} <span class="mx-1">|</span> 
+                            <span class="fw-bold">対象:</span> ${data.targetId === currentUser.id ? 'あなた' : '他の奴隷'}
+                        </div>
+                        <div class="bg-light p-3 rounded-3 text-secondary" style="font-size: 0.95rem;">${data.body}</div>
                     `;
                 } else {
-                    // --- 申請表示 ---
                     let badgeClass = 'status-pending';
                     let statusText = '承認待ち';
                     if (data.status === 'approved') { badgeClass = 'status-approved'; statusText = '承認済み'; }
                     if (data.status === 'rejected') { badgeClass = 'status-rejected'; statusText = '却下'; }
 
                     let actionButtons = '';
-                    let commentHtml = data.comment ? `<div class="alert alert-light mt-2 mb-0 p-2 small"><i class="bi bi-chat-left-text"></i> ${data.comment}</div>` : '';
-                    let decidedTime = data.decidedAt ? `<div class="text-muted small mt-1">処理日時: ${data.decidedAt}</div>` : '';
+                    let commentHtml = data.comment ? `<div class="alert alert-secondary mt-3 mb-0 p-3 small rounded-3"><i class="bi bi-chat-left-text me-2"></i><strong>コメント:</strong> ${data.comment}</div>` : '';
+                    let decidedTime = data.decidedAt ? `<div class="text-muted small mt-2 text-end">処理日時: ${data.decidedAt}</div>` : '';
 
                     if (currentUser.id === data.leaderId) {
                         if (data.status === 'pending') {
                             actionButtons = `
-                                <div class="mt-3 d-flex gap-2">
-                                    <button onclick="app.updateStatus('${docId}', 'approved', '${data.applicantId}')" class="btn btn-success btn-sm flex-grow-1">承認</button>
-                                    <button onclick="app.updateStatus('${docId}', 'rejected', '${data.applicantId}')" class="btn btn-danger btn-sm flex-grow-1">却下</button>
+                                <div class="mt-4 d-flex gap-2">
+                                    <button onclick="app.updateStatus('${docId}', 'approved', '${data.applicantId}')" class="btn btn-success btn-sm flex-grow-1 fw-bold py-2">承認する</button>
+                                    <button onclick="app.updateStatus('${docId}', 'rejected', '${data.applicantId}')" class="btn btn-danger btn-sm flex-grow-1 fw-bold py-2">却下する</button>
                                 </div>`;
                         } else {
                             actionButtons = `<div class="mt-3"><button onclick="app.undoStatus('${docId}', '${data.applicantId}')" class="btn btn-outline-secondary btn-sm w-100">判定を取り消す</button></div>`;
@@ -337,13 +335,13 @@ const App = {
                     }
 
                     card.innerHTML = `
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <span class="badge ${badgeClass}">${statusText}</span>
-                            <small class="text-muted">${data.createdAt}</small>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="status-badge ${badgeClass}">${statusText}</span>
+                            <small class="text-muted fw-bold" style="font-size: 0.75rem;">${data.createdAt}</small>
                         </div>
-                        <h6 class="mb-1">${data.type}</h6>
-                        <div class="small text-muted mb-2">申請者: ${data.applicantName}</div>
-                        <p class="mb-0 bg-light p-2 rounded">${data.body}</p>
+                        <h6 class="mb-2 fw-bold text-dark">${data.type}</h6>
+                        <div class="small text-muted mb-3"><span class="fw-bold">申請者:</span> ${data.applicantName}</div>
+                        <div class="bg-light p-3 rounded-3 text-secondary" style="font-size: 0.95rem;">${data.body}</div>
                         ${commentHtml}
                         ${decidedTime}
                         ${actionButtons}
