@@ -22,21 +22,43 @@ let allUsers = [];
 
 // メインロジック
 const App = {
-    // 初期化：ユーザー一覧の読み込み
+    // 初期化：ユーザー一覧と申請設定の読み込み
     async init() {
         try {
-            const response = await fetch('config/users.json');
-            allUsers = await response.json();
+            // ユーザー設定と申請フォーム設定を並行して取得
+            const [usersResp, formResp] = await Promise.all([
+                fetch('config/users.json'),
+                fetch('config/form.json')
+            ]);
+
+            allUsers = await usersResp.json();
+            const formData = await formResp.json();
             
+            // ユーザープルダウン生成
             const select = document.getElementById('user-select');
+            select.innerHTML = '<option value="">ユーザーを選択...</option>'; // リセット
             allUsers.forEach(u => {
                 const option = document.createElement('option');
                 option.value = u.id;
                 option.text = `${u.name} (${u.group})`;
                 select.appendChild(option);
             });
+
+            // ★追加：申請種別プルダウン生成
+            const typeSelect = document.getElementById('apply-type');
+            typeSelect.innerHTML = ''; // HTMLの直書きを消去
+            formData.types.forEach(type => {
+                const opt = document.createElement('option');
+                opt.value = type;
+                opt.text = type;
+                typeSelect.appendChild(opt);
+            });
+            
+            // テンプレート反映（プレースホルダーとして）
+            document.getElementById('apply-body').placeholder = formData.templates.default;
+
         } catch (e) {
-            alert('ユーザー設定の読み込みに失敗しました');
+            alert('設定ファイルの読み込みに失敗しました');
             console.error(e);
         }
     },
@@ -186,3 +208,4 @@ const App = {
 // グローバルに公開（HTMLからonclickで呼べるようにする）
 window.app = App;
 window.onload = () => App.init();
+
