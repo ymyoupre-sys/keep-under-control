@@ -1,6 +1,6 @@
-// Firebase SDKの読み込み
+// Firebase SDK
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, updateDoc, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, updateDoc, serverTimestamp, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
 
 // Firebase設定
@@ -13,33 +13,31 @@ const firebaseConfig = {
   appId: "1:999632394190:web:085efbde0239f098c27d9f"
 };
 
-// Firebase初期化
+// ▼▼▼ ここにあなたのGASのURLを埋め込みました ▼▼▼
+const gasUrl = "https://script.google.com/macros/s/AKfycbymJdy2UHwg4P7P68fq_c58uw4VWelvd4Vnb3ZjsTvv0VucveufJxND4Dw5pkNDH1kG/exec"; 
+// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const messaging = getMessaging(app);
 const vapidKey = "BPfPbUKmRMqsHoTbS7SqOGb_t9bt9f72J4x5rOFaRRuY-uL8oqa-M6ASyg_vh8jn3WRDmiifyHPQJM3c45y9nSI";
 
-// アプリの状態管理
 let currentUser = null;
 let allUsers = [];
 
-// メインロジック
 const App = {
-    // 初期化：ユーザー一覧と申請設定の読み込み
+    // 初期化
     async init() {
         try {
-            // ユーザー設定と申請フォーム設定を並行して取得
             const [usersResp, formResp] = await Promise.all([
                 fetch('config/users.json'),
                 fetch('config/form.json')
             ]);
-
             allUsers = await usersResp.json();
             const formData = await formResp.json();
             
-            // ユーザープルダウン生成
             const select = document.getElementById('user-select');
-            select.innerHTML = '<option value="">ユーザーを選択...</option>'; // リセット
+            select.innerHTML = '<option value="">ユーザーを選択...</option>'; 
             allUsers.forEach(u => {
                 const option = document.createElement('option');
                 option.value = u.id;
@@ -47,7 +45,6 @@ const App = {
                 select.appendChild(option);
             });
 
-            // 申請種別プルダウン生成
             const typeSelect = document.getElementById('apply-type');
             typeSelect.innerHTML = ''; 
             formData.types.forEach(type => {
@@ -57,83 +54,53 @@ const App = {
                 typeSelect.appendChild(opt);
             });
             
-            // テンプレート反映
             document.getElementById('apply-body').placeholder = formData.templates.default;
+        } catch (e) { console.error(e); }
+    },
 
-        } catch (e) {
-            alert('設定ファイルの読み込みに失敗しました');
-            console.error(e);
-        }
-    }, // ★ここが修正ポイント：initを閉じてカンマを追加
-
-    // 通知許可の要求とトークン保存
+    // 通知許可とトークン保存
     async requestNotificationPermission() {
         try {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
-                console.log('通知許可されました');
-                
-                // トークン取得
                 const token = await getToken(messaging, { 
                     vapidKey: vapidKey,
                     serviceWorkerRegistration: await navigator.serviceWorker.register('./sw.js')
                 });
-
                 if (token) {
-                    console.log('FCM Token:', token);
-                    // Firestoreにトークンを保存
+                    // トークンを保存
                     await setDoc(doc(db, "user_tokens", currentUser.id), {
                         token: token,
                         userId: currentUser.id,
-                        userName: currentUser.name,
                         updatedAt: serverTimestamp()
                     });
-                    console.log('トークンをサーバーに保存しました');
                 }
-            } else {
-                console.log('通知が拒否されました');
             }
-        } catch (err) {
-            console.error('通知設定エラー:', err);
-        }
+        } catch (err) { console.error(err); }
         
-        // フォアグラウンド通知設定
+        // フォアグラウンド受信
         onMessage(messaging, (payload) => {
-            console.log('フォアグラウンド通知:', payload);
             alert(`【新着通知】\n${payload.notification.title}\n${payload.notification.body}`);
         });
     },
 
-    // ログイン処理
+    // ログイン
     login() {
         const userId = document.getElementById('user-select').value;
         if (!userId) return;
-
         currentUser = allUsers.find(u => u.id === userId);
-        
-        // 画面切り替え
         document.getElementById('login-screen').classList.add('d-none');
         document.getElementById('main-screen').classList.remove('d-none');
         document.getElementById('current-user-name').textContent = currentUser.name;
-
-        // リーダー一覧のセット
         this.setupLeaderSelect();
-        
-        // データ監視開始
         this.startListening();
-        
-        // 通知許可を求める
         this.requestNotificationPermission(); 
     },
 
     setupLeaderSelect() {
         const select = document.getElementById('leader-select');
         select.innerHTML = '';
-        
-        const groupLeaders = allUsers.filter(u => 
-            u.group === currentUser.group && u.role === 'leader'
-        );
-
+        const groupLeaders = allUsers.filter(u => u.group === currentUser.group && u.role === 'leader');
         groupLeaders.forEach(u => {
             const option = document.createElement('option');
             option.value = u.id;
@@ -142,16 +109,36 @@ const App = {
         });
     },
 
+    // ★追加機能：通知送信ヘルパー
+    async sendPush(targetUserId, title, body) {
+        try {
+            // Firestoreから相手のトークンを取得
+            const tokenDoc = await getDoc(doc(db, "user_tokens", targetUserId));
+            if (tokenDoc.exists()) {
+                const token = tokenDoc.data().token;
+                // GAS経由で送信
+                await fetch(gasUrl, {
+                    method: 'POST',
+                    mode: 'no-cors', // CORSエラー回避
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: token, title: title, body: body })
+                });
+                console.log('通知送信リクエスト完了');
+            } else {
+                console.log('相手の通知トークンがありません');
+            }
+        } catch (e) {
+            console.error('通知送信失敗:', e);
+        }
+    },
+
     // 申請送信
     async submitApplication() {
         const type = document.getElementById('apply-type').value;
         const leaderId = document.getElementById('leader-select').value;
         const body = document.getElementById('apply-body').value;
 
-        if (!leaderId || !body) {
-            alert('リーダーと内容を入力してください');
-            return;
-        }
+        if (!leaderId || !body) { alert('入力不備があります'); return; }
 
         try {
             await addDoc(collection(db, "applications"), {
@@ -166,27 +153,24 @@ const App = {
                 createdAt: new Date().toLocaleString()
             });
             
+            // ★リーダーへ通知送信
+            this.sendPush(leaderId, '新しい申請が届きました', `${currentUser.name}さんからの${type}`);
+
             alert('申請しました！');
             document.getElementById('apply-body').value = '';
             document.querySelector('[data-bs-target="#tab-list"]').click();
-        } catch (e) {
-            console.error(e);
-            alert('送信エラーが発生しました');
-        }
+        } catch (e) { alert('エラー'); console.error(e); }
     },
 
-    // リアルタイムデータ受信
+    // 一覧監視
     startListening() {
         const q = query(collection(db, "applications"), orderBy("timestamp", "desc"));
-
         onSnapshot(q, (snapshot) => {
             const listEl = document.getElementById('application-list');
             listEl.innerHTML = '';
-
             snapshot.forEach((docSnap) => {
                 const data = docSnap.data();
                 const docId = docSnap.id;
-
                 if (data.groupId !== currentUser.group) return;
 
                 const card = document.createElement('div');
@@ -198,15 +182,16 @@ const App = {
                 if (data.status === 'rejected') { badgeClass = 'status-rejected'; statusText = '否決'; }
 
                 let actionButtons = '';
+                // ボタン部分の修正：applicantIdも渡すようにする
                 if (currentUser.id === data.leaderId && data.status === 'pending') {
                     actionButtons = `
                         <div class="mt-3 d-flex gap-2">
-                            <button onclick="app.updateStatus('${docId}', 'approved')" class="btn btn-success btn-sm flex-grow-1">承認</button>
-                            <button onclick="app.updateStatus('${docId}', 'rejected')" class="btn btn-danger btn-sm flex-grow-1">否決</button>
+                            <button onclick="app.updateStatus('${docId}', 'approved', '${data.applicantId}')" class="btn btn-success btn-sm flex-grow-1">承認</button>
+                            <button onclick="app.updateStatus('${docId}', 'rejected', '${data.applicantId}')" class="btn btn-danger btn-sm flex-grow-1">否決</button>
                         </div>
                     `;
                 }
-
+                
                 let decidedTime = data.decidedAt ? `<div class="text-muted small mt-1">処理日時: ${data.decidedAt}</div>` : '';
 
                 card.innerHTML = `
@@ -225,20 +210,20 @@ const App = {
         });
     },
 
-    // 承認・否決処理
-    async updateStatus(docId, status) {
-        if (!confirm('この処理を確定しますか？')) return;
-        
+    // 承認・否決処理（引数にapplicantIdを追加）
+    async updateStatus(docId, status, applicantId) {
+        if (!confirm('確定しますか？')) return;
         try {
-            const docRef = doc(db, "applications", docId);
-            await updateDoc(docRef, {
+            await updateDoc(doc(db, "applications", docId), {
                 status: status,
                 decidedAt: new Date().toLocaleString()
             });
-        } catch (e) {
-            console.error(e);
-            alert('更新に失敗しました');
-        }
+
+            // ★申請者へ通知送信
+            const msg = status === 'approved' ? '承認されました' : '否決されました';
+            this.sendPush(applicantId, `申請が${msg}`, 'アプリで詳細を確認してください');
+
+        } catch (e) { console.error(e); }
     }
 };
 
