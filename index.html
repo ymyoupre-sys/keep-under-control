@@ -9,51 +9,74 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
+<style>
         :root {
             --primary-color: #007BFF;
-            --bg-color: #f4f6f8; /* 背景を少しリッチなグレーに */
+            --bg-color: #f4f6f8;
         }
         body { 
             background-color: var(--bg-color); 
             padding-bottom: 80px; 
-            font-family: 'Noto Sans JP', sans-serif; /* フォント適用 */
+            font-family: 'Noto Sans JP', sans-serif;
             color: #333;
         }
         
-        /* リッチなUI調整 */
-        .navbar { box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .card { 
+        /* ▼▼▼ フォント文字化け対策：入力欄は標準フォントを使う ▼▼▼ */
+        input, select, textarea, .form-control, .form-select {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+            font-weight: 400 !important; /* 太字による滲みを防ぐ */
+        }
+
+        /* ▼▼▼ タブとカードを一体化させるデザイン ▼▼▼ */
+        .nav-tabs {
+            border-bottom: none; /* 下線を消す */
+            padding-left: 10px; /* 少し右にずらす */
+            z-index: 1; /* カードより手前に */
+            position: relative;
+        }
+        .nav-link {
+            border: none;
+            background-color: transparent; /* 非アクティブは背景なし */
+            color: #888;
+            font-weight: 700;
+            padding: 12px 20px;
+            border-radius: 12px 12px 0 0; /* 上側だけ丸く */
+            margin-right: 4px;
+            transition: all 0.2s;
+        }
+        .nav-link:hover {
+            background-color: rgba(0,0,0,0.03);
+            color: #555;
+        }
+        .nav-link.active {
+            background-color: #fff; /* アクティブは白（カードと同じ） */
+            color: var(--primary-color) !important;
+            box-shadow: 0 -3px 10px rgba(0,0,0,0.03); /* 浮き上がる演出 */
+        }
+        
+        /* タブの中身のカード */
+        .tab-content .card { 
             border: none; 
-            border-radius: 12px; /* 角丸を強めに */
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* ふんわりした影 */
+            border-radius: 0 12px 12px 12px; /* 左上だけ角丸なし（タブとつながるように） */
+            /* もしタブが右にあれば右上も調整必要ですが、今回は左上が重要 */
+            border-top-left-radius: 0;
+            border-top-right-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-top: 0; /* 隙間をなくす */
         }
-        .btn { 
-            border-radius: 8px; 
-            font-weight: 500;
-            padding: 10px;
-        }
-        .form-control, .form-select {
-            border-radius: 8px;
-            border-color: #e0e0e0;
-            padding: 10px 12px;
-        }
-        .form-control:focus, .form-select:focus {
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); /* フォーカス時の光り方を上品に */
-        }
-        
-        /* 項目名を太く見やすく */
+        /* ▲▲▲ デザイン修正ここまで ▲▲▲ */
+
+        .navbar { box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .btn { border-radius: 8px; font-weight: 500; padding: 10px; }
+        .form-control, .form-select { border-radius: 8px; border-color: #e0e0e0; padding: 10px 12px; }
+        .form-control:focus, .form-select:focus { box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
         .form-label { font-weight: 700; color: #444; margin-bottom: 8px; }
-        .nav-link { font-weight: 700; color: #666; }
-        .nav-link.active { color: var(--primary-color) !important; border-bottom-width: 3px; }
         
-        /* プレースホルダーを薄く */
         ::placeholder { color: #ced4da !important; opacity: 1; }
         ::-webkit-input-placeholder { color: #ced4da !important; }
         
         .theme-bg { background-color: var(--primary-color); color: white; }
         
-        /* ステータスバッジ */
         .status-badge { font-size: 0.85em; padding: 6px 12px; border-radius: 20px; font-weight: 700; }
         .status-pending { background-color: #fff3cd; color: #856404; }
         .status-approved { background-color: #d4edda; color: #155724; }
@@ -86,7 +109,7 @@
         </div>
 
         <div id="main-screen" class="d-none">
-            <ul class="nav nav-tabs nav-fill mb-4 border-bottom-0" role="tablist">
+            <ul class="nav nav-tabs nav-fill mb-0 border-bottom-0" role="tablist">
                 <li class="nav-item">
                     <button class="nav-link active" id="btn-tab-apply" data-bs-toggle="tab" data-bs-target="#tab-apply">申請作成</button>
                 </li>
@@ -94,7 +117,7 @@
                     <button class="nav-link" id="btn-tab-request" data-bs-toggle="tab" data-bs-target="#tab-request">命令作成</button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link" id="btn-tab-list" data-bs-toggle="tab" data-bs-target="#tab-list">一覧</button>
+                    <button class="nav-link" id="btn-tab-list" data-bs-toggle="tab" data-bs-target="#tab-list">申請一覧</button>
                 </li>
             </ul>
 
@@ -179,3 +202,4 @@
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
+
