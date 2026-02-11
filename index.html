@@ -24,48 +24,47 @@
         /* ▼▼▼ フォント文字化け対策：入力欄は標準フォントを使う ▼▼▼ */
         input, select, textarea, .form-control, .form-select {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-            font-weight: 400 !important; /* 太字による滲みを防ぐ */
+            font-weight: 400 !important;
         }
 
-        /* ▼▼▼ タブとカードを一体化させるデザイン ▼▼▼ */
+        /* ▼▼▼ タブデザイン修正：シームレス化 ▼▼▼ */
         .nav-tabs {
-            border-bottom: none; /* 下線を消す */
-            padding-left: 10px; /* 少し右にずらす */
-            z-index: 1; /* カードより手前に */
-            position: relative;
+            border-bottom: none;
+            padding-left: 0; /* 左の隙間を削除 */
+            gap: 0; /* タブ同士の隙間を削除 */
+            width: 100%; /* 横幅いっぱい */
+        }
+        .nav-item {
+            margin-bottom: -1px; /* カードに少し食い込ませて隙間を消す */
+            z-index: 10;
         }
         .nav-link {
             border: none;
-            background-color: transparent; /* 非アクティブは背景なし */
+            background-color: rgba(0,0,0,0.03); /* 非アクティブ時は少しグレー */
             color: #888;
             font-weight: 700;
             padding: 12px 20px;
-            border-radius: 12px 12px 0 0; /* 上側だけ丸く */
-            margin-right: 4px;
+            border-radius: 10px 10px 0 0; /* 上だけ丸く、下は直角 */
+            margin-right: 0; /* 右の隙間を削除 */
+            width: 100%;
             transition: all 0.2s;
         }
-        .nav-link:hover {
-            background-color: rgba(0,0,0,0.03);
-            color: #555;
-        }
         .nav-link.active {
-            background-color: #fff; /* アクティブは白（カードと同じ） */
+            background-color: #fff; /* カードと同じ白 */
             color: var(--primary-color) !important;
-            box-shadow: 0 -3px 10px rgba(0,0,0,0.03); /* 浮き上がる演出 */
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.03); /* ほんのり影 */
         }
         
-        /* タブの中身のカード */
+        /* ▼▼▼ カード修正：上側を直角にしてタブと密着させる ▼▼▼ */
         .tab-content .card { 
             border: none; 
-            border-radius: 0 12px 12px 12px; /* 左上だけ角丸なし（タブとつながるように） */
-            /* もしタブが右にあれば右上も調整必要ですが、今回は左上が重要 */
-            border-top-left-radius: 0;
-            border-top-right-radius: 12px;
+            /* 上は直角、下だけ丸くする（これでタブと完全に繋がります） */
+            border-radius: 0 0 12px 12px; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            margin-top: 0; /* 隙間をなくす */
+            margin-top: 0;
         }
-        /* ▲▲▲ デザイン修正ここまで ▲▲▲ */
-
+        
+        /* その他パーツ */
         .navbar { box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .btn { border-radius: 8px; font-weight: 500; padding: 10px; }
         .form-control, .form-select { border-radius: 8px; border-color: #e0e0e0; padding: 10px 12px; }
@@ -202,4 +201,5 @@
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
+
 
