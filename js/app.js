@@ -7,11 +7,9 @@ let CONFIG_USERS = [];
 let CONFIG_SETTINGS = {};
 let CURRENT_USER = null;
 
-// リスナー解除用関数
 let unsubscribeInbox = null;
 let unsubscribeChat = null;
 
-// チャット・画像関連変数
 let currentChatTargetId = null; 
 let chatImageBase64 = null;
 let formImageBase64 = null;
@@ -65,7 +63,6 @@ const App = {
         this.updateUIByRole(user);
         this.startInboxListener();
         
-        // メンバーなら、チャット相手は自動的に「自グループのリーダー」に固定
         if (user.role === 'member') {
             const leader = CONFIG_USERS.find(u => u.group === user.group && u.role === 'leader');
             if (leader) currentChatTargetId = user.id; 
@@ -115,7 +112,6 @@ const App = {
 
             items.forEach(item => {
                 const stInfo = CONFIG_SETTINGS.statusLabels[item.status] || { label: item.status, color: 'bg-secondary' };
-                
                 let imageHtml = '';
                 if (item.image) {
                     imageHtml = `<div class="mt-2"><img src="${item.image}" class="img-fluid rounded border" style="max-height: 150px;"></div>`;
@@ -289,7 +285,7 @@ const App = {
                 `;
                 container.appendChild(row);
             });
-            // チャットの時だけ一番下にスクロールさせる
+            // チャットの時は自動でスクロールを下げる
             const mainScroll = document.getElementById('main-scroll');
             if (mainScroll) mainScroll.scrollTop = mainScroll.scrollHeight;
         });
@@ -366,7 +362,7 @@ const App = {
                 document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('show', 'active'));
                 document.querySelector(targetId).classList.add('show', 'active');
                 
-                // ★追加：タブ切り替え時に強制的に一番上までスクロールさせる
+                // ★タブ切り替え時にスクロールを最上部へリセット
                 const mainScroll = document.getElementById('main-scroll');
                 if (mainScroll) mainScroll.scrollTop = 0;
 
@@ -379,12 +375,14 @@ const App = {
                     this.renderLeaderChatList();
                 }
                 
-                // チャットの入力欄の表示制御
+                // チャット入力欄の表示/非表示（d-noneクラスで制御）
                 const chatInput = document.getElementById('chat-input-area');
                 if (targetId === '#tab-chat') {
                      // チャット画面では、リーダーでメンバー未選択時以外は表示
                      if (!(CURRENT_USER.role === 'leader' && !currentChatTargetId)) {
                          chatInput.classList.remove('d-none');
+                     } else {
+                         chatInput.classList.add('d-none');
                      }
                 } else {
                     chatInput.classList.add('d-none');
