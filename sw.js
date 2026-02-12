@@ -1,9 +1,7 @@
-// js/firebase-config.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-// ★追加：通知機能のインポート
-import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
+importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
 
+// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCWy_BjB9tr02viCSfAx93qeJyX4G0e2iw",
   authDomain: "keep-under-control.firebaseapp.com",
@@ -13,8 +11,18 @@ const firebaseConfig = {
   appId: "1:999632394190:web:085efbde0239f098c27d9f"
 };
 
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
-// ★追加：通知機能のエクスポート
-export const messaging = getMessaging(app);
-export { getToken };
+firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging();
+
+// バックグラウンドで通知を受信した時の処理
+messaging.onBackgroundMessage((payload) => {
+  console.log('バックグラウンド通知を受信:', payload);
+  
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+    body: payload.notification.body,
+    icon: '/icon.png' // アイコン画像があれば指定
+  };
+
+  self.registration.showNotification(notificationTitle, notificationOptions);
+});
