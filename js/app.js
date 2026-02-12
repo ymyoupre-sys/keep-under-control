@@ -1,6 +1,9 @@
 import { DB } from "./db.js";
 import { Utils } from "./utils.js";
 import { Calendar } from "./calendar.js";
+// ★追加：通知機能とFirestore書き込み用
+import { db, messaging, getToken } from "./firebase-config.js";
+import { doc, setDoc, serverTimestamp, collection, addDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // 設定保持用
 let CONFIG_USERS = [];
@@ -17,8 +20,7 @@ let formImageBase64 = null;
 const App = {
     async init() {
         console.log("App Initializing...");
-        // ※ここでは通知許可を求めず、ログインアクション時（ユーザー操作時）に求めるように変更
-
+        
         try {
             const [usersRes, settingsRes] = await Promise.all([
                 fetch('config/users.json'),
@@ -41,7 +43,6 @@ const App = {
     // --- 戻るボタン制御 (History API) ---
     setupHistoryHandler() {
         window.addEventListener('popstate', (event) => {
-            // チャット詳細が開いていて、戻る操作がされた場合
             const chatDetail = document.getElementById('chat-detail-container');
             if (!chatDetail.classList.contains('d-none')) {
                 this.closeChatDetail();
@@ -68,13 +69,36 @@ const App = {
         });
     },
 
-    loginSuccess(user) {
+    async loginSuccess(user) {
         CURRENT_USER = user;
         
-        // ★修正: ログインアクション時（ユーザー操作時）に通知許可を求める
-        if ("Notification" in window && Notification.permission === "default") {
-            Notification.requestPermission();
+        // --- ★ここから追加: FCMトークン取得と保存 ---
+        try {
+            if ('serviceWorker' in navigator) {
+                // Service Workerの登録確認
+                const registration = await navigator.serviceWorker.register('./sw.js');
+                
+                // 通知許可とトークン取得
+                const token = await getToken(messaging, {
+                    serviceWorkerRegistration: registration,
+                    vapidKey: "BMdNlbLwC3bEwAIp-ZG9Uwp-5n4HdyXvlsqJbt6Q5YRdCA7gUexx0G9MpjB3AdLk6iNJodLTobC3-bGG6YskB0s" 
+                });
+
+                if (token) {
+                    console.log("FCM Token:", token);
+                    // Firestoreの fcmTokens コレクションに保存
+                    await setDoc(doc(db, "fcmTokens", user.id), {
+                        token: token,
+                        userId: user.id,
+                        updatedAt: serverTimestamp()
+                    });
+                }
+            }
+        } catch (err) {
+            console.error("通知設定エラー:", err);
+            // エラーでもアプリは使えるように続行
         }
+        // --- ここまで ---
 
         document.getElementById('login-screen').classList.add('d-none');
         document.getElementById('app-screen').classList.remove('d-none');
@@ -83,9 +107,6 @@ const App = {
         this.updateUIByRole(user);
         this.startInboxListener();
         
-        // ★修正: 奴隷も最初は「未選択」状態にするため、ここでのリスナー開始は削除
-        // if (user.role === 'member') { ... } 削除
-
         Calendar.init(user);
 
         // 起動時は必ず「受信箱」を開く
@@ -108,7 +129,6 @@ const App = {
             CONFIG_SETTINGS.applicationTypes.forEach(t => typeSelect.add(new Option(t, t)));
         }
         
-        // ★修正: 主人/奴隷問わず、チャットリスト（相手一覧）を描画する
         this.renderChatList();
         
         document.getElementById('submit-form-btn').onclick = () => this.submitForm();
@@ -125,12 +145,7 @@ const App = {
         let isFirstLoad = true;
 
         unsubscribeInbox = DB.subscribeInbox(CURRENT_USER, (items) => {
-            if (!isFirstLoad && items.length > 0 && document.visibilityState === 'hidden') {
-                const latest = items[0];
-                if (latest.updatedBy !== CURRENT_USER.id) {
-                    this.showLocalNotification("新着通知", `${latest.type}: ${latest.status}`);
-                }
-            }
+            // ローカル通知は削除（サーバーからの通知に任せるため重複防止）
             isFirstLoad = false;
 
             listEl.innerHTML = '';
@@ -182,12 +197,6 @@ const App = {
                 listEl.appendChild(div);
             });
         });
-    },
-
-    showLocalNotification(title, body) {
-        if (Notification.permission === "granted") {
-            new Notification(title, { body: body, icon: 'images/icon.png' });
-        }
     },
 
     createActionButtons(item) {
@@ -314,18 +323,15 @@ const App = {
 
     // --- メッセージ（チャット）機能 ---
     
-    // ★修正: 主人/奴隷共用のチャット相手リスト描画
     renderChatList() {
         const container = document.getElementById('chat-container');
         container.classList.remove('d-none'); 
         
         let targets = [];
         if (CURRENT_USER.role === 'leader') {
-            // 主人は奴隷全員を表示
             targets = CONFIG_USERS.filter(u => u.group === CURRENT_USER.group && u.role === 'member');
             container.innerHTML = `<h6 class="px-2 py-3 text-muted border-bottom">奴隷を選択してメッセージ</h6>`;
         } else {
-            // 奴隷は主人を表示
             targets = CONFIG_USERS.filter(u => u.group === CURRENT_USER.group && u.role === 'leader');
             container.innerHTML = `<h6 class="px-2 py-3 text-muted border-bottom">主人を選択して報告</h6>`;
         }
@@ -334,7 +340,7 @@ const App = {
             const row = document.createElement('div');
             row.className = "d-flex align-items-center p-3 border-bottom bg-white clickable";
             row.onclick = () => {
-                currentChatTargetId = user.id; // 相手のIDをセット
+                currentChatTargetId = user.id; 
                 this.openChatDetail(user.name);
             };
             row.innerHTML = `
@@ -349,7 +355,6 @@ const App = {
         document.getElementById('header-title').textContent = "メッセージ";
     },
 
-    // チャット詳細を開く
     openChatDetail(targetName) {
         history.pushState({chat: true}, '', '#chat-detail');
 
@@ -365,7 +370,6 @@ const App = {
         this.startChatListener();
     },
 
-    // チャット詳細を閉じて一覧に戻る
     closeChatDetail() {
         if(unsubscribeChat) unsubscribeChat();
         
@@ -384,12 +388,7 @@ const App = {
     startChatListener() {
         if (unsubscribeChat) unsubscribeChat();
         
-        // ★修正: 奴隷の場合も currentChatTargetId（主人ID）を使う
         let targetMemberId = currentChatTargetId;
-        
-        // ※補足: DB構造上、チャットルームIDは「GROUP_MEMBERID」というルールになっている
-        // 主人視点: 相手(Member)のIDを使う
-        // 奴隷視点: 自分(Member)のIDを使う
         if (CURRENT_USER.role === 'member') {
             targetMemberId = CURRENT_USER.id;
         }
@@ -402,12 +401,7 @@ const App = {
         let isFirstLoad = true;
 
         unsubscribeChat = DB.subscribeChat(CURRENT_USER.group, targetMemberId, (messages) => {
-            if(!isFirstLoad && messages.length > 0 && document.visibilityState === 'hidden') {
-                const lastMsg = messages[messages.length - 1];
-                if(lastMsg.senderId !== CURRENT_USER.id) {
-                    this.showLocalNotification("新着メッセージ", lastMsg.text || '画像が送信されました');
-                }
-            }
+            // ローカル通知は削除
             isFirstLoad = false;
 
             container.innerHTML = ''; 
@@ -456,14 +450,47 @@ const App = {
         const text = input.value.trim();
         if (!text && !chatImageBase64) return;
         
-        // ★修正: 奴隷の場合もチャットルームID生成のために自分のIDを使う
         let targetMemberId = currentChatTargetId;
         if (CURRENT_USER.role === 'member') {
             targetMemberId = CURRENT_USER.id;
         }
 
+        // ★追加：宛先(receiverId)の特定ロジック
+        let receiverId = null;
+        if (CURRENT_USER.role === 'leader') {
+            // 主人が送信 → 相手は奴隷(targetMemberId)
+            receiverId = targetMemberId;
+        } else {
+            // 奴隷が送信 → 相手は同じグループの主人
+            const leader = CONFIG_USERS.find(u => u.group === CURRENT_USER.group && u.role === 'leader');
+            if (leader) receiverId = leader.id;
+        }
+
         try {
-            await DB.sendMessage(CURRENT_USER.group, targetMemberId, CURRENT_USER, text, chatImageBase64);
+            const chatRoomId = `${CURRENT_USER.group}_${targetMemberId}`;
+            // sendMessageを直接書く（receiverIdを入れるため、DB.sendMessageではなくここで実行）
+            await addDoc(collection(db, "chats", chatRoomId, "messages"), {
+                text: text,
+                senderId: CURRENT_USER.id,
+                senderName: CURRENT_USER.name,
+                senderIcon: CURRENT_USER.icon || "👤",
+                receiverId: receiverId, // ★宛先IDを追加
+                image: chatImageBase64,
+                createdAt: serverTimestamp()
+            });
+            
+            await updateDoc(doc(db, "chats", chatRoomId), {
+                lastMessage: text || (chatImageBase64 ? '画像が送信されました' : ''),
+                updatedAt: serverTimestamp()
+            }).catch(async () => {
+                await setDoc(doc(db, "chats", chatRoomId), {
+                    groupId: CURRENT_USER.group,
+                    memberId: targetMemberId,
+                    lastMessage: text || (chatImageBase64 ? '画像が送信されました' : ''), 
+                    updatedAt: serverTimestamp()
+                });
+            });
+
             input.value = '';
             chatImageBase64 = null;
             document.getElementById('chat-image-preview').innerHTML = '';
@@ -537,18 +564,14 @@ const App = {
                 const titleMap = { '#tab-inbox': '受信箱', '#tab-chat': 'メッセージ', '#tab-form': labelForm, '#tab-calendar': 'カレンダー' };
                 document.getElementById('header-title').textContent = titleMap[targetId];
 
-                // チャットタブ切り替え時の制御
                 const chatInput = document.getElementById('chat-input-area');
                 if (targetId === '#tab-chat') {
-                    // ★修正: 奴隷も最初は一覧画面（詳細コンテナがd-noneなら一覧を表示）
                     const chatDetail = document.getElementById('chat-detail-container');
                     if (chatDetail.classList.contains('d-none')) {
-                         // 一覧表示中
                          document.getElementById('chat-container').classList.remove('d-none');
-                         this.renderChatList(); // 再描画
+                         this.renderChatList(); 
                          chatInput.classList.add('d-none');
                     } else {
-                         // 詳細表示中（戻るボタンで戻らなかった場合など）
                          chatInput.classList.remove('d-none');
                     }
                 } else {
