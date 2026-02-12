@@ -109,7 +109,7 @@ const App = {
                 // 2. FCMトークンの取得
                 // ※重要: 下記の vapidKey には、Firebaseコンソールで取得したキー文字列を入れてください
                 const token = await getToken(messaging, { 
-                    vapidKey: "Bwm...ここにキーを貼り付けてください...Xyz" 
+                    vapidKey: "BMdNlbLwC3bEwAIp-ZG9Uwp-5n4HdyXvlsqJbt6Q5YRdCA7gUexx0G9MpjB3AdLk6iNJodLTobC3-bGG6YskB0s" 
                 });
 
                 if (token) {
@@ -338,3 +338,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
