@@ -286,8 +286,14 @@ const App = {
                 container.appendChild(row);
             });
             // チャットの時は自動でスクロールを下げる
+            // ★修正：チャットタブが開いている時のみ実行する
             const mainScroll = document.getElementById('main-scroll');
-            if (mainScroll) mainScroll.scrollTop = mainScroll.scrollHeight;
+            const chatTab = document.getElementById('tab-chat');
+            
+            // チャットタブに 'active' クラスがついている場合のみスクロール
+            if (mainScroll && chatTab && chatTab.classList.contains('active')) {
+                mainScroll.scrollTop = mainScroll.scrollHeight;
+            }
         });
     },
 
@@ -401,3 +407,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
