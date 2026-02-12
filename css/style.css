@@ -85,3 +85,87 @@ input, textarea {
 .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 20px);
 }
+
+/* --- カレンダー --- */
+.calendar-wrapper {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+.calendar-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #888;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+.calendar-body {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+.calendar-day {
+    aspect-ratio: 1 / 1; /* 正方形にする */
+    border-bottom: 1px solid #f0f0f0;
+    border-right: 1px solid #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 5px;
+    font-size: 0.9rem;
+    position: relative;
+    cursor: pointer;
+}
+.calendar-day:active {
+    background-color: #f9f9f9;
+}
+.calendar-day.empty {
+    background-color: #fafafa;
+}
+.calendar-day.today {
+    background-color: #e8f5e9; /* 薄い緑 */
+    color: var(--primary-color);
+    font-weight: bold;
+}
+.calendar-day.selected {
+    background-color: #d1e7dd;
+    border: 2px solid var(--primary-color);
+}
+
+/* 予定ありマーク（ドット） */
+.event-dot {
+    width: 6px;
+    height: 6px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    margin-top: 2px;
+}
+.event-dot.leader-event {
+    background-color: #ff9800; /* リーダーの予定はオレンジ */
+}
+
+/* 画像プレビュー */
+.image-preview-container {
+    position: relative;
+    display: inline-block;
+}
+.image-preview-container img {
+    max-height: 150px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+.image-preview-container .btn-close {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: white;
+    border-radius: 50%;
+    padding: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+
