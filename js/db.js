@@ -55,7 +55,7 @@ export const DB = {
         return onSnapshot(q, (snapshot) => {
             let items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             
-            // ★修正：ステータス変更等の更新日時を無視し、純粋に作成日順(新しい順)にする
+            // ステータス更新日時を無視し、作成日順(新しい順)で固定
             items.sort((a, b) => {
                 const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
                 const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
@@ -88,7 +88,6 @@ export const DB = {
         });
     },
 
-    // ★追加：物理削除
     async deleteApplication(docId) {
         await deleteDoc(doc(db, "applications", docId));
     },
@@ -110,5 +109,10 @@ export const DB = {
             ...eventData,
             createdAt: serverTimestamp()
         });
+    },
+
+    // ★追加：イベント削除
+    async deleteEvent(docId) {
+        await deleteDoc(doc(db, "events", docId));
     }
 };
