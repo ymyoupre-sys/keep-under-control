@@ -1,27 +1,25 @@
+// js/db.js
+
 import { db } from "./firebase-config.js";
 import { 
-    collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, updateDoc 
+    collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, setDoc
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 export const DB = {
-    // ■ チャット機能
+    // ■ チャット機能（変更なし）
     subscribeChat(groupId, memberId, callback) {
         const chatRoomId = `${groupId}_${memberId}`;
-        
-        // チャットは単純な時系列なので orderBy があってもエラーになりにくいですが、
-        // 万が一のためにここもケアしておきます
         const q = query(
             collection(db, "chats", chatRoomId, "messages"),
             orderBy("createdAt", "asc")
         );
-
         return onSnapshot(q, (snapshot) => {
             const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             callback(messages);
         });
     },
 
-    // ■ チャット送信
+    // ■ チャット送信（変更なし）
     async sendMessage(groupId, memberId, sender, text, imageBase64 = null) {
         const chatRoomId = `${groupId}_${memberId}`;
         await addDoc(collection(db, "chats", chatRoomId, "messages"), {
@@ -33,59 +31,58 @@ export const DB = {
             createdAt: serverTimestamp()
         });
         
-        // 親ドキュメント更新（エラーなら作成）
         await updateDoc(doc(db, "chats", chatRoomId), {
             lastMessage: text,
             updatedAt: serverTimestamp()
         }).catch(async () => {
-            const { setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
             await setDoc(doc(db, "chats", chatRoomId), {
                 groupId, memberId, lastMessage: text, updatedAt: serverTimestamp()
             });
         });
     },
 
-    // ■ 受信箱：修正箇所（orderByを削除し、JSでソート）
+    // ■ 受信箱：★ここを修正（クエリを単純化してJSでフィルタリング）
     subscribeInbox(user, callback) {
         let q;
         const colRef = collection(db, "applications");
 
         if (user.role === 'leader') {
-            // リーダー: orderByを削除
+            // リーダー修正版：まずは「自分のグループ」のものを全て取得
             q = query(
                 colRef,
-                where("groupId", "==", user.group),
-                where("category", "==", "application")
+                where("groupId", "==", user.group)
             );
         } else {
-            // メンバー: orderByを削除
+            // メンバー（変更なし）：自分宛てのもの
             q = query(
                 colRef,
                 where("targetId", "==", user.id)
             );
         }
 
-        // 第2引数にエラーハンドリングを追加（原因特定のため）
         return onSnapshot(q, (snapshot) => {
             let items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             
-            // ★ここでJavaScriptで新しい順に並び替え
+            // ★Javascript側で「申請」だけに絞り込み（リーダーの場合）
+            if (user.role === 'leader') {
+                items = items.filter(item => item.category === 'application');
+            }
+
+            // 新しい順に並び替え
             items.sort((a, b) => {
                 const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
                 const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
-                return timeB - timeA; // 降順（新しいのが上）
+                return timeB - timeA;
             });
 
             callback(items);
         }, (error) => {
-            console.error("受信箱の読み込みエラー:", error);
-            // エラー時もコールバックを空で返してぐるぐるを止める
+            console.error("Inbox Error:", error);
             callback([]); 
-            alert("データ取得エラー: コンソールを確認してください");
         });
     },
 
-    // ■ 申請・指示の送信
+    // ■ 申請・指示の送信（変更なし）
     async submitForm(data) {
         await addDoc(collection(db, "applications"), {
             ...data,
@@ -95,7 +92,7 @@ export const DB = {
         });
     },
     
-    // ■ ステータス更新
+    // ■ ステータス更新（変更なし）
     async updateStatus(docId, status) {
         await updateDoc(doc(db, "applications", docId), {
             status: status,
