@@ -1,0 +1,87 @@
+:root {
+    --primary-color: #06c755; /* LINE Green */
+    --bg-color: #f2f4f7;      /* 背景色（薄いグレー） */
+    --chat-me-bg: #98e184;    /* 自分のチャット吹き出し色 */
+    --chat-other-bg: #ffffff; /* 相手のチャット吹き出し色 */
+}
+
+body {
+    background-color: var(--bg-color);
+    font-family: 'Noto Sans JP', sans-serif;
+    color: #333;
+    /* スマホでの長押し選択等を無効化してアプリっぽくする */
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* フォーム要素は選択可能にする */
+input, textarea {
+    user-select: text;
+}
+
+/* ボトムナビのアクティブ状態 */
+.nav-link {
+    color: #999;
+    transition: color 0.2s;
+    padding-top: 8px;
+    padding-bottom: 4px;
+}
+.nav-link.active {
+    color: var(--primary-color) !important;
+}
+.nav-link i {
+    margin-bottom: -2px;
+}
+
+/* --- チャットUI (LINE風) --- */
+.chat-bubble {
+    max-width: 75%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 0.95rem;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    word-wrap: break-word;
+}
+
+/* 相手のメッセージ（左寄せ） */
+.chat-row-other {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-end;
+}
+.chat-bubble-other {
+    background-color: var(--chat-other-bg);
+    border-top-left-radius: 2px; /* 左上を尖らせる */
+    color: #222;
+}
+
+/* 自分のメッセージ（右寄せ） */
+.chat-row-me {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+}
+.chat-bubble-me {
+    background-color: var(--chat-me-bg);
+    border-top-right-radius: 2px; /* 右上を尖らせる */
+    color: #000;
+}
+
+/* アイコン画像 */
+.user-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    margin-right: 8px;
+}
+
+/* iPhone X以降のSafeArea対応 */
+.pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+}
