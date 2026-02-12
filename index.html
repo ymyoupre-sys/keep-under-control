@@ -55,7 +55,7 @@
                     <div class="card-body">
                         <h6 class="fw-bold mb-3" id="form-title-label">申請を作成</h6>
                         <select id="form-type" class="form-select mb-3"></select>
-                        <textarea id="form-body" class="form-control mb-3" rows="5" placeholder="詳細内容"></textarea>
+                        <textarea id="form-body" class="form-control mb-3" rows="5" placeholder="詳細内容 (省略可)"></textarea>
                         <div class="mb-3">
                             <div id="form-image-preview" class="mb-2 d-none"></div>
                             <label class="btn btn-outline-secondary btn-sm w-100">
@@ -71,9 +71,16 @@
             <div id="tab-calendar" class="tab-pane fade">
                 <div class="d-flex justify-content-between align-items-center mb-3 bg-white p-3 rounded shadow-sm">
                     <button id="cal-prev-btn" class="btn btn-sm btn-outline-secondary"><i class="bi bi-chevron-left"></i></button>
-                    <h5 class="m-0 fw-bold" id="cal-title">2026年 2月</h5>
+                    <h5 class="m-0 fw-bold" id="cal-title"></h5>
                     <button id="cal-next-btn" class="btn btn-sm btn-outline-secondary"><i class="bi bi-chevron-right"></i></button>
                 </div>
+                
+                <div class="mb-3 px-1">
+                    <button class="btn btn-outline-primary w-100 shadow-sm" onclick="window.calendar.showAddModal()">
+                        <i class="bi bi-plus-lg"></i> 予定を追加
+                    </button>
+                </div>
+
                 <div class="calendar-wrapper">
                     <div class="calendar-header">
                         <span class="text-danger">日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span class="text-primary">土</span>
@@ -108,7 +115,7 @@
                     <div class="col-3">
                         <a href="#" class="nav-link nav-item" data-target="#tab-chat">
                             <i class="bi bi-chat-dots fs-4 d-block"></i>
-                            <span class="small fw-bold" id="nav-label-chat">連絡</span>
+                            <span class="small fw-bold">メッセージ</span>
                         </a>
                     </div>
                     <div class="col-3">
@@ -120,7 +127,7 @@
                     <div class="col-3">
                         <a href="#" class="nav-link nav-item" data-target="#tab-calendar">
                             <i class="bi bi-calendar-check fs-4 d-block"></i>
-                            <span class="small fw-bold">予定</span>
+                            <span class="small fw-bold">カレンダー</span>
                         </a>
                     </div>
                 </div>
@@ -133,9 +140,20 @@
             <div class="modal-content">
                 <div class="modal-header"><h5 class="modal-title">予定の追加</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
-                    <input type="hidden" id="event-date-hidden">
-                    <div class="mb-3"><label class="form-label">日付</label><div id="event-date-display" class="fw-bold fs-5"></div></div>
-                    <div class="mb-3"><label class="form-label">予定の内容</label><input type="text" id="event-title-input" class="form-control" placeholder="例: 出張、会議"></div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label small text-muted">開始日</label>
+                            <input type="date" id="event-start-date" class="form-control">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted">終了日</label>
+                            <input type="date" id="event-end-date" class="form-control">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">予定の内容</label>
+                        <input type="text" id="event-title-input" class="form-control" placeholder="例: 出張、会議">
+                    </div>
                 </div>
                 <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button><button type="button" id="save-event-btn" class="btn btn-success">保存</button></div>
             </div>
