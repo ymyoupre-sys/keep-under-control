@@ -38,7 +38,7 @@ const App = {
 
         } catch (e) {
             console.error("Init Error", e);
-            alert("初期化エラーが発生しました");
+            // 初期化エラーが出てもアラートは出さず、ログだけ残す
         }
     },
 
@@ -89,7 +89,6 @@ const App = {
             mainScreen.classList.remove('d-none');
         } else {
             console.error('Fatal Error: id="main-screen" not found in HTML.');
-            alert('画面読み込みエラー: main-screenが見つかりません');
             return;
         }
         
@@ -110,7 +109,11 @@ const App = {
         }
 
         this.startInboxListener();
-        Calendar.init(CURRENT_USER);
+        
+        // カレンダー初期化（DOM要素があるか確認してから実行）
+        if(document.getElementById('tab-calendar')) {
+            Calendar.init(CURRENT_USER);
+        }
     },
 
     async setupNotifications() {
@@ -119,9 +122,13 @@ const App = {
             if (permission === 'granted') {
                 console.log('Notification permission granted.');
                 
-                // ★重要: ここにあなたのVAPIDキーが入っているか確認してください
+                // ■ 修正点: sw.js を明示的に登録して、その登録情報を使う
+                const registration = await navigator.serviceWorker.register('sw.js');
+                
+                // ★重要: VAPIDキーをご自身のものに書き換えてください
                 const token = await getToken(messaging, { 
-                    vapidKey: "BMwS...（ここにあなたのキーを貼り付け）...XYZ" 
+                    vapidKey: "BMwS...ご自身のキー...XYZ",
+                    serviceWorkerRegistration: registration
                 });
 
                 if (token) {
@@ -129,10 +136,8 @@ const App = {
                     await DB.saveUserToken(CURRENT_USER, token);
                 }
                 
-                // アプリ起動中の通知受信
                 onMessage(messaging, (payload) => {
                     console.log('Message received in foreground: ', payload);
-                    // 必要であればここでToastなどを表示
                 });
             }
         } catch (error) {
@@ -156,7 +161,8 @@ const App = {
                 const labelForm = CURRENT_USER.role === 'leader' ? '指示作成' : '申請作成';
 
                 const titleMap = { '#tab-chat': labelChat, '#tab-inbox': labelInbox, '#tab-form': labelForm, '#tab-calendar': 'カレンダー' };
-                document.getElementById('header-title').textContent = titleMap[targetId];
+                const headerTitle = document.getElementById('header-title');
+                if(headerTitle) headerTitle.textContent = titleMap[targetId];
 
                 const chatInput = document.getElementById('chat-input-area');
                 
