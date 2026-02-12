@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>奴隷管理アプリ</title>
+    <title>管理アプリ</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#06c755">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -53,7 +53,7 @@
             <div id="tab-form" class="tab-pane fade">
                 <div class="card border-0 shadow-sm">
                     <div class="card-body">
-                        <h6 class="fw-bold mb-3" id="form-title-label">許可申請を作成</h6>
+                        <h6 class="fw-bold mb-3" id="form-title-label">申請を作成</h6>
                         <select id="form-type" class="form-select mb-3"></select>
                         <textarea id="form-body" class="form-control mb-3" rows="5" placeholder="内容 (省略可)"></textarea>
                         <div class="mb-3">
@@ -152,7 +152,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">予定の内容</label>
-                        <input type="text" id="event-title-input" class="form-control" placeholder="例: 仕事、調教">
+                        <input type="text" id="event-title-input" class="form-control" placeholder="例: 外出、出社、在宅など">
                     </div>
                 </div>
                 <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button><button type="button" id="save-event-btn" class="btn btn-success">保存</button></div>
@@ -164,5 +164,6 @@
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
+
 
 
