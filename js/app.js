@@ -48,7 +48,7 @@ const App = {
             const bodyInput = document.getElementById('apply-body');
             if (bodyInput) bodyInput.placeholder = formData.templates.default;
 
-            // 命令種別生成
+            // 依頼種別生成
             const reqSelect = document.getElementById('request-type');
             if (reqSelect && formData.requestTypes) {
                 reqSelect.innerHTML = '';
@@ -157,17 +157,17 @@ const App = {
         if (logoutBtn) logoutBtn.classList.remove('d-none');
         document.getElementById('current-user-name').textContent = currentUser.name;
 
-        // 主人なら命令タブを表示 & 初期アクティブにする
+        // リーダーなら依頼タブを表示 & 初期アクティブにする
         const reqTabItem = document.getElementById('nav-item-request');
         if (reqTabItem && currentUser.role === 'leader') {
             reqTabItem.classList.remove('d-none');
 
-            // ★追加ロジック：主人なら初期タブを「命令作成」に切り替え
+            // ★追加ロジック：リーダーなら初期タブを「依頼作成」に切り替え
             // 1. 申請タブを非アクティブ化
             document.getElementById('btn-tab-apply').classList.remove('active');
             document.getElementById('tab-apply').classList.remove('show', 'active');
             
-            // 2. 命令タブをアクティブ化
+            // 2. 依頼タブをアクティブ化
             document.getElementById('btn-tab-request').classList.add('active');
             document.getElementById('tab-request').classList.add('show', 'active');
         }
@@ -270,8 +270,8 @@ const App = {
                 timestamp: serverTimestamp(),
                 createdAt: new Date().toLocaleString()
             });
-            this.sendPush(targetId, '新しい命令', `${currentUser.name}さんから：${type}`);
-            alert('命令を送信しました！');
+            this.sendPush(targetId, '新しい依頼', `${currentUser.name}さんから：${type}`);
+            alert('依頼を送信しました！');
             document.getElementById('request-body').value = '';
             document.querySelector('[data-bs-target="#tab-list"]').click();
         } catch (e) { alert('エラー'); console.error(e); }
@@ -295,7 +295,7 @@ const App = {
                 
                 if (isRequest) {
                     const badgeClass = 'status-request';
-                    const statusText = `命令：${data.deadline || '期限なし'}`;
+                    const statusText = `依頼：${data.deadline || '期限なし'}`;
                     
                     card.innerHTML = `
                         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -304,8 +304,8 @@ const App = {
                         </div>
                         <h6 class="mb-2 fw-bold text-dark">${data.type}</h6>
                         <div class="small text-muted mb-3">
-                            <span class="fw-bold">命令者:</span> ${data.applicantName} <span class="mx-1">|</span> 
-                            <span class="fw-bold">対象:</span> ${data.targetId === currentUser.id ? 'あなた' : '他の奴隷'}
+                            <span class="fw-bold">依頼者:</span> ${data.applicantName} <span class="mx-1">|</span> 
+                            <span class="fw-bold">対象:</span> ${data.targetId === currentUser.id ? 'あなた' : '他のメンバー'}
                         </div>
                         <div class="bg-light p-3 rounded-3 text-secondary" style="font-size: 0.95rem;">${data.body}</div>
                     `;
@@ -372,4 +372,5 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
