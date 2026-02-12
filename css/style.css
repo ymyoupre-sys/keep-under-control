@@ -68,6 +68,11 @@ html, body {
     min-height: 0 !important;
 }
 
+/* --- 修正追記：非アクティブなタブを完全に非表示にする --- */
+.tab-pane:not(.active) {
+    display: none !important;
+}
+
 /* --- 以下、装飾系（変更なし） --- */
 input, textarea { user-select: text; }
 .nav-link { color: #999; transition: color 0.2s; padding-top: 8px; padding-bottom: 4px; }
@@ -95,3 +100,4 @@ input, textarea { user-select: text; }
 .image-preview-container { position: relative; display: inline-block; }
 .image-preview-container img { max-height: 150px; border-radius: 8px; border: 1px solid #ddd; }
 .image-preview-container .btn-close { position: absolute; top: -8px; right: -8px; background-color: white; border-radius: 50%; padding: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+
