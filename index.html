@@ -4,7 +4,7 @@
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>申請/命令アプリ</title>
+    <title>申請/依頼アプリ</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -106,7 +106,7 @@
 <body>
     <nav class="navbar navbar-dark theme-bg sticky-top mb-4">
         <div class="container-fluid">
-            <span class="navbar-brand mb-0 h1 fw-bold">申請/命令アプリ</span>
+            <span class="navbar-brand mb-0 h1 fw-bold">申請/依頼アプリ</span>
             <div class="d-flex align-items-center gap-2">
                 <span id="current-user-name" class="text-white small fw-bold"></span>
                 <button id="logout-btn" onclick="app.logout()" class="btn btn-sm btn-outline-light d-none" style="border-radius: 20px; padding: 4px 12px;">ログアウト</button>
@@ -136,7 +136,7 @@
                             <button class="nav-link active" id="btn-tab-apply" data-bs-toggle="tab" data-bs-target="#tab-apply">申請作成</button>
                         </li>
                         <li class="nav-item d-none" id="nav-item-request">
-                            <button class="nav-link" id="btn-tab-request" data-bs-toggle="tab" data-bs-target="#tab-request">命令作成</button>
+                            <button class="nav-link" id="btn-tab-request" data-bs-toggle="tab" data-bs-target="#tab-request">依頼作成</button>
                         </li>
                         <li class="nav-item">
                             <button class="nav-link" id="btn-tab-list" data-bs-toggle="tab" data-bs-target="#tab-list">申請一覧</button>
@@ -153,9 +153,9 @@
                                 <select id="apply-type" class="form-select"></select>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">提出先主人</label>
+                                <label class="form-label">提出先リーダー</label>
                                 <select id="leader-select" class="form-select"></select>
-                                <div class="form-text">同じグループの主人のみ表示されます</div>
+                                <div class="form-text">同じグループのリーダーのみ表示されます</div>
                             </div>
                             <div class="mb-4">
                                 <label class="form-label">内容詳細</label>
@@ -165,15 +165,15 @@
                         </div>
 
                         <div class="tab-pane fade" id="tab-request">
-                            <h6 class="mb-4 pb-2 border-bottom fw-bold text-primary">奴隷へ命令を送る</h6>
+                            <h6 class="mb-4 pb-2 border-bottom fw-bold text-primary">メンバーへ依頼を送る</h6>
                             
                             <div class="mb-3">
-                                <label class="form-label">命令の種類</label>
+                                <label class="form-label">依頼の種類</label>
                                 <select id="request-type" class="form-select"></select>
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">命令先</label>
+                                <label class="form-label">依頼先</label>
                                 <select id="target-select" class="form-select"></select>
                             </div>
 
@@ -212,10 +212,10 @@
 
                             <div class="mb-4">
                                 <label class="form-label">内容詳細</label>
-                                <textarea id="request-body" class="form-control" rows="3" placeholder="命令内容を入力"></textarea>
+                                <textarea id="request-body" class="form-control" rows="3" placeholder="依頼内容を入力"></textarea>
                             </div>
                             
-                            <button onclick="app.submitRequest()" class="btn btn-info text-white w-100 py-3 fw-bold shadow-sm">命令を送る</button>
+                            <button onclick="app.submitRequest()" class="btn btn-info text-white w-100 py-3 fw-bold shadow-sm">依頼を送る</button>
                         </div>
 
                         <div class="tab-pane fade" id="tab-list">
@@ -232,6 +232,7 @@
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
+
 
 
 
