@@ -18,7 +18,6 @@ export const DB = {
         });
     },
 
-    // チャット送信 (画像対応)
     async sendMessage(groupId, memberId, sender, text, imageBase64 = null) {
         const chatRoomId = `${groupId}_${memberId}`;
         await addDoc(collection(db, "chats", chatRoomId, "messages"), {
@@ -26,11 +25,10 @@ export const DB = {
             senderId: sender.id,
             senderName: sender.name,
             senderIcon: sender.icon || "👤",
-            image: imageBase64, // 画像(Base64)
+            image: imageBase64,
             createdAt: serverTimestamp()
         });
         
-        // 最新メッセージとして親ドキュメントも更新
         await updateDoc(doc(db, "chats", chatRoomId), {
             lastMessage: text || (imageBase64 ? '画像が送信されました' : ''),
             updatedAt: serverTimestamp()
@@ -43,37 +41,25 @@ export const DB = {
         });
     },
 
-    // ■ 受信箱：リーダー用フィルタリング修正版
+    // ■ 受信箱
     subscribeInbox(user, callback) {
         let q;
         const colRef = collection(db, "applications");
 
         if (user.role === 'leader') {
-            // リーダー: まずは「自分のグループ」のものを全て取得
-            q = query(
-                colRef,
-                where("groupId", "==", user.group)
-            );
+            q = query(colRef, where("groupId", "==", user.group));
         } else {
-            // メンバー: 自分宛てのもの
-            q = query(
-                colRef,
-                where("targetId", "==", user.id)
-            );
+            q = query(colRef, where("targetId", "==", user.id));
         }
 
         return onSnapshot(q, (snapshot) => {
             let items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             
-            // Javascript側で「申請」だけに絞り込み（リーダーの場合）
-            if (user.role === 'leader') {
-                items = items.filter(item => item.category === 'application');
-            }
-
-            // 新しい順に並び替え
+            // リーダーでも全部見る（指示の履歴も見たいのでフィルタ除去）
+            // 並び替え: 更新日時があればそれで、なければ作成日時
             items.sort((a, b) => {
-                const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
-                const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
+                const timeA = (a.updatedAt || a.createdAt)?.toMillis() || 0;
+                const timeB = (b.updatedAt || b.createdAt)?.toMillis() || 0;
                 return timeB - timeA;
             });
 
@@ -84,27 +70,28 @@ export const DB = {
         });
     },
 
-    // ■ 申請・指示の送信 (画像対応)
+    // ■ 申請・指示の送信
     async submitForm(data) {
-        // dataの中には category, type, body, image, applicantId... 等が含まれる前提
         await addDoc(collection(db, "applications"), {
             ...data,
             status: 'pending',
             createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(), // ソート用
             createdDateStr: new Date().toLocaleDateString('ja-JP') 
         });
     },
     
-    // ■ ステータス更新
-    async updateStatus(docId, status) {
+    // ■ ステータス更新（コメント対応）
+    async updateStatus(docId, status, comment = '', updaterId) {
         await updateDoc(doc(db, "applications", docId), {
             status: status,
-            decidedAt: serverTimestamp()
+            resultComment: comment,
+            updatedBy: updaterId,
+            updatedAt: serverTimestamp() // 通知トリガー用
         });
     },
 
     // ■ カレンダー機能
-    // 予定のリアルタイム監視
     subscribeEvents(groupId, callback) {
         const q = query(
             collection(db, "events"),
@@ -116,7 +103,6 @@ export const DB = {
         });
     },
 
-    // 予定の追加
     async addEvent(eventData) {
         await addDoc(collection(db, "events"), {
             ...eventData,
