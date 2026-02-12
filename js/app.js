@@ -1,9 +1,8 @@
-// js/app.js
 import { DB } from "./db.js";
 import { Utils } from "./utils.js";
 import { Calendar } from "./calendar.js";
 import { db, messaging, getToken } from "./firebase-config.js";
-import { onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js"; // 追加
+import { onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
 
 // 設定保持用
 let CONFIG_USERS = [];
@@ -34,39 +33,65 @@ const App = {
             this.setupImageInputs();
             this.setupHistoryHandler(); 
             
+            // 通知設定の初期化
+            this.setupNotifications();
+
         } catch (e) {
             console.error("Init Error", e);
-            alert("初期化エラー");
+            alert("初期化エラーが発生しました");
         }
     },
 
     setupLogin() {
-        // 既存のログイン済みチェック
+        // ログイン済みチェック
         const storedUser = localStorage.getItem('app_user_v2');
         if (storedUser) {
-            CURRENT_USER = JSON.parse(storedUser);
-            this.showMainScreen();
+            try {
+                CURRENT_USER = JSON.parse(storedUser);
+                this.showMainScreen();
+                return;
+            } catch (e) {
+                console.error("User parse error", e);
+                localStorage.removeItem('app_user_v2');
+            }
         }
 
         const loginBtn = document.getElementById('login-btn');
+        const nameInput = document.getElementById('login-name');
+        const errorMsg = document.getElementById('login-error');
+
+        if (!loginBtn || !nameInput) return;
+
         loginBtn.addEventListener('click', () => {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+            const inputName = nameInput.value.trim();
             
-            const user = CONFIG_USERS.find(u => u.email === email && u.password === password);
+            // 名前でユーザーを探す
+            const user = CONFIG_USERS.find(u => u.name === inputName);
+            
             if (user) {
                 CURRENT_USER = user;
                 localStorage.setItem('app_user_v2', JSON.stringify(user));
                 this.showMainScreen();
+                if(errorMsg) errorMsg.classList.add('d-none');
             } else {
-                alert('メールアドレスまたはパスワードが間違っています');
+                if(errorMsg) errorMsg.classList.remove('d-none');
             }
         });
     },
 
     showMainScreen() {
-        document.getElementById('login-screen').classList.add('d-none');
-        document.getElementById('main-screen').classList.remove('d-none');
+        const loginScreen = document.getElementById('login-screen');
+        const mainScreen = document.getElementById('main-screen');
+
+        if (loginScreen) loginScreen.classList.add('d-none');
+        
+        if (mainScreen) {
+            mainScreen.classList.remove('d-none');
+        } else {
+            console.error('Fatal Error: id="main-screen" not found in HTML.');
+            alert('画面読み込みエラー: main-screenが見つかりません');
+            return;
+        }
         
         // ユーザー名表示
         const userNameEls = document.querySelectorAll('#user-name-display');
@@ -76,84 +101,58 @@ const App = {
         if (CURRENT_USER.role === 'leader') {
             document.querySelectorAll('.role-leader').forEach(el => el.classList.remove('d-none'));
             document.querySelectorAll('.role-member').forEach(el => el.classList.add('d-none'));
-            
-            // リーダーはメンバー全員のチャットリストを見る
-            // メンバーリストの生成などは省略（既存コードにある想定）
             this.renderChatList(); 
         } else {
             document.querySelectorAll('.role-leader').forEach(el => el.classList.add('d-none'));
             document.querySelectorAll('.role-member').forEach(el => el.classList.remove('d-none'));
-            
             // メンバーはリーダーとのチャット固定
             this.openChat(CURRENT_USER.group, CURRENT_USER.id, 'リーダー');
         }
 
-        // リスナー開始
         this.startInboxListener();
-        
-        // カレンダー初期化
         Calendar.init(CURRENT_USER);
-
-        // ★追加：通知設定の開始
-        this.setupNotifications();
     },
 
-    // ★追加：通知設定とトークン保存
     async setupNotifications() {
         try {
-            // 1. 通知の許可を要求
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
                 console.log('Notification permission granted.');
                 
-                // 2. FCMトークンの取得
-                // ※重要: 下記の vapidKey には、Firebaseコンソールで取得したキー文字列を入れてください
+                // ★重要: ここにあなたのVAPIDキーが入っているか確認してください
                 const token = await getToken(messaging, { 
-                    vapidKey: "BMdNlbLwC3bEwAIp-ZG9Uwp-5n4HdyXvlsqJbt6Q5YRdCA7gUexx0G9MpjB3AdLk6iNJodLTobC3-bGG6YskB0s" 
+                    vapidKey: "BMwS...（ここにあなたのキーを貼り付け）...XYZ" 
                 });
 
                 if (token) {
                     console.log('FCM Token:', token);
-                    // 3. データベースにユーザーと紐づけて保存
                     await DB.saveUserToken(CURRENT_USER, token);
-                } else {
-                    console.log('No registration token available.');
                 }
-
-                // 4. アプリを開いている時の通知制御
-                // 「チャットを開いている時は通知不要」を実現するため、
-                // フォアグラウンド受信時は何もしない（OSのシステム通知も出ない）ようにします。
+                
+                // アプリ起動中の通知受信
                 onMessage(messaging, (payload) => {
                     console.log('Message received in foreground: ', payload);
-                    // ここで alert や toast を出さない限り、ユーザーには通知されません。
-                    // 必要であれば、「チャット画面以外を見ているときだけ」スナックバーを出すなどの分岐も可能です。
+                    // 必要であればここでToastなどを表示
                 });
-
-            } else {
-                console.log('Unable to get permission to notify.');
             }
         } catch (error) {
             console.error('Notification setup failed:', error);
         }
     },
 
-    // ... (setupTabs, setupImageInputs, setupHistoryHandler など既存のコードはそのまま) ...
     setupTabs() {
         document.querySelectorAll('.bottom-nav-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
-                // アクティブ切り替え
                 document.querySelectorAll('.bottom-nav-item').forEach(nav => nav.classList.remove('active'));
                 item.classList.add('active');
                 
-                // コンテンツ切り替え
                 const targetId = item.getAttribute('href');
                 document.querySelectorAll('.tab-content').forEach(content => content.classList.add('d-none'));
                 document.querySelector(targetId).classList.remove('d-none');
                 
-                // ヘッダータイトル変更
                 const labelChat = CURRENT_USER.role === 'leader' ? 'チャット一覧' : '連絡';
-                const labelInbox = CURRENT_USER.role === 'leader' ? '受信箱' : '報告・申請'; // 文言は調整
+                const labelInbox = CURRENT_USER.role === 'leader' ? '受信箱' : '報告・申請'; 
                 const labelForm = CURRENT_USER.role === 'leader' ? '指示作成' : '申請作成';
 
                 const titleMap = { '#tab-chat': labelChat, '#tab-inbox': labelInbox, '#tab-form': labelForm, '#tab-calendar': 'カレンダー' };
@@ -161,7 +160,6 @@ const App = {
 
                 const chatInput = document.getElementById('chat-input-area');
                 
-                // チャットタブの挙動
                 if (targetId === '#tab-chat') {
                     const chatDetail = document.getElementById('chat-detail-container');
                     const chatList = document.getElementById('chat-container');
@@ -181,18 +179,18 @@ const App = {
             });
         });
 
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            if(confirm('ログアウトしますか？')) {
-                localStorage.removeItem('app_user_v2');
-                location.reload();
-            }
-        });
+        const logoutBtn = document.getElementById('logout-btn');
+        if(logoutBtn){
+            logoutBtn.addEventListener('click', () => {
+                if(confirm('ログアウトしますか？')) {
+                    localStorage.removeItem('app_user_v2');
+                    location.reload();
+                }
+            });
+        }
     },
 
-    // ... (renderChatList, openChat などは既存のまま) ...
     renderChatList() {
-        // リーダー用：メンバー一覧を表示してクリックでチャットを開く
-        // config/users.json から自分のグループのメンバーを抽出
         const members = CONFIG_USERS.filter(u => u.group === CURRENT_USER.group && u.role === 'member');
         const container = document.getElementById('chat-list');
         if(!container) return;
@@ -214,20 +212,20 @@ const App = {
     },
 
     openChat(groupId, memberId, targetName) {
-        // ... (既存のチャットオープン処理) ...
-        // チャットIDを特定
         const chatRoomId = `${groupId}_${memberId}`;
-        currentChatTargetId = chatRoomId; // 通知制御判定用に保持
+        currentChatTargetId = chatRoomId;
 
-        document.getElementById('chat-container').classList.add('d-none');
-        document.getElementById('chat-detail-container').classList.remove('d-none');
+        const chatContainer = document.getElementById('chat-container');
+        const detailContainer = document.getElementById('chat-detail-container');
+        
+        if(chatContainer) chatContainer.classList.add('d-none');
+        if(detailContainer) detailContainer.classList.remove('d-none');
+        
         document.getElementById('chat-target-name').textContent = targetName;
-        document.getElementById('chat-input-area').classList.remove('d-none'); // 入力欄表示
+        document.getElementById('chat-input-area').classList.remove('d-none');
 
-        // 前のリスナー解除
         if(unsubscribeChat) unsubscribeChat();
 
-        // リスナー登録
         unsubscribeChat = DB.subscribeChat(groupId, memberId, (messages) => {
             const msgContainer = document.getElementById('chat-messages');
             msgContainer.innerHTML = '';
@@ -246,51 +244,47 @@ const App = {
                 div.innerHTML = contentHtml;
                 msgContainer.appendChild(div);
             });
-            // 最下部へスクロール
             window.scrollTo(0, document.body.scrollHeight);
         });
         
-        // 戻るボタン
-        document.getElementById('back-to-chat-list').onclick = () => {
-             document.getElementById('chat-detail-container').classList.add('d-none');
-             document.getElementById('chat-input-area').classList.add('d-none');
-             
-             if(CURRENT_USER.role === 'leader') {
-                 document.getElementById('chat-container').classList.remove('d-none');
-             } else {
-                 // メンバーは戻る場所がない（あるいはタブ切り替え扱い）
-             }
-             if(unsubscribeChat) unsubscribeChat();
-             currentChatTargetId = null;
-        };
+        const backBtn = document.getElementById('back-to-chat-list');
+        if(backBtn) {
+            backBtn.onclick = () => {
+                 document.getElementById('chat-detail-container').classList.add('d-none');
+                 document.getElementById('chat-input-area').classList.add('d-none');
+                 
+                 if(CURRENT_USER.role === 'leader') {
+                     if(chatContainer) chatContainer.classList.remove('d-none');
+                 }
+                 if(unsubscribeChat) unsubscribeChat();
+                 currentChatTargetId = null;
+            };
+        }
         
-        // 送信ボタン
         const sendBtn = document.getElementById('chat-send-btn');
-        // イベントリスナーの重複登録を防ぐため、cloneNode等でリセットするか、onclickで上書きする
-        sendBtn.onclick = async () => {
-            const input = document.getElementById('chat-message-input');
-            const text = input.value;
-            if(!text && !chatImageBase64) return;
-            
-            await DB.sendMessage(groupId, memberId, CURRENT_USER, text, chatImageBase64);
-            input.value = '';
-            chatImageBase64 = null;
-            document.getElementById('chat-image-preview').innerHTML = ''; // プレビュー消去
-        };
+        if(sendBtn) {
+            sendBtn.onclick = async () => {
+                const input = document.getElementById('chat-message-input');
+                const text = input.value;
+                if(!text && !chatImageBase64) return;
+                
+                await DB.sendMessage(groupId, memberId, CURRENT_USER, text, chatImageBase64);
+                input.value = '';
+                chatImageBase64 = null;
+                document.getElementById('chat-image-preview').innerHTML = '';
+            };
+        }
     },
     
     startInboxListener() {
         if(unsubscribeInbox) unsubscribeInbox();
         
-        // 申請/報告の監視
         unsubscribeInbox = DB.subscribeApplications(CURRENT_USER.group, (apps) => {
             const listContainer = document.getElementById('inbox-list');
             if(!listContainer) return;
             listContainer.innerHTML = '';
 
             apps.forEach(app => {
-                // 自分がリーダーなら全て見える。メンバーなら自分が出したものか、自分宛て（指示）のもの
-                // ※ここでは簡易的に全て表示し、フィルタリングは要件に合わせてください
                 const div = document.createElement('div');
                 div.className = 'card mb-2 p-2';
                 div.innerHTML = `
@@ -300,42 +294,82 @@ const App = {
                     </div>
                     <div class="small text-muted">${app.userName} - ${Utils.formatDate(app.createdAt ? app.createdAt.toDate() : new Date())}</div>
                 `;
-                // ... クリック時の詳細表示ロジック ...
                 listContainer.appendChild(div);
             });
         });
     },
 
     setupImageInputs() {
-        // 画像添付周りの処理（既存）
+        const chatFile = document.getElementById('chat-image-file');
+        if(chatFile){
+            chatFile.addEventListener('change', async (e) => {
+                if(e.target.files.length > 0) {
+                    const base64 = await Utils.fileToBase64(e.target.files[0]);
+                    chatImageBase64 = await Utils.compressImage(base64);
+                    document.getElementById('chat-image-preview').innerHTML = '<span class="badge bg-secondary">画像選択中</span>';
+                }
+            });
+        }
+
+        const formFile = document.getElementById('form-image-file');
+        if(formFile){
+            formFile.addEventListener('change', async (e) => {
+                if(e.target.files.length > 0) {
+                    const base64 = await Utils.fileToBase64(e.target.files[0]);
+                    formImageBase64 = await Utils.compressImage(base64);
+                    document.getElementById('form-image-preview').innerHTML = '<img src="'+formImageBase64+'" style="width:100px;">';
+                }
+            });
+        }
+        
+        const submitBtn = document.getElementById('form-submit-btn');
+        if(submitBtn) {
+            submitBtn.addEventListener('click', () => this.handleFormSubmit());
+        }
     },
 
     setupHistoryHandler() {
-        // 戻るボタン処理（既存）
+        window.addEventListener('popstate', () => {
+             const chatDetail = document.getElementById('chat-detail-container');
+             if (chatDetail && !chatDetail.classList.contains('d-none')) {
+                 const backBtn = document.getElementById('back-to-chat-list');
+                 if(backBtn) backBtn.click();
+             }
+        });
     },
 
-    // フォーム送信処理（抜粋修正）
     async handleFormSubmit() {
-        // ... バリデーション ...
         const title = document.getElementById('form-title').value;
         const content = document.getElementById('form-content').value;
         
+        if(!title) {
+            alert('件名は必須です');
+            return;
+        }
+
         const data = {
             title: title,
             content: content,
             userId: CURRENT_USER.id,
             userName: CURRENT_USER.name,
-            groupId: CURRENT_USER.group, // ★追加：グループIDを必ず含める
+            groupId: CURRENT_USER.group,
             type: CURRENT_USER.role === 'leader' ? 'instruction' : 'request',
             image: formImageBase64
         };
         
-        await DB.submitForm(data);
-        alert('送信しました');
-        // ... リセット処理 ...
+        try {
+            await DB.submitForm(data);
+            alert('送信しました');
+            document.getElementById('form-title').value = '';
+            document.getElementById('form-content').value = '';
+            formImageBase64 = null;
+            document.getElementById('form-image-preview').innerHTML = '';
+        } catch(e) {
+            console.error(e);
+            alert('送信に失敗しました');
+        }
     }
 };
 
 window.app = App;
 window.onload = () => App.init();
-
