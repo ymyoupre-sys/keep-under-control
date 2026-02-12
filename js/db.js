@@ -1,9 +1,25 @@
+// js/db.js
+
 import { db } from "./firebase-config.js";
 import { 
     collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, setDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 export const DB = {
+    // ■ 通知用トークン保存（追加）
+    async saveUserToken(user, token) {
+        if (!user || !user.id || !token) return;
+        // usersコレクションに、ID・権限・グループ・トークンを保存
+        // これにより、Cloud Functionsが「誰に送ればいいか」を検索できるようになります
+        await setDoc(doc(db, "users", user.id), {
+            name: user.name,
+            role: user.role,
+            groupId: user.group,
+            fcmToken: token,
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+    },
+
     // ■ チャット機能
     subscribeChat(groupId, memberId, callback) {
         const chatRoomId = `${groupId}_${memberId}`;
@@ -32,37 +48,25 @@ export const DB = {
         await updateDoc(doc(db, "chats", chatRoomId), {
             lastMessage: text || (imageBase64 ? '画像が送信されました' : ''),
             updatedAt: serverTimestamp()
-        }).catch(async () => {
+        }).catch(async (e) => {
+            // ドキュメントが存在しない場合の初期作成
             await setDoc(doc(db, "chats", chatRoomId), {
-                groupId, memberId, 
-                lastMessage: text || (imageBase64 ? '画像が送信されました' : ''), 
+                lastMessage: text || (imageBase64 ? '画像が送信されました' : ''),
                 updatedAt: serverTimestamp()
             });
         });
     },
 
-    // ■ 受信箱
-    subscribeInbox(user, callback) {
-        let q;
-        const colRef = collection(db, "applications");
-
-        if (user.role === 'leader') {
-            q = query(colRef, where("groupId", "==", user.group));
-        } else {
-            q = query(colRef, where("targetId", "==", user.id));
-        }
-
+    // ■ 申請機能
+    subscribeApplications(groupId, callback) {
+        const q = query(
+            collection(db, "applications"),
+            where("groupId", "==", groupId),
+            orderBy("createdAt", "desc")
+        );
         return onSnapshot(q, (snapshot) => {
-            let items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            // ステータス更新日時を無視し、作成日順(新しい順)で固定
-            items.sort((a, b) => {
-                const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
-                const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
-                return timeB - timeA;
-            });
-
-            callback(items);
+            const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            callback(apps);
         }, (error) => {
             console.error("Inbox Error:", error);
             callback([]); 
@@ -70,6 +74,8 @@ export const DB = {
     },
 
     async submitForm(data) {
+        // groupIdが含まれているか確認し、なければdataから取得または追加
+        // 注: 呼び出し元(App.js)で user.group を data に含めるように修正します
         await addDoc(collection(db, "applications"), {
             ...data,
             status: 'pending',
@@ -111,8 +117,7 @@ export const DB = {
         });
     },
 
-    // ★追加：イベント削除
-    async deleteEvent(docId) {
-        await deleteDoc(doc(db, "events", docId));
+    async deleteEvent(id) {
+        await deleteDoc(doc(db, "events", id));
     }
 };
