@@ -1,7 +1,6 @@
 [
-  { "id": "user1", "name": "本多", "group": "A", "role": "leader" },
-  { "id": "user2", "name": "山根", "group": "A", "role": "member" },
-  { "id": "user3", "name": "xx", "group": "B", "role": "leader" },
-  { "id": "user4", "name": "xxxx", "group": "B", "role": "member" }
+  { "id": "u001", "name": "本多", "group": "A", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u002", "name": "山根", "group": "A", "role": "member", "icon": "🐶" },
+  { "id": "u003", "name": "リーダー", "group": "B", "role": "leader", "icon": "🧑‍💼" },
+  { "id": "u004", "name": "メンバー", "group": "B", "role": "member", "icon": "😺" }
 ]
-
