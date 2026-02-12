@@ -99,13 +99,13 @@ const App = {
 
         typeSelect.innerHTML = '';
         if (user.role === 'leader') {
-            navForm.textContent = "指示";
-            titleLabel.textContent = "メンバーへ指示";
+            navForm.textContent = "命令";
+            titleLabel.textContent = "奴隷へ命令";
             CONFIG_SETTINGS.instructionTypes.forEach(t => typeSelect.add(new Option(t, t)));
             this.renderLeaderChatList();
         } else {
-            navForm.textContent = "申請";
-            titleLabel.textContent = "リーダーへ申請";
+            navForm.textContent = "許可申請";
+            titleLabel.textContent = "主人へ許可申請";
             CONFIG_SETTINGS.applicationTypes.forEach(t => typeSelect.add(new Option(t, t)));
         }
         
@@ -142,7 +142,7 @@ const App = {
                 const stInfo = CONFIG_SETTINGS.statusLabels[item.status] || { label: item.status, color: 'bg-secondary' };
                 
                 if (CURRENT_USER.role === 'member' && item.category === 'instruction' && item.status === 'pending') {
-                     badgeHtml = `<span class="badge bg-info text-dark rounded-pill">指示</span>`;
+                     badgeHtml = `<span class="badge bg-info text-dark rounded-pill">命令</span>`;
                 } else {
                      badgeHtml = `<span class="badge ${stInfo.color} rounded-pill">${stInfo.label}</span>`;
                 }
@@ -206,11 +206,11 @@ const App = {
                     </div>
                 `;
             }
-            // ★修正：指示の取り消し（削除）
+            // ★修正：命令の取り消し（削除）
             if (item.category === 'instruction') {
                 return `
                     <div class="d-flex gap-2 mt-2">
-                        <button onclick="window.app.deleteItem('${item.id}')" class="btn btn-sm btn-outline-secondary w-100">指示を取り消す（削除）</button>
+                        <button onclick="window.app.deleteItem('${item.id}')" class="btn btn-sm btn-outline-secondary w-100">命令を取り消す（削除）</button>
                     </div>
                 `;
             }
@@ -244,7 +244,7 @@ const App = {
 
     // ★追加：物理削除
     async deleteItem(id) {
-        if(!confirm('この指示を完全に削除しますか？\n（相手の画面からも消えます）')) return;
+        if(!confirm('この命令を完全に削除しますか？\n（相手の画面からも消えます）')) return;
         await DB.deleteApplication(id);
     },
 
@@ -317,7 +317,7 @@ const App = {
     renderLeaderChatList() {
         const container = document.getElementById('chat-container');
         container.classList.remove('d-none'); // リストを表示
-        container.innerHTML = `<h6 class="px-2 py-3 text-muted border-bottom">メンバーを選択してメッセージ</h6>`;
+        container.innerHTML = `<h6 class="px-2 py-3 text-muted border-bottom">奴隷を選択してメッセージ</h6>`;
         
         const myMembers = CONFIG_USERS.filter(u => u.group === CURRENT_USER.group && u.role === 'member');
         
@@ -383,7 +383,7 @@ const App = {
         const container = document.getElementById('chat-detail-container');
         if (CURRENT_USER.role === 'member') {
             container.classList.remove('d-none');
-            // メンバーは最初から詳細表示なのでリストは隠す必要なし（タブ切り替えで制御）
+            // 奴隷は最初から詳細表示なのでリストは隠す必要なし（タブ切り替えで制御）
         }
 
         container.innerHTML = '<div class="p-3 text-center text-muted small">ここでの会話は他言無用です...🤫</div>';
@@ -455,7 +455,7 @@ const App = {
         } catch (e) { console.error(e); alert('送信失敗'); }
     },
 
-    // --- 申請/指示フォーム ---
+    // --- 許可申請/命令フォーム ---
     async submitForm() {
         const type = document.getElementById('form-type').value;
         const body = document.getElementById('form-body').value;
@@ -468,10 +468,10 @@ const App = {
         let category = '';
 
         if (CURRENT_USER.role === 'leader') {
-            const targetNameInput = prompt("宛先のメンバー名を入力してください（完全一致）");
+            const targetNameInput = prompt("宛先の奴隷名を入力してください（完全一致）");
             if (!targetNameInput) return;
             const targetUser = CONFIG_USERS.find(u => u.name === targetNameInput && u.group === CURRENT_USER.group);
-            if (!targetUser) { alert('該当するメンバーがいません'); return; }
+            if (!targetUser) { alert('該当する奴隷がいません'); return; }
             targetId = targetUser.id;
             targetName = targetUser.name;
             category = 'instruction';
@@ -527,16 +527,16 @@ const App = {
                 if (targetId === '#tab-chat') {
                     if (CURRENT_USER.role === 'leader') {
                         if (!currentChatTargetId) {
-                            // メンバー未選択
+                            // 奴隷未選択
                             this.renderLeaderChatList();
                         } else {
-                            // メンバー選択済みなら詳細表示（ただしタブ切り替えでDOMが残っている場合のみ）
+                            // 奴隷選択済みなら詳細表示（ただしタブ切り替えでDOMが残っている場合のみ）
                             document.getElementById('chat-container').classList.add('d-none');
                             document.getElementById('chat-detail-container').classList.remove('d-none');
                             chatInput.classList.remove('d-none');
                         }
                     } else {
-                        // メンバーは即詳細
+                        // 奴隷は即詳細
                         chatInput.classList.remove('d-none');
                         if(mainScroll) mainScroll.scrollTop = mainScroll.scrollHeight;
                     }
@@ -557,3 +557,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
