@@ -17,9 +17,7 @@ let formImageBase64 = null;
 const App = {
     async init() {
         console.log("App Initializing...");
-        if ("Notification" in window && Notification.permission === "default") {
-            Notification.requestPermission();
-        }
+        // ※ここでは通知許可を求めず、ログインアクション時（ユーザー操作時）に求めるように変更
 
         try {
             const [usersRes, settingsRes] = await Promise.all([
@@ -32,7 +30,7 @@ const App = {
             this.setupLogin();
             this.setupTabs();
             this.setupImageInputs();
-            this.setupHistoryHandler(); // 戻るボタン制御
+            this.setupHistoryHandler(); 
             
         } catch (e) {
             console.error("Init Error", e);
@@ -44,9 +42,8 @@ const App = {
     setupHistoryHandler() {
         window.addEventListener('popstate', (event) => {
             // チャット詳細が開いていて、戻る操作がされた場合
-            const chatInput = document.getElementById('chat-input-area');
-            if (!chatInput.classList.contains('d-none')) {
-                // チャット一覧に戻すUI処理
+            const chatDetail = document.getElementById('chat-detail-container');
+            if (!chatDetail.classList.contains('d-none')) {
                 this.closeChatDetail();
             }
         });
@@ -73,6 +70,12 @@ const App = {
 
     loginSuccess(user) {
         CURRENT_USER = user;
+        
+        // ★修正: ログインアクション時（ユーザー操作時）に通知許可を求める
+        if ("Notification" in window && Notification.permission === "default") {
+            Notification.requestPermission();
+        }
+
         document.getElementById('login-screen').classList.add('d-none');
         document.getElementById('app-screen').classList.remove('d-none');
         document.getElementById('user-display').textContent = `${user.group}｜${user.name} ${user.icon || ''}`;
@@ -80,15 +83,12 @@ const App = {
         this.updateUIByRole(user);
         this.startInboxListener();
         
-        if (user.role === 'member') {
-            const leader = CONFIG_USERS.find(u => u.group === user.group && u.role === 'leader');
-            if (leader) currentChatTargetId = user.id; 
-            this.startChatListener();
-        }
+        // ★修正: 奴隷も最初は「未選択」状態にするため、ここでのリスナー開始は削除
+        // if (user.role === 'member') { ... } 削除
 
         Calendar.init(user);
 
-        // ★修正: 起動時は必ず「受信箱」を開く
+        // 起動時は必ず「受信箱」を開く
         document.querySelector('[data-target="#tab-inbox"]').click();
     },
 
@@ -102,12 +102,14 @@ const App = {
             navForm.textContent = "命令";
             titleLabel.textContent = "奴隷へ命令";
             CONFIG_SETTINGS.instructionTypes.forEach(t => typeSelect.add(new Option(t, t)));
-            this.renderLeaderChatList();
         } else {
             navForm.textContent = "許可申請";
             titleLabel.textContent = "主人へ許可申請";
             CONFIG_SETTINGS.applicationTypes.forEach(t => typeSelect.add(new Option(t, t)));
         }
+        
+        // ★修正: 主人/奴隷問わず、チャットリスト（相手一覧）を描画する
+        this.renderChatList();
         
         document.getElementById('submit-form-btn').onclick = () => this.submitForm();
         document.getElementById('send-chat-btn').onclick = () => this.sendChatMessage();
@@ -198,7 +200,6 @@ const App = {
                     </div>
                 `;
             }
-            // 承認/却下の取り消し
             if (item.status !== 'pending' && item.category === 'application') {
                  return `
                     <div class="d-flex gap-2 mt-2">
@@ -206,7 +207,6 @@ const App = {
                     </div>
                 `;
             }
-            // ★修正：命令の取り消し（削除）
             if (item.category === 'instruction') {
                 return `
                     <div class="d-flex gap-2 mt-2">
@@ -242,7 +242,6 @@ const App = {
         await DB.updateStatus(id, status, comment, CURRENT_USER.id);
     },
 
-    // ★追加：物理削除
     async deleteItem(id) {
         if(!confirm('この命令を完全に削除しますか？\n（相手の画面からも消えます）')) return;
         await DB.deleteApplication(id);
@@ -314,23 +313,33 @@ const App = {
     },
 
     // --- メッセージ（チャット）機能 ---
-    renderLeaderChatList() {
+    
+    // ★修正: 主人/奴隷共用のチャット相手リスト描画
+    renderChatList() {
         const container = document.getElementById('chat-container');
-        container.classList.remove('d-none'); // リストを表示
-        container.innerHTML = `<h6 class="px-2 py-3 text-muted border-bottom">奴隷を選択してメッセージ</h6>`;
+        container.classList.remove('d-none'); 
         
-        const myMembers = CONFIG_USERS.filter(u => u.group === CURRENT_USER.group && u.role === 'member');
+        let targets = [];
+        if (CURRENT_USER.role === 'leader') {
+            // 主人は奴隷全員を表示
+            targets = CONFIG_USERS.filter(u => u.group === CURRENT_USER.group && u.role === 'member');
+            container.innerHTML = `<h6 class="px-2 py-3 text-muted border-bottom">奴隷を選択してメッセージ</h6>`;
+        } else {
+            // 奴隷は主人を表示
+            targets = CONFIG_USERS.filter(u => u.group === CURRENT_USER.group && u.role === 'leader');
+            container.innerHTML = `<h6 class="px-2 py-3 text-muted border-bottom">主人を選択して報告</h6>`;
+        }
         
-        myMembers.forEach(m => {
+        targets.forEach(user => {
             const row = document.createElement('div');
             row.className = "d-flex align-items-center p-3 border-bottom bg-white clickable";
             row.onclick = () => {
-                currentChatTargetId = m.id;
-                this.openChatDetail(m.name);
+                currentChatTargetId = user.id; // 相手のIDをセット
+                this.openChatDetail(user.name);
             };
             row.innerHTML = `
-                <div class="user-icon">${m.icon || '👤'}</div>
-                <div class="fw-bold">${m.name}</div>
+                <div class="user-icon">${user.icon || '👤'}</div>
+                <div class="fw-bold">${user.name}</div>
                 <div class="ms-auto text-muted small"><i class="bi bi-chevron-right"></i></div>
             `;
             container.appendChild(row);
@@ -342,13 +351,11 @@ const App = {
 
     // チャット詳細を開く
     openChatDetail(targetName) {
-        // ★履歴に追加して「戻る」ボタンで戻れるようにする
         history.pushState({chat: true}, '', '#chat-detail');
 
-        document.getElementById('chat-container').classList.add('d-none'); // リストを隠す
-        document.getElementById('chat-detail-container').classList.remove('d-none'); // 詳細を表示
+        document.getElementById('chat-container').classList.add('d-none'); 
+        document.getElementById('chat-detail-container').classList.remove('d-none'); 
         
-        // ヘッダーに戻るボタン追加
         const headerTitle = document.getElementById('header-title');
         headerTitle.innerHTML = `<i class="bi bi-chevron-left me-1" onclick="window.history.back()"></i> ${targetName}`;
         headerTitle.classList.add('clickable');
@@ -358,13 +365,13 @@ const App = {
         this.startChatListener();
     },
 
-    // チャット詳細を閉じて一覧に戻る（PopStateイベントまたは戻るボタンから呼ばれる）
+    // チャット詳細を閉じて一覧に戻る
     closeChatDetail() {
         if(unsubscribeChat) unsubscribeChat();
         
-        document.getElementById('chat-detail-container').innerHTML = ''; // クリア
+        document.getElementById('chat-detail-container').innerHTML = ''; 
         document.getElementById('chat-detail-container').classList.add('d-none');
-        document.getElementById('chat-container').classList.remove('d-none'); // リスト再表示
+        document.getElementById('chat-container').classList.remove('d-none'); 
         
         document.getElementById('chat-input-area').classList.add('d-none');
 
@@ -377,15 +384,19 @@ const App = {
     startChatListener() {
         if (unsubscribeChat) unsubscribeChat();
         
-        const targetMemberId = CURRENT_USER.role === 'member' ? CURRENT_USER.id : currentChatTargetId;
+        // ★修正: 奴隷の場合も currentChatTargetId（主人ID）を使う
+        let targetMemberId = currentChatTargetId;
+        
+        // ※補足: DB構造上、チャットルームIDは「GROUP_MEMBERID」というルールになっている
+        // 主人視点: 相手(Member)のIDを使う
+        // 奴隷視点: 自分(Member)のIDを使う
+        if (CURRENT_USER.role === 'member') {
+            targetMemberId = CURRENT_USER.id;
+        }
+        
         if (!targetMemberId) return;
 
         const container = document.getElementById('chat-detail-container');
-        if (CURRENT_USER.role === 'member') {
-            container.classList.remove('d-none');
-            // 奴隷は最初から詳細表示なのでリストは隠す必要なし（タブ切り替えで制御）
-        }
-
         container.innerHTML = '<div class="p-3 text-center text-muted small">ここでの会話は他言無用です...🤫</div>';
 
         let isFirstLoad = true;
@@ -445,7 +456,12 @@ const App = {
         const text = input.value.trim();
         if (!text && !chatImageBase64) return;
         
-        const targetMemberId = CURRENT_USER.role === 'member' ? CURRENT_USER.id : currentChatTargetId;
+        // ★修正: 奴隷の場合もチャットルームID生成のために自分のIDを使う
+        let targetMemberId = currentChatTargetId;
+        if (CURRENT_USER.role === 'member') {
+            targetMemberId = CURRENT_USER.id;
+        }
+
         try {
             await DB.sendMessage(CURRENT_USER.group, targetMemberId, CURRENT_USER, text, chatImageBase64);
             input.value = '';
@@ -498,7 +514,6 @@ const App = {
             document.getElementById('form-image-preview').innerHTML = '';
             document.getElementById('form-image-preview').classList.add('d-none');
             
-            // ★修正：送信後は勝手に受信箱に戻さない（続けて作業できるように）
         } catch(e) { console.error(e); alert('エラー発生'); }
     },
     
@@ -525,20 +540,16 @@ const App = {
                 // チャットタブ切り替え時の制御
                 const chatInput = document.getElementById('chat-input-area');
                 if (targetId === '#tab-chat') {
-                    if (CURRENT_USER.role === 'leader') {
-                        if (!currentChatTargetId) {
-                            // 奴隷未選択
-                            this.renderLeaderChatList();
-                        } else {
-                            // 奴隷選択済みなら詳細表示（ただしタブ切り替えでDOMが残っている場合のみ）
-                            document.getElementById('chat-container').classList.add('d-none');
-                            document.getElementById('chat-detail-container').classList.remove('d-none');
-                            chatInput.classList.remove('d-none');
-                        }
+                    // ★修正: 奴隷も最初は一覧画面（詳細コンテナがd-noneなら一覧を表示）
+                    const chatDetail = document.getElementById('chat-detail-container');
+                    if (chatDetail.classList.contains('d-none')) {
+                         // 一覧表示中
+                         document.getElementById('chat-container').classList.remove('d-none');
+                         this.renderChatList(); // 再描画
+                         chatInput.classList.add('d-none');
                     } else {
-                        // 奴隷は即詳細
-                        chatInput.classList.remove('d-none');
-                        if(mainScroll) mainScroll.scrollTop = mainScroll.scrollHeight;
+                         // 詳細表示中（戻るボタンで戻らなかった場合など）
+                         chatInput.classList.remove('d-none');
                     }
                 } else {
                     chatInput.classList.add('d-none');
@@ -557,4 +568,3 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
-
