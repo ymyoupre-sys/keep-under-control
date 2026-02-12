@@ -15,7 +15,7 @@
 </head>
 <body>
 
-    <div id="login-screen" class="container d-flex flex-column justify-content-center align-items-center h-100 bg-light" style="position:fixed; top:0; left:0; width:100%; z-index:9999;">
+    <div id="login-screen" class="container d-flex flex-column justify-content-center align-items-center vh-100 bg-light" style="position:fixed; top:0; left:0; width:100%; z-index:9999;">
         <div class="card shadow border-0 p-4" style="width: 100%; max-width: 350px;">
             <div class="text-center mb-4">
                 <h4 class="fw-bold text-success">利用開始</h4>
@@ -37,7 +37,7 @@
             </div>
         </nav>
 
-        <main id="main-scroll" class="container-fluid py-3">
+        <main id="main-scroll" class="container-fluid">
             
             <div id="tab-inbox" class="tab-pane fade show active">
                 <div class="list-group list-group-flush" id="inbox-list">
@@ -45,20 +45,9 @@
                 </div>
             </div>
 
-            <div id="tab-chat" class="tab-pane fade" style="padding-bottom: 80px;">
+            <div id="tab-chat" class="tab-pane fade">
                 <div id="chat-container" class="d-flex flex-column gap-3">
                     </div>
-                
-                <div id="chat-input-area" class="bg-light border-top" style="position: fixed; bottom: 60px; left: 0; width: 100%; z-index: 1020;">
-                    <div id="chat-image-preview" class="px-2 pt-2 d-none"></div>
-                    <div class="p-2">
-                        <div class="input-group">
-                            <button class="btn btn-secondary"><i class="bi bi-plus-lg"></i></button>
-                            <input type="text" id="chat-input-text" class="form-control" placeholder="メッセージ...">
-                            <button id="send-chat-btn" class="btn btn-success"><i class="bi bi-send-fill"></i></button>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <div id="tab-form" class="tab-pane fade">
@@ -96,7 +85,18 @@
 
         </main>
 
-        <nav class="navbar app-footer navbar-light border-top pb-safe">
+        <div id="chat-input-area" class="border-top d-none">
+            <div id="chat-image-preview" class="px-2 pt-2 d-none"></div>
+            <div class="p-2">
+                <div class="input-group">
+                    <button class="btn btn-secondary"><i class="bi bi-plus-lg"></i></button>
+                    <input type="text" id="chat-input-text" class="form-control" placeholder="メッセージ...">
+                    <button id="send-chat-btn" class="btn btn-success"><i class="bi bi-send-fill"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <nav class="navbar app-footer navbar-light border-top">
             <div class="container-fluid p-0">
                 <div class="row w-100 m-0 text-center gx-0">
                     <div class="col-3">
