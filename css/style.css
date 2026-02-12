@@ -1,25 +1,54 @@
 :root {
-    --primary-color: #06c755; /* LINE Green */
-    --bg-color: #f2f4f7;      /* 背景色（薄いグレー） */
-    --chat-me-bg: #98e184;    /* 自分のチャット吹き出し色 */
-    --chat-other-bg: #ffffff; /* 相手のチャット吹き出し色 */
+    --primary-color: #06c755;
+    --bg-color: #f2f4f7;
+    --chat-me-bg: #98e184;
+    --chat-other-bg: #ffffff;
 }
 
-body {
+/* ▼▼▼ レイアウトの根幹修正 ▼▼▼ */
+html, body {
+    height: 100%;       /* 画面の高さを100%に固定 */
+    overflow: hidden;   /* 画面全体（ボディ）のスクロールを禁止 */
     background-color: var(--bg-color);
     font-family: 'Noto Sans JP', sans-serif;
     color: #333;
-    /* スマホでの長押し選択等を無効化してアプリっぽくする */
     user-select: none;
     -webkit-tap-highlight-color: transparent;
 }
 
-/* フォーム要素は選択可能にする */
+/* アプリ全体のコンテナ（縦並びのFlexbox） */
+#app-screen {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh; /* ダイナミックビューポートの高さ */
+    width: 100%;
+}
+
+/* ヘッダーとフッターは伸縮させない */
+.app-header, .app-footer {
+    flex: 0 0 auto; 
+    z-index: 1030;
+    background-color: #fff;
+}
+
+/* メインエリアだけスクロールさせる */
+#main-scroll {
+    flex: 1 1 auto;      /* 余ったスペースを埋める */
+    overflow-y: auto;    /* ここだけ縦スクロール許可 */
+    position: relative;
+    -webkit-overflow-scrolling: touch; /* なめらかスクロール */
+    padding-bottom: 20px; /* 余白 */
+}
+
+/* ▲▲▲ レイアウト修正ここまで ▲▲▲ */
+
+
+/* 入力フォームなどは選択可能に */
 input, textarea {
     user-select: text;
 }
 
-/* ボトムナビのアクティブ状態 */
+/* ナビゲーション */
 .nav-link {
     color: #999;
     transition: color 0.2s;
@@ -33,7 +62,7 @@ input, textarea {
     margin-bottom: -2px;
 }
 
-/* --- チャットUI (LINE風) --- */
+/* --- チャットUI --- */
 .chat-bubble {
     max-width: 75%;
     padding: 10px 14px;
@@ -43,8 +72,6 @@ input, textarea {
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     word-wrap: break-word;
 }
-
-/* 相手のメッセージ（左寄せ） */
 .chat-row-other {
     display: flex;
     justify-content: flex-start;
@@ -52,11 +79,9 @@ input, textarea {
 }
 .chat-bubble-other {
     background-color: var(--chat-other-bg);
-    border-top-left-radius: 2px; /* 左上を尖らせる */
+    border-top-left-radius: 2px;
     color: #222;
 }
-
-/* 自分のメッセージ（右寄せ） */
 .chat-row-me {
     display: flex;
     justify-content: flex-end;
@@ -64,11 +89,9 @@ input, textarea {
 }
 .chat-bubble-me {
     background-color: var(--chat-me-bg);
-    border-top-right-radius: 2px; /* 右上を尖らせる */
+    border-top-right-radius: 2px;
     color: #000;
 }
-
-/* アイコン画像 */
 .user-icon {
     width: 36px;
     height: 36px;
@@ -81,12 +104,7 @@ input, textarea {
     margin-right: 8px;
 }
 
-/* iPhone X以降のSafeArea対応 */
-.pb-safe {
-    padding-bottom: env(safe-area-inset-bottom, 20px);
-}
-
-/* --- カレンダー --- */
+/* カレンダー等のスタイル */
 .calendar-wrapper {
     background: #fff;
     border-radius: 8px;
@@ -108,7 +126,7 @@ input, textarea {
     grid-template-columns: repeat(7, 1fr);
 }
 .calendar-day {
-    aspect-ratio: 1 / 1; /* 正方形にする */
+    aspect-ratio: 1 / 1;
     border-bottom: 1px solid #f0f0f0;
     border-right: 1px solid #f0f0f0;
     display: flex;
@@ -120,35 +138,15 @@ input, textarea {
     position: relative;
     cursor: pointer;
 }
-.calendar-day:active {
-    background-color: #f9f9f9;
-}
-.calendar-day.empty {
-    background-color: #fafafa;
-}
-.calendar-day.today {
-    background-color: #e8f5e9; /* 薄い緑 */
-    color: var(--primary-color);
-    font-weight: bold;
-}
-.calendar-day.selected {
-    background-color: #d1e7dd;
-    border: 2px solid var(--primary-color);
-}
-
-/* 予定ありマーク（ドット） */
+.calendar-day:active { background-color: #f9f9f9; }
+.calendar-day.empty { background-color: #fafafa; }
+.calendar-day.today { background-color: #e8f5e9; color: var(--primary-color); font-weight: bold; }
+.calendar-day.selected { background-color: #d1e7dd; border: 2px solid var(--primary-color); }
 .event-dot {
-    width: 6px;
-    height: 6px;
-    background-color: var(--primary-color);
-    border-radius: 50%;
-    margin-top: 2px;
+    width: 6px; height: 6px; background-color: var(--primary-color); border-radius: 50%; margin-top: 2px;
 }
-.event-dot.leader-event {
-    background-color: #ff9800; /* リーダーの予定はオレンジ */
-}
+.event-dot.leader-event { background-color: #ff9800; }
 
-/* 画像プレビュー */
 .image-preview-container {
     position: relative;
     display: inline-block;
@@ -160,12 +158,12 @@ input, textarea {
 }
 .image-preview-container .btn-close {
     position: absolute;
-    top: -8px;
-    right: -8px;
-    background-color: white;
-    border-radius: 50%;
-    padding: 4px;
+    top: -8px; right: -8px;
+    background-color: white; border-radius: 50%; padding: 4px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
-
+/* iPhone X以降のSafeArea対応 */
+.pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+}
