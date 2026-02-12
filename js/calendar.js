@@ -10,12 +10,19 @@ export const Calendar = {
         this.currentUser = user;
         this.startListener();
 
-        document.getElementById('cal-prev-btn').onclick = () => this.changeMonth(-1);
-        document.getElementById('cal-next-btn').onclick = () => this.changeMonth(1);
-        document.getElementById('save-event-btn').onclick = () => this.saveEvent();
+        // ボタンが存在する場合のみイベントを設定（エラー回避）
+        const prevBtn = document.getElementById('cal-prev-btn');
+        const nextBtn = document.getElementById('cal-next-btn');
+        const saveBtn = document.getElementById('save-event-btn');
+
+        if(prevBtn) prevBtn.onclick = () => this.changeMonth(-1);
+        if(nextBtn) nextBtn.onclick = () => this.changeMonth(1);
+        if(saveBtn) saveBtn.onclick = () => this.saveEvent();
     },
 
     startListener() {
+        if(!this.currentUser || !this.currentUser.group) return;
+        
         DB.subscribeEvents(this.currentUser.group, (allEvents) => {
             this.events = allEvents;
             this.render(); 
@@ -27,204 +34,97 @@ export const Calendar = {
         this.render();
     },
 
-    // 帯の位置（段目）を計算して割り当てる関数
-    calcEventVisualRows(eventsInMonth) {
-        // まず日付順、次に期間が長い順にソート
-        const sorted = [...eventsInMonth].sort((a, b) => {
-            if (a.startDate !== b.startDate) return a.startDate.localeCompare(b.startDate);
-            const durA = (new Date(a.endDate) - new Date(a.startDate));
-            const durB = (new Date(b.endDate) - new Date(b.startDate));
-            return durB - durA; 
-        });
-
-        // 各イベントに row（0始まり）を割り当てる
-        // 簡易的な「貪欲法」で空いている最小の行を探す
-        // 日付ごとの使用済み行管理
-        const dateRows = {}; // "YYYY/MM/DD": [true, true, false...]
-
-        sorted.forEach(ev => {
-            const start = new Date(ev.startDate);
-            const end = new Date(ev.endDate);
-            
-            // このイベントがカバーする日付リストを作成
-            const dates = [];
-            for(let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                dates.push(`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`);
-            }
-
-            // この期間すべてで空いている最小のrowを探す
-            let row = 0;
-            while (true) {
-                let isOk = true;
-                for (const dateStr of dates) {
-                    if (!dateRows[dateStr]) dateRows[dateStr] = [];
-                    if (dateRows[dateStr][row]) {
-                        isOk = false;
-                        break;
-                    }
-                }
-                if (isOk) break;
-                row++;
-            }
-
-            // 決定したrowを埋める
-            ev.visualRow = row;
-            for (const dateStr of dates) {
-                if (!dateRows[dateStr]) dateRows[dateStr] = [];
-                dateRows[dateStr][row] = true;
-            }
-        });
-        
-        return sorted;
-    },
-
     render() {
-        const year = this.currentDate.getFullYear();
-        const month = this.currentDate.getMonth(); 
-        
-        document.getElementById('cal-title').textContent = `${year}年 ${month + 1}月`;
-
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
-        const startDayOfWeek = firstDay.getDay(); 
-        const daysInMonth = lastDay.getDate();
-
+        const label = document.getElementById('cal-month-label');
         const grid = document.getElementById('calendar-grid');
-        grid.innerHTML = '';
 
-        // 空白セル
-        for (let i = 0; i < startDayOfWeek; i++) {
-            const div = document.createElement('div');
-            div.className = 'calendar-day empty';
-            grid.appendChild(div);
+        // ★安全装置：HTMLの更新がまだ反映されていない場合、ここで処理を中断してエラーを防ぐ
+        if (!label || !grid) {
+            console.warn("カレンダー要素が見つかりません。HTMLの更新を待っています...");
+            return;
         }
 
-        // 表示すべきイベントをフィルタリング
-        const visibleEvents = this.events.filter(e => {
-            if (this.currentUser.role === 'member') {
-                // メンバー: リーダーの予定 または 自分の予定
-                return e.userRole === 'leader' || e.userId === this.currentUser.id;
-            }
-            return true; // リーダーは全員分
+        const y = this.currentDate.getFullYear();
+        const m = this.currentDate.getMonth();
+        
+        label.textContent = `${y}年 ${m + 1}月`;
+        grid.innerHTML = ''; // クリア
+
+        // カレンダー生成ロジック
+        const firstDay = new Date(y, m, 1).getDay();
+        const lastDate = new Date(y, m + 1, 0).getDate();
+        
+        // 曜日ヘッダー
+        const weekDays = ['日', '月', '火', '水', '木', '金', '土'];
+        const headerRow = document.createElement('div');
+        headerRow.className = 'd-flex border-bottom bg-light fw-bold text-center';
+        weekDays.forEach(day => {
+            const div = document.createElement('div');
+            div.style.flex = '1';
+            div.textContent = day;
+            headerRow.appendChild(div);
         });
+        grid.appendChild(headerRow);
 
-        // 位置計算
-        this.calcEventVisualRows(visibleEvents);
-
-        // カレンダー日付生成
-        for (let d = 1; d <= daysInMonth; d++) {
-            const currentDayDate = new Date(year, month, d);
-            const dateStr = `${year}/${month + 1}/${d}`; // 比較用
-            currentDayDate.setHours(0,0,0,0);
-
-            const div = document.createElement('div');
-            div.className = 'calendar-day';
+        // 日付セル生成
+        let date = 1;
+        // 6週間分ループ（最大）
+        for (let i = 0; i < 6; i++) {
+            const row = document.createElement('div');
+            row.className = 'd-flex border-bottom';
+            row.style.minHeight = '80px';
             
-            // 今日の強調
-            const today = new Date();
-            today.setHours(0,0,0,0);
-            if (currentDayDate.getTime() === today.getTime()) {
-                div.classList.add('today');
+            let hasDateInRow = false;
+
+            for (let j = 0; j < 7; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'border-end p-1 position-relative';
+                cell.style.flex = '1';
+                cell.style.fontSize = '12px';
+
+                if (i === 0 && j < firstDay) {
+                    cell.className += ' bg-light'; // 先月の空白
+                } else if (date > lastDate) {
+                    cell.className += ' bg-light'; // 来月の空白
+                } else {
+                    hasDateInRow = true;
+                    cell.textContent = date;
+                    
+                    // 今日の日付強調
+                    const today = new Date();
+                    if(date === today.getDate() && m === today.getMonth() && y === today.getFullYear()) {
+                        cell.className += ' bg-info bg-opacity-10 fw-bold';
+                    }
+
+                    // イベント表示
+                    const dayEvents = this.events.filter(e => {
+                        const start = new Date(e.startDate);
+                        const end = new Date(e.endDate);
+                        const current = new Date(y, m, date);
+                        return current >= start && current <= end;
+                    });
+
+                    dayEvents.forEach(evt => {
+                        const badge = document.createElement('div');
+                        badge.className = 'badge bg-primary text-wrap text-start w-100 mt-1';
+                        badge.style.fontSize = '10px';
+                        badge.textContent = evt.title;
+                        
+                        // 削除機能
+                        badge.onclick = (e) => {
+                            e.stopPropagation();
+                            this.deleteEvent(evt.id);
+                        };
+                        cell.appendChild(badge);
+                    });
+
+                    date++;
+                }
+                row.appendChild(cell);
             }
-
-            div.innerHTML = `<span class="day-num">${d}</span>`;
-            
-            // この日に表示すべきイベントを探す
-            const dayEvents = visibleEvents.filter(e => {
-                const s = new Date(e.startDate); s.setHours(0,0,0,0);
-                const end = new Date(e.endDate); end.setHours(0,0,0,0);
-                return currentDayDate >= s && currentDayDate <= end;
-            });
-
-            dayEvents.forEach(e => {
-                const bar = document.createElement('div');
-                // クラス設定
-                let classes = ['event-bar'];
-                if (e.userRole === 'leader') classes.push('leader-event');
-                
-                // 開始日かどうか、終了日かどうか
-                // 文字列比較で判定
-                if (e.startDate === dateStr.replace(/\//g, '/')) classes.push('is-start'); // DB形式依存吸収のため注意
-                // 念のためDateオブジェクトで比較
-                const s = new Date(e.startDate); s.setHours(0,0,0,0);
-                const end = new Date(e.endDate); end.setHours(0,0,0,0);
-
-                if (currentDayDate.getTime() === s.getTime()) classes.push('is-start');
-                if (currentDayDate.getTime() === end.getTime()) classes.push('is-end');
-
-                bar.className = classes.join(' ');
-                
-                // 位置指定：数字の下(28px) + (行番号 * 8px)
-                const topPos = 28 + (e.visualRow * 8);
-                bar.style.top = `${topPos}px`;
-                
-                div.appendChild(bar);
-            });
-
-            div.onclick = () => this.openDayModal(currentDayDate, dayEvents);
-            grid.appendChild(div);
+            grid.appendChild(row);
+            if (date > lastDate) break;
         }
-    },
-
-    openDayModal(dateObj, dayEvents) {
-        const dateStr = `${dateObj.getFullYear()}/${dateObj.getMonth()+1}/${dateObj.getDate()}`;
-        const listEl = document.getElementById('selected-date-events');
-        listEl.innerHTML = `<h6 class="border-bottom pb-2 mb-2">📅 ${dateStr} の予定</h6>`;
-        
-        if (dayEvents.length === 0) {
-            listEl.innerHTML += `<div class="text-muted small">予定はありません</div>`;
-        } else {
-            dayEvents.forEach(e => {
-                const badge = e.userRole === 'leader' ? 'bg-warning text-dark' : 'bg-success';
-                let timeInfo = '';
-                if (e.startDate && e.endDate && e.startDate !== e.endDate) {
-                    timeInfo = `<small class="d-block text-muted" style="font-size:0.7rem">${e.startDate} ~ ${e.endDate}</small>`;
-                }
-
-                // 削除ボタンの判定
-                // リーダー：誰の予定でも削除可能
-                // メンバー：自分の予定のみ削除可能
-                let deleteBtn = '';
-                const canDelete = (this.currentUser.role === 'leader') || (this.currentUser.role === 'member' && e.userId === this.currentUser.id);
-
-                if (canDelete) {
-                    deleteBtn = `
-                        <button class="btn btn-sm btn-outline-danger ms-auto" onclick="window.calendar.deleteEvent('${e.id}')">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    `;
-                }
-
-                listEl.innerHTML += `
-                    <div class="d-flex align-items-center mb-2 p-2 bg-light rounded">
-                        <div class="me-2">
-                            <span class="badge ${badge} d-block mb-1">${e.userName}</span>
-                        </div>
-                        <div class="flex-grow-1">
-                            <span class="fw-bold">${e.title}</span>
-                            ${timeInfo}
-                        </div>
-                        ${deleteBtn}
-                    </div>`;
-            });
-        }
-    },
-
-    showAddModal() {
-        const modalEl = document.getElementById('eventModal');
-        const modal = new bootstrap.Modal(modalEl);
-        
-        const today = new Date();
-        const y = today.getFullYear();
-        const m = String(today.getMonth() + 1).padStart(2, '0');
-        const d = String(today.getDate()).padStart(2, '0');
-        const todayStr = `${y}-${m}-${d}`;
-
-        document.getElementById('event-start-date').value = todayStr;
-        document.getElementById('event-end-date').value = todayStr;
-        document.getElementById('event-title-input').value = '';
-        
-        modal.show();
     },
 
     async saveEvent() {
@@ -253,9 +153,15 @@ export const Calendar = {
                 title: title
             });
             
+            // モーダルを閉じる
             const modalEl = document.getElementById('eventModal');
+            // @ts-ignore
             const modal = bootstrap.Modal.getInstance(modalEl);
-            modal.hide();
+            if(modal) modal.hide();
+            
+            // 入力クリア
+            document.getElementById('event-title-input').value = '';
+            
         } catch (e) {
             console.error(e);
             alert('保存失敗');
@@ -266,14 +172,8 @@ export const Calendar = {
         if(!confirm('この予定を削除しますか？')) return;
         try {
             await DB.deleteEvent(id);
-            // モーダルリストは再描画されないので、簡易的に閉じるかアラート
-            // alert('削除しました');
-            // データ更新リスナーがrenderを呼ぶので画面は更新される
-        } catch(e) {
-            console.error(e);
-            alert('削除失敗');
+        } catch (e) {
+            console.error("Delete Error", e);
         }
     }
 };
-
-window.calendar = Calendar;
