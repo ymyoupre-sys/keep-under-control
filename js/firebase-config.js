@@ -1,6 +1,8 @@
 // js/firebase-config.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+// ★追加：通知機能のインポート
+import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCWy_BjB9tr02viCSfAx93qeJyX4G0e2iw",
@@ -13,3 +15,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
+// ★追加：通知機能のエクスポート
+export const messaging = getMessaging(app);
+export { getToken };
