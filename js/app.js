@@ -44,7 +44,8 @@ const App = {
     setupHistoryHandler() {
         window.addEventListener('popstate', (event) => {
             const chatDetail = document.getElementById('chat-detail-container');
-            if (!chatDetail.classList.contains('d-none')) {
+            // チャット詳細(chat-detail-container)が存在し、表示されている場合のみ閉じる
+            if (chatDetail && !chatDetail.classList.contains('d-none')) {
                 this.closeChatDetail();
             }
         });
@@ -72,13 +73,14 @@ const App = {
     async loginSuccess(user) {
         CURRENT_USER = user;
         
-        // --- ★ここから追加: FCMトークン取得と保存 ---
+        // --- ★FCMトークン取得と保存 ---
         try {
             if ('serviceWorker' in navigator) {
-                // Service Workerの登録確認
+                // Service Workerの登録
                 const registration = await navigator.serviceWorker.register('./sw.js');
                 
                 // 通知許可とトークン取得
+                // ★★★ ここにVAPIDキーを貼り付けてください ★★★
                 const token = await getToken(messaging, {
                     serviceWorkerRegistration: registration,
                     vapidKey: "BMdNlbLwC3bEwAIp-ZG9Uwp-5n4HdyXvlsqJbt6Q5YRdCA7gUexx0G9MpjB3AdLk6iNJodLTobC3-bGG6YskB0s" 
@@ -96,7 +98,7 @@ const App = {
             }
         } catch (err) {
             console.error("通知設定エラー:", err);
-            // エラーでもアプリは使えるように続行
+            // 通知エラーでもアプリ動作は継続
         }
         // --- ここまで ---
 
@@ -142,12 +144,7 @@ const App = {
         const listEl = document.getElementById('inbox-list');
         listEl.innerHTML = '<div class="text-center mt-5"><div class="spinner-border text-success"></div></div>';
 
-        let isFirstLoad = true;
-
         unsubscribeInbox = DB.subscribeInbox(CURRENT_USER, (items) => {
-            // ローカル通知は削除（サーバーからの通知に任せるため重複防止）
-            isFirstLoad = false;
-
             listEl.innerHTML = '';
             if (items.length === 0) {
                 listEl.innerHTML = '<div class="text-center text-muted mt-5 p-3">現在、対応が必要な項目はありません<br>☕</div>';
@@ -325,6 +322,8 @@ const App = {
     
     renderChatList() {
         const container = document.getElementById('chat-container');
+        if (!container) return; // コンテナがない場合はスキップ
+
         container.classList.remove('d-none'); 
         
         let targets = [];
@@ -351,7 +350,8 @@ const App = {
             container.appendChild(row);
         });
         
-        document.getElementById('chat-input-area').classList.add('d-none');
+        const inputArea = document.getElementById('chat-input-area');
+        if (inputArea) inputArea.classList.add('d-none');
         document.getElementById('header-title').textContent = "メッセージ";
     },
 
@@ -359,7 +359,9 @@ const App = {
         history.pushState({chat: true}, '', '#chat-detail');
 
         document.getElementById('chat-container').classList.add('d-none'); 
-        document.getElementById('chat-detail-container').classList.remove('d-none'); 
+        
+        const detailContainer = document.getElementById('chat-detail-container');
+        if (detailContainer) detailContainer.classList.remove('d-none'); 
         
         const headerTitle = document.getElementById('header-title');
         headerTitle.innerHTML = `<i class="bi bi-chevron-left me-1" onclick="window.history.back()"></i> ${targetName}`;
@@ -373,9 +375,14 @@ const App = {
     closeChatDetail() {
         if(unsubscribeChat) unsubscribeChat();
         
-        document.getElementById('chat-detail-container').innerHTML = ''; 
-        document.getElementById('chat-detail-container').classList.add('d-none');
-        document.getElementById('chat-container').classList.remove('d-none'); 
+        const detailContainer = document.getElementById('chat-detail-container');
+        if (detailContainer) {
+            detailContainer.innerHTML = ''; 
+            detailContainer.classList.add('d-none');
+        }
+
+        const listContainer = document.getElementById('chat-container');
+        if (listContainer) listContainer.classList.remove('d-none'); 
         
         document.getElementById('chat-input-area').classList.add('d-none');
 
@@ -396,14 +403,13 @@ const App = {
         if (!targetMemberId) return;
 
         const container = document.getElementById('chat-detail-container');
+        if (!container) return;
+
         container.innerHTML = '<div class="p-3 text-center text-muted small">ここでの会話は他言無用です...🤫</div>';
 
-        let isFirstLoad = true;
-
+        // 自分が送る側かどうかに関わらず、チャットルームIDは常に「Group_MemberID」の形式
+        // GroupID, MemberID を引数にする
         unsubscribeChat = DB.subscribeChat(CURRENT_USER.group, targetMemberId, (messages) => {
-            // ローカル通知は削除
-            isFirstLoad = false;
-
             container.innerHTML = ''; 
             
             messages.forEach(msg => {
@@ -438,10 +444,7 @@ const App = {
             });
             
             const mainScroll = document.getElementById('main-scroll');
-            const chatTab = document.getElementById('tab-chat');
-            if (mainScroll && chatTab && chatTab.classList.contains('active')) {
-                mainScroll.scrollTop = mainScroll.scrollHeight;
-            }
+            if (mainScroll) mainScroll.scrollTop = mainScroll.scrollHeight;
         });
     },
 
@@ -455,30 +458,32 @@ const App = {
             targetMemberId = CURRENT_USER.id;
         }
 
-        // ★追加：宛先(receiverId)の特定ロジック
+        // 宛先(receiverId)の特定
         let receiverId = null;
         if (CURRENT_USER.role === 'leader') {
-            // 主人が送信 → 相手は奴隷(targetMemberId)
+            // 主人が送信 → 宛先は選択中の奴隷ID
             receiverId = targetMemberId;
         } else {
-            // 奴隷が送信 → 相手は同じグループの主人
+            // 奴隷が送信 → 宛先は同じグループの主人ID
             const leader = CONFIG_USERS.find(u => u.group === CURRENT_USER.group && u.role === 'leader');
             if (leader) receiverId = leader.id;
         }
 
         try {
             const chatRoomId = `${CURRENT_USER.group}_${targetMemberId}`;
-            // sendMessageを直接書く（receiverIdを入れるため、DB.sendMessageではなくここで実行）
+            
+            // receiverIdを含めてメッセージを保存
             await addDoc(collection(db, "chats", chatRoomId, "messages"), {
                 text: text,
                 senderId: CURRENT_USER.id,
                 senderName: CURRENT_USER.name,
                 senderIcon: CURRENT_USER.icon || "👤",
-                receiverId: receiverId, // ★宛先IDを追加
+                receiverId: receiverId, // ★通知用ID
                 image: chatImageBase64,
                 createdAt: serverTimestamp()
             });
             
+            // ルーム情報の更新
             await updateDoc(doc(db, "chats", chatRoomId), {
                 lastMessage: text || (chatImageBase64 ? '画像が送信されました' : ''),
                 updatedAt: serverTimestamp()
@@ -531,7 +536,7 @@ const App = {
                 image: formImageBase64,
                 applicantId: CURRENT_USER.id,
                 applicantName: CURRENT_USER.name,
-                targetId: targetId,
+                targetId: targetId, // ★通知用ID
                 targetName: targetName,
                 groupId: CURRENT_USER.group
             });
@@ -566,16 +571,22 @@ const App = {
 
                 const chatInput = document.getElementById('chat-input-area');
                 if (targetId === '#tab-chat') {
+                    // チャットタブを開いたとき、詳細が開いていなければリストを表示
                     const chatDetail = document.getElementById('chat-detail-container');
-                    if (chatDetail.classList.contains('d-none')) {
-                         document.getElementById('chat-container').classList.remove('d-none');
-                         this.renderChatList(); 
-                         chatInput.classList.add('d-none');
+                    const chatList = document.getElementById('chat-container');
+                    
+                    if (chatDetail && chatDetail.classList.contains('d-none')) {
+                         if (chatList) {
+                             chatList.classList.remove('d-none');
+                             this.renderChatList(); 
+                         }
+                         if (chatInput) chatInput.classList.add('d-none');
                     } else {
-                         chatInput.classList.remove('d-none');
+                         // 詳細が開いているなら入力欄を表示
+                         if (chatInput) chatInput.classList.remove('d-none');
                     }
                 } else {
-                    chatInput.classList.add('d-none');
+                    if (chatInput) chatInput.classList.add('d-none');
                 }
             });
         });
