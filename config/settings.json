@@ -1,0 +1,23 @@
+{
+  "appTitle": "業務管理アプリ",
+  "themeColor": "#06c755", 
+  "applicationTypes": [
+    "車両予約",
+    "有給申請",
+    "備品購入",
+    "経費精算",
+    "その他報告"
+  ],
+  "instructionTypes": [
+    "業務指示",
+    "確認依頼",
+    "面談設定",
+    "その他連絡"
+  ],
+  "statusLabels": {
+    "pending": { "label": "承認待ち", "color": "bg-warning text-dark" },
+    "approved": { "label": "承認済み", "color": "bg-success text-white" },
+    "rejected": { "label": "却下", "color": "bg-danger text-white" },
+    "completed": { "label": "完了", "color": "bg-secondary text-white" }
+  }
+}
