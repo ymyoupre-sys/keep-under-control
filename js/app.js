@@ -127,7 +127,7 @@ const App = {
                 
                 // ★重要: VAPIDキーをご自身のものに書き換えてください
                 const token = await getToken(messaging, { 
-                    vapidKey: "BMwS...ご自身のキー...XYZ",
+                    vapidKey: "BMdNlbLwC3bEwAIp-ZG9Uwp-5n4HdyXvlsqJbt6Q5YRdCA7gUexx0G9MpjB3AdLk6iNJodLTobC3-bGG6YskB0s",
                     serviceWorkerRegistration: registration
                 });
 
@@ -379,3 +379,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
