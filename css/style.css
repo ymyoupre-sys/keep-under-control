@@ -48,7 +48,6 @@ html, body {
     padding-bottom: env(safe-area-inset-bottom, 10px);
 }
 
-/* ★修正：フッターアイコンとテキストの上下中央揃え */
 .nav-link {
     color: #999;
     transition: color 0.2s;
@@ -78,19 +77,71 @@ html, body {
 .chat-bubble-me { background-color: var(--chat-me-bg); border-top-right-radius: 2px; color: #000; }
 .user-icon { width: 36px; height: 36px; border-radius: 50%; background-color: #ddd; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-right: 8px; margin-top: 20px; }
 
-/* カレンダー関連 */
+/* --- カレンダー関連の修正 --- */
 .calendar-wrapper { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 .calendar-header { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.8rem; font-weight: bold; color: #888; padding: 10px 0; border-bottom: 1px solid #eee; }
 .calendar-body { display: grid; grid-template-columns: repeat(7, 1fr); }
-.calendar-day { aspect-ratio: 1 / 1; border-bottom: 1px solid #f0f0f0; border-right: 1px solid #f0f0f0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 5px; font-size: 0.9rem; position: relative; cursor: pointer; }
+
+.calendar-day { 
+    aspect-ratio: 1 / 1; 
+    border-bottom: 1px solid #f0f0f0; 
+    border-right: 1px solid #f0f0f0; 
+    /* Flexboxをやめて相対配置にする */
+    display: block; 
+    position: relative; 
+    cursor: pointer; 
+}
 .calendar-day:active { background-color: #f9f9f9; }
 .calendar-day.empty { background-color: #fafafa; }
-.calendar-day.today span.day-num { background-color: var(--primary-color); color: white; border-radius: 50%; padding: 2px 6px; font-weight: bold; }
+
+/* 日付の数字 */
+.calendar-day span.day-num {
+    display: block;
+    text-align: center;
+    margin-top: 4px;
+    font-size: 0.9rem;
+    z-index: 2; /* 帯より上 */
+    position: relative;
+}
+.calendar-day.today span.day-num { 
+    background-color: var(--primary-color); 
+    color: white; 
+    border-radius: 50%; 
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    margin: 4px auto 0;
+    font-weight: bold; 
+}
 .calendar-day.selected { background-color: #d1e7dd; }
 
-.event-bar-container { display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 2px; overflow: hidden; }
-.event-bar { width: 90%; height: 6px; background-color: var(--primary-color); border-radius: 3px; margin-top: 2px; margin-bottom: 1px; }
+/* イベントバー（共通） */
+.event-bar {
+    position: absolute;
+    height: 6px;
+    left: 0; 
+    right: 0;
+    background-color: var(--primary-color);
+    z-index: 1;
+    /* デフォルトは角丸なし（貫通してるように見せるため） */
+    border-radius: 0;
+    pointer-events: none; /* クリックは親のdivが受け取る */
+}
 .event-bar.leader-event { background-color: #ff9800; }
+
+/* 開始日：左端を少し空けて角丸 */
+.event-bar.is-start {
+    left: 4px;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+}
+/* 終了日：右端を少し空けて角丸 */
+.event-bar.is-end {
+    right: 4px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+/* 1日だけの予定：両方適用 */
 
 .image-preview-container { position: relative; display: inline-block; }
 .image-preview-container img { max-height: 150px; border-radius: 8px; border: 1px solid #ddd; }
