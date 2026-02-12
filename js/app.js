@@ -122,12 +122,12 @@ const App = {
 
         typeSelect.innerHTML = '';
         if (user.role === 'leader') {
-            navForm.textContent = "命令";
-            titleLabel.textContent = "奴隷へ命令";
+            navForm.textContent = "指示";
+            titleLabel.textContent = "メンバーへ指示";
             CONFIG_SETTINGS.instructionTypes.forEach(t => typeSelect.add(new Option(t, t)));
         } else {
-            navForm.textContent = "許可申請";
-            titleLabel.textContent = "主人へ許可申請";
+            navForm.textContent = "申請";
+            titleLabel.textContent = "リーダーへ申請";
             CONFIG_SETTINGS.applicationTypes.forEach(t => typeSelect.add(new Option(t, t)));
         }
         
@@ -156,7 +156,7 @@ const App = {
                 const stInfo = CONFIG_SETTINGS.statusLabels[item.status] || { label: item.status, color: 'bg-secondary' };
                 
                 if (CURRENT_USER.role === 'member' && item.category === 'instruction' && item.status === 'pending') {
-                     badgeHtml = `<span class="badge bg-info text-dark rounded-pill">命令</span>`;
+                     badgeHtml = `<span class="badge bg-info text-dark rounded-pill">指示</span>`;
                 } else {
                      badgeHtml = `<span class="badge ${stInfo.color} rounded-pill">${stInfo.label}</span>`;
                 }
@@ -216,7 +216,7 @@ const App = {
             if (item.category === 'instruction') {
                 return `
                     <div class="d-flex gap-2 mt-2">
-                        <button onclick="window.app.deleteItem('${item.id}')" class="btn btn-sm btn-outline-secondary w-100">命令を取り消す（削除）</button>
+                        <button onclick="window.app.deleteItem('${item.id}')" class="btn btn-sm btn-outline-secondary w-100">指示を取り消す（削除）</button>
                     </div>
                 `;
             }
@@ -249,7 +249,7 @@ const App = {
     },
 
     async deleteItem(id) {
-        if(!confirm('この命令を完全に削除しますか？\n（相手の画面からも消えます）')) return;
+        if(!confirm('この指示を完全に削除しますか？\n（相手の画面からも消えます）')) return;
         await DB.deleteApplication(id);
     },
 
@@ -329,10 +329,10 @@ const App = {
         let targets = [];
         if (CURRENT_USER.role === 'leader') {
             targets = CONFIG_USERS.filter(u => u.group === CURRENT_USER.group && u.role === 'member');
-            container.innerHTML = `<h6 class="px-2 py-3 text-muted border-bottom">奴隷を選択してメッセージ</h6>`;
+            container.innerHTML = `<h6 class="px-2 py-3 text-muted border-bottom">メンバーを選択してメッセージ</h6>`;
         } else {
             targets = CONFIG_USERS.filter(u => u.group === CURRENT_USER.group && u.role === 'leader');
-            container.innerHTML = `<h6 class="px-2 py-3 text-muted border-bottom">主人を選択して報告</h6>`;
+            container.innerHTML = `<h6 class="px-2 py-3 text-muted border-bottom">リーダーを選択して報告</h6>`;
         }
         
         targets.forEach(user => {
@@ -461,10 +461,10 @@ const App = {
         // 宛先(receiverId)の特定
         let receiverId = null;
         if (CURRENT_USER.role === 'leader') {
-            // 主人が送信 → 宛先は選択中の奴隷ID
+            // リーダーが送信 → 宛先は選択中のメンバーID
             receiverId = targetMemberId;
         } else {
-            // 奴隷が送信 → 宛先は同じグループの主人ID
+            // メンバーが送信 → 宛先は同じグループのリーダーID
             const leader = CONFIG_USERS.find(u => u.group === CURRENT_USER.group && u.role === 'leader');
             if (leader) receiverId = leader.id;
         }
@@ -503,7 +503,7 @@ const App = {
         } catch (e) { console.error(e); alert('送信失敗'); }
     },
 
-    // --- 許可申請/命令フォーム ---
+    // --- 申請/指示フォーム ---
     async submitForm() {
         const type = document.getElementById('form-type').value;
         const body = document.getElementById('form-body').value;
@@ -516,10 +516,10 @@ const App = {
         let category = '';
 
         if (CURRENT_USER.role === 'leader') {
-            const targetNameInput = prompt("宛先の奴隷名を入力してください（完全一致）");
+            const targetNameInput = prompt("宛先のメンバー名を入力してください（完全一致）");
             if (!targetNameInput) return;
             const targetUser = CONFIG_USERS.find(u => u.name === targetNameInput && u.group === CURRENT_USER.group);
-            if (!targetUser) { alert('該当する奴隷がいません'); return; }
+            if (!targetUser) { alert('該当するメンバーがいません'); return; }
             targetId = targetUser.id;
             targetName = targetUser.name;
             category = 'instruction';
@@ -601,4 +601,5 @@ const App = {
 };
 
 window.app = App;
+
 window.onload = () => App.init();
