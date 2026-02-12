@@ -1,6 +1,6 @@
 import { db } from "./firebase-config.js";
 import { 
-    collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, setDoc
+    collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, setDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 export const DB = {
@@ -55,11 +55,10 @@ export const DB = {
         return onSnapshot(q, (snapshot) => {
             let items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             
-            // リーダーでも全部見る（指示の履歴も見たいのでフィルタ除去）
-            // 並び替え: 更新日時があればそれで、なければ作成日時
+            // ★修正：ステータス変更等の更新日時を無視し、純粋に作成日順(新しい順)にする
             items.sort((a, b) => {
-                const timeA = (a.updatedAt || a.createdAt)?.toMillis() || 0;
-                const timeB = (b.updatedAt || b.createdAt)?.toMillis() || 0;
+                const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
+                const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
                 return timeB - timeA;
             });
 
@@ -70,25 +69,28 @@ export const DB = {
         });
     },
 
-    // ■ 申請・指示の送信
     async submitForm(data) {
         await addDoc(collection(db, "applications"), {
             ...data,
             status: 'pending',
             createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(), // ソート用
+            updatedAt: serverTimestamp(), 
             createdDateStr: new Date().toLocaleDateString('ja-JP') 
         });
     },
     
-    // ■ ステータス更新（コメント対応）
     async updateStatus(docId, status, comment = '', updaterId) {
         await updateDoc(doc(db, "applications", docId), {
             status: status,
             resultComment: comment,
             updatedBy: updaterId,
-            updatedAt: serverTimestamp() // 通知トリガー用
+            updatedAt: serverTimestamp()
         });
+    },
+
+    // ★追加：物理削除
+    async deleteApplication(docId) {
+        await deleteDoc(doc(db, "applications", docId));
     },
 
     // ■ カレンダー機能
