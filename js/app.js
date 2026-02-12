@@ -17,7 +17,6 @@ let formImageBase64 = null;
 const App = {
     async init() {
         console.log("App Initializing...");
-        // 通知の許可を求める
         if ("Notification" in window && Notification.permission === "default") {
             Notification.requestPermission();
         }
@@ -33,11 +32,24 @@ const App = {
             this.setupLogin();
             this.setupTabs();
             this.setupImageInputs();
+            this.setupHistoryHandler(); // 戻るボタン制御
             
         } catch (e) {
             console.error("Init Error", e);
             alert("初期化エラー");
         }
+    },
+
+    // --- 戻るボタン制御 (History API) ---
+    setupHistoryHandler() {
+        window.addEventListener('popstate', (event) => {
+            // チャット詳細が開いていて、戻る操作がされた場合
+            const chatInput = document.getElementById('chat-input-area');
+            if (!chatInput.classList.contains('d-none')) {
+                // チャット一覧に戻すUI処理
+                this.closeChatDetail();
+            }
+        });
     },
 
     // --- ログイン周り ---
@@ -70,11 +82,14 @@ const App = {
         
         if (user.role === 'member') {
             const leader = CONFIG_USERS.find(u => u.group === user.group && u.role === 'leader');
-            if (leader) currentChatTargetId = user.id; // メンバーは自分のIDの部屋を見る
+            if (leader) currentChatTargetId = user.id; 
             this.startChatListener();
         }
 
         Calendar.init(user);
+
+        // ★修正: 起動時は必ず「受信箱」を開く
+        document.querySelector('[data-target="#tab-inbox"]').click();
     },
 
     updateUIByRole(user) {
@@ -108,11 +123,8 @@ const App = {
         let isFirstLoad = true;
 
         unsubscribeInbox = DB.subscribeInbox(CURRENT_USER, (items) => {
-            // プッシュ通知（ローカル）判定: 初回ロード以外で、アイテムが増えたor更新された場合
-            // ここでは簡易的に「新しい未読がある」場合に通知
             if (!isFirstLoad && items.length > 0 && document.visibilityState === 'hidden') {
                 const latest = items[0];
-                // 自分が更新したものは除外
                 if (latest.updatedBy !== CURRENT_USER.id) {
                     this.showLocalNotification("新着通知", `${latest.type}: ${latest.status}`);
                 }
@@ -126,12 +138,9 @@ const App = {
             }
 
             items.forEach(item => {
-                // メンバーの場合、リーダーからの「指示」はステータスバッジ（承認待ち等）を出さない
-                // または「完了」「未達」などの状態を表示する
                 let badgeHtml = '';
                 const stInfo = CONFIG_SETTINGS.statusLabels[item.status] || { label: item.status, color: 'bg-secondary' };
                 
-                // メンバー視点かつカテゴリが指示の場合、「承認待ち」は表示しない
                 if (CURRENT_USER.role === 'member' && item.category === 'instruction' && item.status === 'pending') {
                      badgeHtml = `<span class="badge bg-info text-dark rounded-pill">指示</span>`;
                 } else {
@@ -143,7 +152,6 @@ const App = {
                     imageHtml = `<div class="mt-2"><img src="${item.image}" class="img-fluid rounded border" style="max-height: 150px;"></div>`;
                 }
 
-                // コメント表示
                 let commentHtml = '';
                 if (item.resultComment) {
                     commentHtml = `<div class="mt-2 p-2 bg-white border rounded small text-danger"><i class="bi bi-chat-quote-fill me-1"></i>${item.resultComment}</div>`;
@@ -181,9 +189,7 @@ const App = {
     },
 
     createActionButtons(item) {
-        // --- リーダーの操作 ---
         if (CURRENT_USER.role === 'leader') {
-            // メンバーからの申請に対して（承認待ち）
             if (item.category === 'application' && item.status === 'pending') {
                 return `
                     <div class="d-flex gap-2 mt-2">
@@ -192,27 +198,25 @@ const App = {
                     </div>
                 `;
             }
-            // 既に承認/却下したもの、または自分が出した指示に対して（取り消し/リセット）
-            if (item.status !== 'pending') {
+            // 承認/却下の取り消し
+            if (item.status !== 'pending' && item.category === 'application') {
                  return `
                     <div class="d-flex gap-2 mt-2">
                         <button onclick="window.app.updateStatus('${item.id}', 'pending', true)" class="btn btn-sm btn-outline-secondary w-100">取り消し（ステータスリセット）</button>
                     </div>
                 `;
             }
-            // 自分が出した指示（pending中）に対して
-            if (item.category === 'instruction' && item.status === 'pending') {
+            // ★修正：指示の取り消し（削除）
+            if (item.category === 'instruction') {
                 return `
                     <div class="d-flex gap-2 mt-2">
-                        <button onclick="window.app.updateStatus('${item.id}', 'canceled', true)" class="btn btn-sm btn-outline-secondary w-100">指示を取り消す</button>
+                        <button onclick="window.app.deleteItem('${item.id}')" class="btn btn-sm btn-outline-secondary w-100">指示を取り消す（削除）</button>
                     </div>
                 `;
             }
         }
 
-        // --- メンバーの操作 ---
         if (CURRENT_USER.role === 'member') {
-            // リーダーからの指示に対して（完了/未達報告）
             if (item.category === 'instruction' && item.status === 'pending') {
                  return `
                     <div class="d-flex gap-2 mt-2">
@@ -227,21 +231,21 @@ const App = {
 
     async updateStatus(id, status, isRevoke = false) {
         let msg = '';
-        if (isRevoke) msg = '取り消しますか？';
+        if (isRevoke) msg = 'ステータスをリセットしますか？';
         else if (status === 'approved') msg = '承認しますか？';
         else if (status === 'rejected') msg = '却下しますか？';
         else if (status === 'completed') msg = '完了として報告しますか？';
         else if (status === 'incomplete') msg = '未達として報告しますか？';
         
         if(!confirm(msg)) return;
-
-        // コメント入力
         const comment = prompt("コメントがあれば入力してください（任意）");
-
         await DB.updateStatus(id, status, comment, CURRENT_USER.id);
-        
-        // ローカルでの通知（相手への通知はDBリスナー経由で行われるが、念のため自分にもフィードバック）
-        // alert('更新しました');
+    },
+
+    // ★追加：物理削除
+    async deleteItem(id) {
+        if(!confirm('この指示を完全に削除しますか？\n（相手の画面からも消えます）')) return;
+        await DB.deleteApplication(id);
     },
 
     // --- 画像処理関連 ---
@@ -312,7 +316,9 @@ const App = {
     // --- メッセージ（チャット）機能 ---
     renderLeaderChatList() {
         const container = document.getElementById('chat-container');
+        container.classList.remove('d-none'); // リストを表示
         container.innerHTML = `<h6 class="px-2 py-3 text-muted border-bottom">メンバーを選択してメッセージ</h6>`;
+        
         const myMembers = CONFIG_USERS.filter(u => u.group === CURRENT_USER.group && u.role === 'member');
         
         myMembers.forEach(m => {
@@ -320,8 +326,7 @@ const App = {
             row.className = "d-flex align-items-center p-3 border-bottom bg-white clickable";
             row.onclick = () => {
                 currentChatTargetId = m.id;
-                this.startChatListener();
-                this.renderChatHeader(m.name);
+                this.openChatDetail(m.name);
             };
             row.innerHTML = `
                 <div class="user-icon">${m.icon || '👤'}</div>
@@ -330,12 +335,43 @@ const App = {
             `;
             container.appendChild(row);
         });
+        
         document.getElementById('chat-input-area').classList.add('d-none');
+        document.getElementById('header-title').textContent = "メッセージ";
     },
 
-    renderChatHeader(targetName) {
-        document.getElementById('header-title').textContent = `${targetName}とメッセージ`;
+    // チャット詳細を開く
+    openChatDetail(targetName) {
+        // ★履歴に追加して「戻る」ボタンで戻れるようにする
+        history.pushState({chat: true}, '', '#chat-detail');
+
+        document.getElementById('chat-container').classList.add('d-none'); // リストを隠す
+        document.getElementById('chat-detail-container').classList.remove('d-none'); // 詳細を表示
+        
+        // ヘッダーに戻るボタン追加
+        const headerTitle = document.getElementById('header-title');
+        headerTitle.innerHTML = `<i class="bi bi-chevron-left me-1" onclick="window.history.back()"></i> ${targetName}`;
+        headerTitle.classList.add('clickable');
+        headerTitle.onclick = () => window.history.back();
+
         document.getElementById('chat-input-area').classList.remove('d-none');
+        this.startChatListener();
+    },
+
+    // チャット詳細を閉じて一覧に戻る（PopStateイベントまたは戻るボタンから呼ばれる）
+    closeChatDetail() {
+        if(unsubscribeChat) unsubscribeChat();
+        
+        document.getElementById('chat-detail-container').innerHTML = ''; // クリア
+        document.getElementById('chat-detail-container').classList.add('d-none');
+        document.getElementById('chat-container').classList.remove('d-none'); // リスト再表示
+        
+        document.getElementById('chat-input-area').classList.add('d-none');
+
+        const headerTitle = document.getElementById('header-title');
+        headerTitle.textContent = "メッセージ";
+        headerTitle.classList.remove('clickable');
+        headerTitle.onclick = null;
     },
 
     startChatListener() {
@@ -344,13 +380,17 @@ const App = {
         const targetMemberId = CURRENT_USER.role === 'member' ? CURRENT_USER.id : currentChatTargetId;
         if (!targetMemberId) return;
 
-        const container = document.getElementById('chat-container');
+        const container = document.getElementById('chat-detail-container');
+        if (CURRENT_USER.role === 'member') {
+            container.classList.remove('d-none');
+            // メンバーは最初から詳細表示なのでリストは隠す必要なし（タブ切り替えで制御）
+        }
+
         container.innerHTML = '<div class="p-3 text-center text-muted small">ここでの会話は他言無用です...🤫</div>';
 
         let isFirstLoad = true;
 
         unsubscribeChat = DB.subscribeChat(CURRENT_USER.group, targetMemberId, (messages) => {
-            // 新規メッセージ通知（別タブを開いている時など）
             if(!isFirstLoad && messages.length > 0 && document.visibilityState === 'hidden') {
                 const lastMsg = messages[messages.length - 1];
                 if(lastMsg.senderId !== CURRENT_USER.id) {
@@ -373,8 +413,6 @@ const App = {
 
                 const timeStr = msg.createdAt ? Utils.formatTime(msg.createdAt.toDate()) : '...';
 
-                // HTML構造：時間（上）→ バブル（下）
-                // 相手の場合：アイコン（左）→ ラッパー（時間→バブル）
                 if (!isMe) {
                     row.innerHTML = `
                         <div class="user-icon small">${msg.senderIcon}</div>
@@ -394,7 +432,6 @@ const App = {
                 container.appendChild(row);
             });
             
-            // スクロール制御（修正済み）
             const mainScroll = document.getElementById('main-scroll');
             const chatTab = document.getElementById('tab-chat');
             if (mainScroll && chatTab && chatTab.classList.contains('active')) {
@@ -406,7 +443,6 @@ const App = {
     async sendChatMessage() {
         const input = document.getElementById('chat-input-text');
         const text = input.value.trim();
-        // 画像もテキストも無い場合は送信不可
         if (!text && !chatImageBase64) return;
         
         const targetMemberId = CURRENT_USER.role === 'member' ? CURRENT_USER.id : currentChatTargetId;
@@ -423,7 +459,6 @@ const App = {
     async submitForm() {
         const type = document.getElementById('form-type').value;
         const body = document.getElementById('form-body').value;
-        // 詳細なしでもOK、ただし画像も詳細もなければエラー
         if (!body && !formImageBase64) { 
             if(!confirm('詳細も画像もありませんが送信しますか？')) return; 
         }
@@ -462,7 +497,8 @@ const App = {
             formImageBase64 = null;
             document.getElementById('form-image-preview').innerHTML = '';
             document.getElementById('form-image-preview').classList.add('d-none');
-            document.querySelector('[data-target="#tab-inbox"]').click();
+            
+            // ★修正：送信後は勝手に受信箱に戻さない（続けて作業できるように）
         } catch(e) { console.error(e); alert('エラー発生'); }
     },
     
@@ -486,19 +522,24 @@ const App = {
                 const titleMap = { '#tab-inbox': '受信箱', '#tab-chat': 'メッセージ', '#tab-form': labelForm, '#tab-calendar': 'カレンダー' };
                 document.getElementById('header-title').textContent = titleMap[targetId];
 
-                if (targetId === '#tab-chat' && CURRENT_USER.role === 'leader' && !currentChatTargetId) {
-                    this.renderLeaderChatList();
-                }
-                
+                // チャットタブ切り替え時の制御
                 const chatInput = document.getElementById('chat-input-area');
                 if (targetId === '#tab-chat') {
-                     if (!(CURRENT_USER.role === 'leader' && !currentChatTargetId)) {
-                         chatInput.classList.remove('d-none');
-                         // タブ開いた時も最下部へ
-                         if(mainScroll) mainScroll.scrollTop = mainScroll.scrollHeight;
-                     } else {
-                         chatInput.classList.add('d-none');
-                     }
+                    if (CURRENT_USER.role === 'leader') {
+                        if (!currentChatTargetId) {
+                            // メンバー未選択
+                            this.renderLeaderChatList();
+                        } else {
+                            // メンバー選択済みなら詳細表示（ただしタブ切り替えでDOMが残っている場合のみ）
+                            document.getElementById('chat-container').classList.add('d-none');
+                            document.getElementById('chat-detail-container').classList.remove('d-none');
+                            chatInput.classList.remove('d-none');
+                        }
+                    } else {
+                        // メンバーは即詳細
+                        chatInput.classList.remove('d-none');
+                        if(mainScroll) mainScroll.scrollTop = mainScroll.scrollHeight;
+                    }
                 } else {
                     chatInput.classList.add('d-none');
                 }
