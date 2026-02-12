@@ -29,7 +29,7 @@ const App = {
             
             this.setupLogin();
             this.setupTabs();
-            this.setupImageInputs(); // 画像入力のセットアップ
+            this.setupImageInputs();
             
         } catch (e) {
             console.error("Init Error", e);
@@ -68,11 +68,10 @@ const App = {
         // メンバーなら、チャット相手は自動的に「自グループのリーダー」に固定
         if (user.role === 'member') {
             const leader = CONFIG_USERS.find(u => u.group === user.group && u.role === 'leader');
-            if (leader) currentChatTargetId = user.id; // メンバー視点では自分のIDでsubscribe
+            if (leader) currentChatTargetId = user.id; 
             this.startChatListener();
         }
 
-        // ★カレンダー起動
         Calendar.init(user);
     },
 
@@ -88,8 +87,6 @@ const App = {
             navForm.textContent = "指示";
             titleLabel.textContent = "メンバーへ指示";
             CONFIG_SETTINGS.instructionTypes.forEach(t => typeSelect.add(new Option(t, t)));
-            
-            // リーダーの場合、チャットタブは初期状態では「メンバーリスト」を表示する
             this.renderLeaderChatList();
         } else {
             navChat.textContent = "報告";
@@ -98,7 +95,6 @@ const App = {
             CONFIG_SETTINGS.applicationTypes.forEach(t => typeSelect.add(new Option(t, t)));
         }
         
-        // イベント設定
         document.getElementById('submit-form-btn').onclick = () => this.submitForm();
         document.getElementById('send-chat-btn').onclick = () => this.sendChatMessage();
     },
@@ -120,7 +116,6 @@ const App = {
             items.forEach(item => {
                 const stInfo = CONFIG_SETTINGS.statusLabels[item.status] || { label: item.status, color: 'bg-secondary' };
                 
-                // 画像がある場合のHTML
                 let imageHtml = '';
                 if (item.image) {
                     imageHtml = `<div class="mt-2"><img src="${item.image}" class="img-fluid rounded border" style="max-height: 150px;"></div>`;
@@ -169,7 +164,6 @@ const App = {
 
     // --- 画像処理関連 ---
     setupImageInputs() {
-        // 1. チャット用画像 (ボタンクリックで隠しinputを発火)
         const plusBtn = document.querySelector('#chat-input-area .btn-secondary');
         if (plusBtn) {
             const hiddenInput = document.createElement('input');
@@ -198,7 +192,6 @@ const App = {
             };
         }
 
-        // 2. フォーム用画像
         const formFileIn = document.querySelector('#tab-form input[type="file"]');
         if (formFileIn) {
             formFileIn.addEventListener('change', async (e) => {
@@ -234,11 +227,10 @@ const App = {
         };
     },
 
-    // --- チャット機能 (Chat) ---
+    // --- チャット機能 ---
     renderLeaderChatList() {
         const container = document.getElementById('chat-container');
         container.innerHTML = `<h6 class="px-2 py-3 text-muted border-bottom">メンバーを選択して連絡</h6>`;
-        
         const myMembers = CONFIG_USERS.filter(u => u.group === CURRENT_USER.group && u.role === 'member');
         
         myMembers.forEach(m => {
@@ -297,36 +289,31 @@ const App = {
                 `;
                 container.appendChild(row);
             });
-            window.scrollTo(0, document.body.scrollHeight);
+            // チャットの時だけ一番下にスクロールさせる
+            const mainScroll = document.getElementById('main-scroll');
+            if (mainScroll) mainScroll.scrollTop = mainScroll.scrollHeight;
         });
     },
 
     async sendChatMessage() {
         const input = document.getElementById('chat-input-text');
         const text = input.value.trim();
-        
         if (!text && !chatImageBase64) return;
         
         const targetMemberId = CURRENT_USER.role === 'member' ? CURRENT_USER.id : currentChatTargetId;
-        
         try {
             await DB.sendMessage(CURRENT_USER.group, targetMemberId, CURRENT_USER, text, chatImageBase64);
             input.value = '';
-            // 画像リセット
             chatImageBase64 = null;
             document.getElementById('chat-image-preview').innerHTML = '';
             document.getElementById('chat-image-preview').classList.add('d-none');
-        } catch (e) {
-            console.error(e);
-            alert('送信失敗');
-        }
+        } catch (e) { console.error(e); alert('送信失敗'); }
     },
 
-    // --- 申請・指示フォーム送信 ---
+    // --- 申請フォーム ---
     async submitForm() {
         const type = document.getElementById('form-type').value;
         const body = document.getElementById('form-body').value;
-        
         if (!body && !formImageBase64) { alert('内容を入力してください'); return; }
         
         let targetId = null;
@@ -349,10 +336,8 @@ const App = {
 
         try {
             await DB.submitForm({
-                category,
-                type,
-                body,
-                image: formImageBase64, // 画像データを送信
+                category, type, body,
+                image: formImageBase64,
                 applicantId: CURRENT_USER.id,
                 applicantName: CURRENT_USER.name,
                 targetId: targetId,
@@ -361,18 +346,14 @@ const App = {
             });
             alert('送信しました');
             document.getElementById('form-body').value = '';
-            
-            // 画像リセット
             formImageBase64 = null;
             document.getElementById('form-image-preview').innerHTML = '';
             document.getElementById('form-image-preview').classList.add('d-none');
-            
-            // 受信箱タブへ移動
             document.querySelector('[data-target="#tab-inbox"]').click();
         } catch(e) { console.error(e); alert('エラー発生'); }
     },
     
-    // --- 共通 ---
+    // --- タブ切り替え ---
     setupTabs() {
         const navLinks = document.querySelectorAll('.nav-link[data-target]');
         navLinks.forEach(link => {
@@ -385,6 +366,10 @@ const App = {
                 document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('show', 'active'));
                 document.querySelector(targetId).classList.add('show', 'active');
                 
+                // ★追加：タブ切り替え時に強制的に一番上までスクロールさせる
+                const mainScroll = document.getElementById('main-scroll');
+                if (mainScroll) mainScroll.scrollTop = 0;
+
                 const labelChat = document.getElementById('nav-label-chat').textContent;
                 const labelForm = document.getElementById('nav-label-form').textContent;
                 const titleMap = { '#tab-inbox': '受信箱', '#tab-chat': labelChat, '#tab-form': labelForm, '#tab-calendar': '予定' };
@@ -392,6 +377,17 @@ const App = {
 
                 if (targetId === '#tab-chat' && CURRENT_USER.role === 'leader' && !currentChatTargetId) {
                     this.renderLeaderChatList();
+                }
+                
+                // チャットの入力欄の表示制御
+                const chatInput = document.getElementById('chat-input-area');
+                if (targetId === '#tab-chat') {
+                     // チャット画面では、リーダーでメンバー未選択時以外は表示
+                     if (!(CURRENT_USER.role === 'leader' && !currentChatTargetId)) {
+                         chatInput.classList.remove('d-none');
+                     }
+                } else {
+                    chatInput.classList.add('d-none');
                 }
             });
         });
