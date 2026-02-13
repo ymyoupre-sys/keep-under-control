@@ -12,8 +12,8 @@ let unsubscribeInbox = null;
 let unsubscribeChat = null;
 
 let currentChatTargetId = null; 
-let chatImagesBase64 = []; // 複数画像用配列
-let formImagesBase64 = []; // 複数画像用配列
+let chatImagesBase64 = []; 
+let formImagesBase64 = []; 
 
 const App = {
     async init() {
@@ -28,7 +28,6 @@ const App = {
             this.setupLogin();
             this.setupTabs();
             this.setupImageInputs();
-            this.setupPullToRefresh();
             this.setupTextareaAutoResize();
 
         } catch (e) {
@@ -75,7 +74,6 @@ const App = {
             document.querySelectorAll('.role-member').forEach(el => el.classList.remove('d-none'));
         }
 
-        // 申請/指示のプルダウン作成
         const typeSelect = document.getElementById('form-type-select');
         typeSelect.innerHTML = '';
         const types = CURRENT_USER.role === 'leader' ? CONFIG_SETTINGS.instructionTypes : CONFIG_SETTINGS.applicationTypes;
@@ -90,41 +88,9 @@ const App = {
         this.setupNotifications();
         Calendar.init(CURRENT_USER);
 
-        // 前回のタブを復元 (デフォルトは受信箱)
         const savedTab = sessionStorage.getItem('activeTab') || '#tab-inbox';
         const targetNav = document.querySelector(`.bottom-nav-item[href="${savedTab}"]`);
         if(targetNav) targetNav.click();
-    },
-
-    // --- プルリフレッシュ (引っ張って更新) ---
-    setupPullToRefresh() {
-        let touchstartY = 0;
-        const scrollArea = document.getElementById('scrollable-content');
-        const indicator = document.getElementById('ptr-indicator');
-
-        scrollArea.addEventListener('touchstart', e => {
-            if (scrollArea.scrollTop === 0) touchstartY = e.touches[0].clientY;
-        }, {passive: true});
-
-        scrollArea.addEventListener('touchmove', e => {
-            if (scrollArea.scrollTop === 0 && touchstartY > 0) {
-                const dy = e.touches[0].clientY - touchstartY;
-                if (dy > 0 && dy < 100) {
-                    indicator.style.height = `${dy}px`;
-                    indicator.style.lineHeight = `${dy}px`;
-                }
-            }
-        }, {passive: true});
-
-        scrollArea.addEventListener('touchend', e => {
-            if (indicator.style.height && parseInt(indicator.style.height) > 60) {
-                indicator.textContent = "更新中...";
-                location.reload();
-            } else {
-                indicator.style.height = '0';
-            }
-            touchstartY = 0;
-        });
     },
 
     setupTabs() {
@@ -135,7 +101,7 @@ const App = {
                 item.classList.add('active');
                 
                 const targetId = item.getAttribute('href');
-                sessionStorage.setItem('activeTab', targetId); // タブ状態保存
+                sessionStorage.setItem('activeTab', targetId); 
 
                 document.querySelectorAll('.tab-content').forEach(content => content.classList.add('d-none'));
                 document.querySelector(targetId).classList.remove('d-none');
@@ -146,11 +112,8 @@ const App = {
                 const chatInput = document.getElementById('chat-input-area');
                 if (targetId === '#tab-chat') {
                     const chatDetail = document.getElementById('chat-detail-container');
-                    if (chatDetail && !chatDetail.classList.contains('d-none')) {
-                         chatInput.classList.remove('d-none');
-                    } else {
-                         chatInput.classList.add('d-none');
-                    }
+                    if (chatDetail && !chatDetail.classList.contains('d-none')) chatInput.classList.remove('d-none');
+                    else chatInput.classList.add('d-none');
                 } else {
                     chatInput.classList.add('d-none');
                 }
@@ -164,7 +127,6 @@ const App = {
             }
         });
 
-        // モーダルの画像フルスクリーン表示機能
         window.openFullscreenImage = (src) => {
             document.getElementById('fullscreen-img').src = src;
             const modal = new bootstrap.Modal(document.getElementById('imageFullscreenModal'));
@@ -174,7 +136,6 @@ const App = {
 
     // --- チャット関連 ---
     renderChatList() {
-        // 同じグループの自分以外全員をリスト表示（リーダーもメンバーも）
         const targets = CONFIG_USERS.filter(u => u.group === CURRENT_USER.group && u.id !== CURRENT_USER.id);
         const container = document.getElementById('chat-list');
         container.innerHTML = '';
@@ -212,12 +173,11 @@ const App = {
                 const hasReacted = msg.reactions && msg.reactions.includes(CURRENT_USER.id);
                 
                 const div = document.createElement('div');
-                div.className = `d-flex mb-3 ${isMe ? 'justify-content-end' : 'justify-content-start'}`;
+                // ★修正：align-items-start でアイコンと吹き出しの上端を揃える
+                div.className = `d-flex mb-3 align-items-start ${isMe ? 'justify-content-end' : 'justify-content-start'}`;
                 
-                // アイコンHTML
-                const iconHtml = !isMe ? `<div class="me-2" style="font-size:24px;">${msg.senderIcon}</div>` : '';
+                const iconHtml = !isMe ? `<div class="me-2" style="font-size:32px; line-height:1;">${msg.senderIcon}</div>` : '';
                 
-                // 画像ギャラリーHTML
                 let imagesHtml = '';
                 if(msg.images && msg.images.length > 0) {
                     imagesHtml = `<div class="d-flex flex-wrap gap-1 mt-1">`;
@@ -227,13 +187,12 @@ const App = {
                     imagesHtml += `</div>`;
                 }
 
-                // テキストHTML
                 let textHtml = '';
                 if(msg.text) {
                     textHtml = `<div class="p-2 rounded ${isMe ? 'text-dark' : 'bg-white border text-dark'}" style="background-color: ${isMe ? 'var(--chat-me-bg)' : ''};">${msg.text}</div>`;
                 }
 
-                const editedLabel = msg.isEdited ? `<div class="small text-muted text-end" style="font-size:10px;">編集済</div>` : '';
+                const editedLabel = msg.isEdited ? `<div class="small text-muted text-end mt-1" style="font-size:10px;">編集済</div>` : '';
                 const reactionHtml = reactionsCount > 0 ? `<div class="reaction-badge text-danger"><i class="${hasReacted ? 'bi bi-heart-fill' : 'bi bi-heart'}"></i> ${reactionsCount}</div>` : '';
 
                 div.innerHTML = `
@@ -246,7 +205,6 @@ const App = {
                     </div>
                 `;
 
-                // 長押しでいいね
                 let pressTimer;
                 const bubble = div.querySelector('.chat-bubble');
                 bubble.addEventListener('touchstart', () => {
@@ -254,7 +212,6 @@ const App = {
                 }, {passive:true});
                 bubble.addEventListener('touchend', () => clearTimeout(pressTimer));
 
-                // 自分のメッセージをタップで編集
                 if (isMe && msg.text) {
                     bubble.onclick = () => {
                         const newText = prompt("メッセージを編集しますか？", msg.text);
@@ -269,7 +226,6 @@ const App = {
             window.scrollTo(0, document.body.scrollHeight);
         });
         
-        // 戻るボタンでリストへ（アプリは終了しない）
         document.getElementById('back-to-chat-list').onclick = () => {
              document.getElementById('chat-detail-container').classList.add('d-none');
              document.getElementById('chat-input-area').classList.add('d-none');
@@ -285,7 +241,7 @@ const App = {
             
             await DB.sendMessage(groupId, myId, targetId, CURRENT_USER, text, chatImagesBase64);
             input.value = '';
-            input.style.height = '38px'; // 高さリセット
+            input.style.height = '38px'; 
             chatImagesBase64 = [];
             this.updateImagePreview('chat-image-preview', chatImagesBase64);
         };
@@ -300,26 +256,28 @@ const App = {
             listContainer.innerHTML = '';
 
             apps.forEach(app => {
-                // リーダーは全て、メンバーは自分が作ったものか、リーダーの指示(type=instruction)を表示
                 if(CURRENT_USER.role === 'member' && app.userId !== CURRENT_USER.id && app.type !== 'instruction') return;
 
                 const div = document.createElement('div');
-                div.className = 'card mb-2 p-2 border-start border-4 clickable';
-                // 未承認なら左端の色を変える
+                div.className = 'card mb-2 p-2 border-start border-4 clickable shadow-sm';
                 div.style.borderLeftColor = app.status === 'pending' ? '#ffc107' : (app.status === 'approved' ? '#198754' : '#dc3545');
                 
+                // ★修正：「指示」と「申請」の色・形を分ける
+                const badgeHtml = app.type === 'instruction' 
+                    ? `<span class="badge bg-primary rounded-pill mb-1 px-3 py-1">指示</span>`
+                    : `<span class="badge border border-secondary text-secondary mb-1 px-3 py-1">申請</span>`;
+
                 div.innerHTML = `
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <span class="badge bg-secondary mb-1">${app.type === 'instruction' ? '指示' : '申請'}</span>
-                            <strong class="ms-1">${app.title}</strong>
+                            ${badgeHtml}
+                            <strong class="ms-1 d-block mt-1">${app.title}</strong>
                         </div>
-                        <span class="badge ${CONFIG_SETTINGS.statusLabels[app.status]?.color || 'bg-secondary'}">${CONFIG_SETTINGS.statusLabels[app.status]?.label || app.status}</span>
+                        <span class="badge ${CONFIG_SETTINGS.statusLabels[app.status]?.color || 'bg-secondary'} mt-1">${CONFIG_SETTINGS.statusLabels[app.status]?.label || app.status}</span>
                     </div>
-                    <div class="small text-muted mt-1">${app.userName} - ${app.createdDateStr}</div>
+                    <div class="small text-muted mt-2">${app.userName} - ${app.createdDateStr}</div>
                 `;
                 
-                // タップで詳細モーダルを開く
                 div.onclick = () => this.showInboxDetail(app);
                 listContainer.appendChild(div);
             });
@@ -332,42 +290,51 @@ const App = {
         document.getElementById('detail-date').textContent = appData.createdDateStr;
         document.getElementById('detail-content').textContent = appData.content || '（内容なし）';
 
-        // 複数画像の表示
         const imgContainer = document.getElementById('detail-images');
         imgContainer.innerHTML = '';
         if(appData.images && appData.images.length > 0) {
             appData.images.forEach(img => {
                 const el = document.createElement('img');
                 el.src = img;
-                el.className = 'image-preview-item';
+                el.className = 'image-preview-item clickable';
                 el.onclick = () => window.openFullscreenImage(img);
                 imgContainer.appendChild(el);
             });
         }
 
-        // リーダー用アクションの表示制御
         const leaderArea = document.getElementById('leader-judge-area');
-        if (CURRENT_USER.role === 'leader' && appData.type !== 'instruction') {
-            leaderArea.classList.remove('d-none');
-            const commentInput = document.getElementById('judge-comment');
-            commentInput.value = appData.resultComment || '';
+        const deleteBtn = document.getElementById('btn-delete-app');
 
-            // 承認・却下ボタン
-            document.getElementById('btn-approve').onclick = () => DB.updateStatus(appData.id, 'approved', commentInput.value, CURRENT_USER.id);
-            document.getElementById('btn-reject').onclick = () => DB.updateStatus(appData.id, 'rejected', commentInput.value, CURRENT_USER.id);
+        if (CURRENT_USER.role === 'leader') {
+            leaderArea.classList.remove('d-none');
             
-            // 取り消しボタン（判定済みなら表示）
-            const cancelBtn = document.getElementById('btn-cancel-judge');
-            if(appData.status !== 'pending') {
-                cancelBtn.classList.remove('d-none');
-                cancelBtn.onclick = () => DB.updateStatus(appData.id, 'pending', '', CURRENT_USER.id);
+            // 申請の場合のみ承認/却下ボタンを見せる
+            if (appData.type !== 'instruction') {
+                document.getElementById('judge-comment').parentElement.classList.remove('d-none');
+                document.getElementById('btn-approve').parentElement.classList.remove('d-none');
+                
+                const commentInput = document.getElementById('judge-comment');
+                commentInput.value = appData.resultComment || '';
+                document.getElementById('btn-approve').onclick = () => DB.updateStatus(appData.id, 'approved', commentInput.value, CURRENT_USER.id);
+                document.getElementById('btn-reject').onclick = () => DB.updateStatus(appData.id, 'rejected', commentInput.value, CURRENT_USER.id);
+                
+                const cancelBtn = document.getElementById('btn-cancel-judge');
+                if(appData.status !== 'pending') {
+                    cancelBtn.classList.remove('d-none');
+                    cancelBtn.onclick = () => DB.updateStatus(appData.id, 'pending', '', CURRENT_USER.id);
+                } else {
+                    cancelBtn.classList.add('d-none');
+                }
             } else {
-                cancelBtn.classList.add('d-none');
+                // 指示の場合は承認欄を隠す
+                document.getElementById('judge-comment').parentElement.classList.add('d-none');
+                document.getElementById('btn-approve').parentElement.classList.add('d-none');
+                document.getElementById('btn-cancel-judge').classList.add('d-none');
             }
 
-            // 削除ボタン
-            document.getElementById('btn-delete-app').onclick = async () => {
-                if(confirm("この申請を削除しますか？")) {
+            // ★修正：リーダーなら「申請」も「指示」も削除可能。再確認アラート追加。
+            deleteBtn.onclick = async () => {
+                if(confirm("本当にこの項目を削除しますか？\n（削除後は元に戻せません）")) {
                     await DB.deleteApplication(appData.id);
                     bootstrap.Modal.getInstance(document.getElementById('inboxDetailModal')).hide();
                 }
@@ -415,7 +382,7 @@ const App = {
             `;
             wrapper.querySelector('button').onclick = () => {
                 imageArray.splice(index, 1);
-                this.updateImagePreview(containerId, imageArray); // 再描画して削除を反映
+                this.updateImagePreview(containerId, imageArray); 
             };
             container.appendChild(wrapper);
         });
@@ -426,7 +393,7 @@ const App = {
         tx.setAttribute('style', 'height:38px; overflow-y:hidden; resize:none;');
         tx.addEventListener("input", function() {
             this.style.height = 'auto';
-            const newHeight = Math.min(this.scrollHeight, 100); // 最大100pxまで
+            const newHeight = Math.min(this.scrollHeight, 100); 
             this.style.height = newHeight + "px";
             if(newHeight >= 100) this.style.overflowY = 'auto';
         }, false);
@@ -452,7 +419,7 @@ const App = {
             document.getElementById('form-content').value = '';
             formImagesBase64 = [];
             this.updateImagePreview('form-image-preview', formImagesBase64);
-            document.querySelector('.bottom-nav-item[href="#tab-inbox"]').click(); // 送信後は受信箱へ
+            document.querySelector('.bottom-nav-item[href="#tab-inbox"]').click(); 
         } catch(e) { console.error(e); alert('送信に失敗しました'); }
     },
 
@@ -462,7 +429,8 @@ const App = {
             if (permission === 'granted') {
                 const registration = await navigator.serviceWorker.register('sw.js');
                 const token = await getToken(messaging, { 
-                    vapidKey: "BMdNlbLwC3bEwAIp-ZG9Uwp-5n4HdyXvlsqJbt6Q5YRdCA7gUexx0G9MpjB3AdLk6iNJodLTobC3-bGG6YskB0s",
+                    // ★重要：ご自身のVAPIDキーをここに記載してください
+                    vapidKey: "BMdNlbLwC3bEwAIp-ZG9Uwp-5n4HdyXvlsqJbt6Q5YRdCA7gUexx0G9MpjB3AdLk6iNJodLTobC3-bGG6YskB0s", 
                     serviceWorkerRegistration: registration
                 });
                 if (token) await DB.saveUserToken(CURRENT_USER, token);
@@ -475,4 +443,3 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
-
