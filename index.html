@@ -31,50 +31,49 @@
     <div id="main-screen" class="d-none">
         
         <header class="fixed-top bg-white border-bottom px-3 py-2 d-flex justify-content-between align-items-center" style="height: 60px;">
-            <span class="fw-bold" id="header-title">チャット</span>
+            <span class="fw-bold" id="header-title">受信箱</span>
             <div class="d-flex align-items-center">
                 <span id="user-name-display" class="me-2 small text-muted"></span>
                 <button id="logout-btn" class="btn btn-sm btn-outline-secondary"><i class="bi bi-box-arrow-right"></i></button>
             </div>
         </header>
 
-        <div class="container-fluid pt-5 pb-5 mt-4">
-            
-            <div id="tab-chat" class="tab-content">
-                <div id="chat-container" class="role-leader">
-                    <div id="chat-list" class="list-group list-group-flush">
-                        </div>
-                </div>
+        <div id="ptr-indicator" style="margin-top: 60px;">↓ 引っ張って更新</div>
 
-                <div id="chat-detail-container" class="d-none bg-light" style="position:fixed; top:60px; bottom:60px; left:0; width:100%; z-index:100; overflow-y:auto;">
-                    <div class="p-2 bg-white border-bottom sticky-top d-flex align-items-center">
-                        <button id="back-to-chat-list" class="btn btn-sm role-leader"><i class="bi bi-chevron-left"></i></button>
-                        <span id="chat-target-name" class="ms-2 fw-bold"></span>
-                    </div>
-                    <div id="chat-messages" class="p-3">
-                        </div>
-                </div>
+        <div id="scrollable-content" class="container-fluid pt-2 pb-5 mb-5" style="height: calc(100vh - 120px); overflow-y: auto;">
+            
+            <div id="tab-inbox" class="tab-content">
+                <div id="inbox-list"></div>
             </div>
 
-            <div id="tab-inbox" class="tab-content d-none">
-                <div id="inbox-list">
+            <div id="tab-chat" class="tab-content d-none">
+                <div id="chat-container">
+                    <div id="chat-list" class="list-group list-group-flush"></div>
+                </div>
+
+                <div id="chat-detail-container" class="d-none bg-light" style="position:fixed; top:60px; bottom:60px; left:0; width:100%; z-index:100; overflow-y:auto; padding-bottom: 20px;">
+                    <div class="p-2 bg-white border-bottom sticky-top d-flex align-items-center">
+                        <button id="back-to-chat-list" class="btn btn-sm"><i class="bi bi-chevron-left"></i></button>
+                        <span id="chat-target-name" class="ms-2 fw-bold"></span>
                     </div>
+                    <div id="chat-messages" class="p-3"></div>
+                </div>
             </div>
 
             <div id="tab-form" class="tab-content d-none">
                 <div class="card p-3 border-0">
                     <div class="mb-3">
-                        <label class="form-label">件名</label>
-                        <input type="text" id="form-title" class="form-control">
+                        <label class="form-label fw-bold"><span class="role-member">申請</span><span class="role-leader d-none">指示</span>の種類</label>
+                        <select id="form-type-select" class="form-select"></select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">内容</label>
+                        <label class="form-label fw-bold">内容 <span class="text-muted small">(任意)</span></label>
                         <textarea id="form-content" class="form-control" rows="5"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">画像添付</label>
-                        <input type="file" id="form-image-file" class="form-control" accept="image/*">
-                        <div id="form-image-preview" class="mt-2"></div>
+                        <label class="form-label fw-bold">画像添付 <span class="text-muted small">(最大4枚)</span></label>
+                        <input type="file" id="form-image-file" class="form-control" accept="image/*" multiple>
+                        <div id="form-image-preview" class="image-preview-container mt-2"></div>
                     </div>
                     <button id="form-submit-btn" class="btn btn-success w-100">送信</button>
                 </div>
@@ -83,13 +82,16 @@
             <div id="tab-calendar" class="tab-content d-none">
                 <div class="d-flex justify-content-between align-items-center mb-3 px-2">
                     <button id="cal-prev-btn" class="btn btn-sm btn-outline-secondary">&lt;</button>
-                    <h5 id="cal-month-label" class="m-0"></h5>
+                    <h5 id="cal-month-label" class="m-0 fw-bold"></h5>
                     <button id="cal-next-btn" class="btn btn-sm btn-outline-secondary">&gt;</button>
                 </div>
-                <div id="calendar-grid" class="border bg-white"></div>
-                <div class="mt-3 text-end">
-                    <button class="btn btn-primary rounded-circle shadow" data-bs-toggle="modal" data-bs-target="#eventModal" style="width:50px; height:50px;">
-                        <i class="bi bi-plus-lg"></i>
+                <div id="calendar-grid" class="border bg-white mb-4"></div>
+                
+                <div id="calendar-grid-next" class="border bg-white role-leader d-none"></div>
+
+                <div class="mt-3 text-end" style="position: fixed; bottom: 80px; right: 20px; z-index: 90;">
+                    <button class="btn btn-primary rounded-circle shadow" data-bs-toggle="modal" data-bs-target="#eventModal" style="width:60px; height:60px; font-size: 24px;">
+                        <i class="bi bi-plus"></i>
                     </button>
                 </div>
             </div>
@@ -97,54 +99,87 @@
         </div>
 
         <div id="chat-input-area" class="fixed-bottom bg-white border-top p-2 d-none" style="bottom:60px; z-index:1050;">
-            <div id="chat-image-preview" class="mb-1"></div>
-            <div class="input-group">
-                <label class="btn btn-outline-secondary">
+            <div id="chat-image-preview" class="image-preview-container mb-1"></div>
+            <div class="input-group align-items-end">
+                <label class="btn btn-outline-secondary mb-0" style="height: 38px;">
                     <i class="bi bi-image"></i>
-                    <input type="file" id="chat-image-file" hidden accept="image/*">
+                    <input type="file" id="chat-image-file" hidden accept="image/*" multiple>
                 </label>
-                <input type="text" id="chat-message-input" class="form-control" placeholder="メッセージ...">
-                <button id="chat-send-btn" class="btn btn-success"><i class="bi bi-send"></i></button>
+                <textarea id="chat-message-input" class="form-control" rows="1" style="resize: none; overflow-y: hidden;" placeholder="メッセージ..."></textarea>
+                <button id="chat-send-btn" class="btn btn-success" style="height: 38px;"><i class="bi bi-send"></i></button>
             </div>
         </div>
 
         <nav class="bottom-nav fixed-bottom bg-white border-top d-flex justify-content-around py-2" style="height:60px; z-index:1060;">
-            <a href="#tab-chat" class="bottom-nav-item active text-decoration-none text-center text-secondary" style="flex:1;">
-                <i class="bi bi-chat-dots fs-4"></i>
-                <div style="font-size:10px;">チャット</div>
-            </a>
-            <a href="#tab-inbox" class="bottom-nav-item text-decoration-none text-center text-secondary" style="flex:1;">
+            <a href="#tab-inbox" class="bottom-nav-item active text-decoration-none text-center text-secondary" style="flex:1;">
                 <i class="bi bi-inbox fs-4"></i>
                 <div style="font-size:10px;">受信箱</div>
             </a>
+            <a href="#tab-chat" class="bottom-nav-item text-decoration-none text-center text-secondary" style="flex:1;">
+                <i class="bi bi-chat-dots fs-4"></i>
+                <div style="font-size:10px;">チャット</div>
+            </a>
             <a href="#tab-form" class="bottom-nav-item text-decoration-none text-center text-secondary" style="flex:1;">
                 <i class="bi bi-pencil-square fs-4"></i>
-                <div style="font-size:10px;">作成</div>
+                <div style="font-size:10px;"><span class="role-member">申請</span><span class="role-leader d-none">指示</span></div>
             </a>
             <a href="#tab-calendar" class="bottom-nav-item text-decoration-none text-center text-secondary" style="flex:1;">
                 <i class="bi bi-calendar3 fs-4"></i>
-                <div style="font-size:10px;">予定</div>
+                <div style="font-size:10px;">カレンダー</div>
             </a>
         </nav>
-    </div> <div class="modal fade" id="eventModal" tabindex="-1">
+    </div> <div class="modal fade" id="imageFullscreenModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+            <div class="modal-content bg-transparent border-0">
+                <div class="modal-header border-0 pb-0">
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center d-flex align-items-center justify-content-center" style="height: 80vh;">
+                    <img id="fullscreen-img" src="" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="inboxDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="detail-title"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2 small text-muted">送信者: <span id="detail-sender"></span> | 日時: <span id="detail-date"></span></div>
+                    <div class="mb-3 p-3 bg-light rounded" id="detail-content" style="white-space: pre-wrap;"></div>
+                    <div id="detail-images" class="image-preview-container mb-3"></div>
+                    
+                    <div id="leader-judge-area" class="role-leader d-none border-top pt-3 mt-3">
+                        <label class="form-label fw-bold">判定コメント (任意)</label>
+                        <textarea id="judge-comment" class="form-control mb-2" rows="2"></textarea>
+                        <div class="d-flex justify-content-between gap-2 mb-2">
+                            <button id="btn-approve" class="btn btn-success flex-fill">承認する</button>
+                            <button id="btn-reject" class="btn btn-danger flex-fill">却下する</button>
+                        </div>
+                        <div class="d-flex justify-content-between gap-2">
+                            <button id="btn-cancel-judge" class="btn btn-warning flex-fill d-none">判定を取り消す</button>
+                            <button id="btn-delete-app" class="btn btn-outline-danger flex-fill">この申請を削除</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="eventModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header"><h5 class="modal-title">予定の追加</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <div class="row mb-3">
-                        <div class="col-6">
-                            <label class="form-label small text-muted">開始日</label>
-                            <input type="date" id="event-start-date" class="form-control">
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label small text-muted">終了日</label>
-                            <input type="date" id="event-end-date" class="form-control">
-                        </div>
+                        <div class="col-6"><label class="form-label small text-muted">開始日</label><input type="date" id="event-start-date" class="form-control"></div>
+                        <div class="col-6"><label class="form-label small text-muted">終了日</label><input type="date" id="event-end-date" class="form-control"></div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">予定の内容</label>
-                        <input type="text" id="event-title-input" class="form-control" placeholder="例: 外出、出社、在宅など">
-                    </div>
+                    <div class="mb-3"><label class="form-label">予定の内容</label><input type="text" id="event-title-input" class="form-control" placeholder="例: 外出、出社、在宅など"></div>
                 </div>
                 <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button><button type="button" id="save-event-btn" class="btn btn-success">保存</button></div>
             </div>
