@@ -29,10 +29,25 @@ const App = {
             this.setupTabs();
             this.setupImageInputs();
             this.setupTextareaAutoResize();
+            this.setupHistoryHandler();
 
         } catch (e) {
             console.error("Init Error", e);
         }
+    },
+
+    setupHistoryHandler() {
+        // スマホの「戻る」ボタンを押したときにチャットを閉じる処理
+        window.addEventListener('popstate', () => {
+             const chatDetail = document.getElementById('chat-detail-container');
+             if (chatDetail && !chatDetail.classList.contains('d-none')) {
+                 chatDetail.classList.add('d-none');
+                 document.getElementById('chat-input-area').classList.add('d-none');
+                 document.getElementById('chat-container').classList.remove('d-none');
+                 if(unsubscribeChat) unsubscribeChat();
+                 currentChatTargetId = null;
+             }
+        });
     },
 
     setupLogin() {
@@ -155,6 +170,8 @@ const App = {
     },
 
     openChat(groupId, myId, targetId, targetName) {
+        history.pushState({chat: true}, '', '#chat'); // 戻るボタン用の履歴追加
+
         currentChatTargetId = DB.getChatRoomId(groupId, myId, targetId);
 
         document.getElementById('chat-container').classList.add('d-none');
@@ -163,6 +180,8 @@ const App = {
         document.getElementById('chat-input-area').classList.remove('d-none');
 
         if(unsubscribeChat) unsubscribeChat();
+
+        const detailContainer = document.getElementById('chat-detail-container');
 
         unsubscribeChat = DB.subscribeChat(groupId, myId, targetId, (messages) => {
             const msgContainer = document.getElementById('chat-messages');
@@ -173,10 +192,10 @@ const App = {
                 const hasReacted = msg.reactions && msg.reactions.includes(CURRENT_USER.id);
                 
                 const div = document.createElement('div');
-                // ★修正：align-items-start でアイコンと吹き出しの上端を揃える
-                div.className = `d-flex mb-3 align-items-start ${isMe ? 'justify-content-end' : 'justify-content-start'}`;
+                // アイコンと吹き出しを密着・上揃え・間隔を詰める
+                div.className = `d-flex mb-2 align-items-start ${isMe ? 'justify-content-end' : 'justify-content-start'}`;
                 
-                const iconHtml = !isMe ? `<div class="me-2" style="font-size:32px; line-height:1;">${msg.senderIcon}</div>` : '';
+                const iconHtml = !isMe ? `<div class="me-1" style="font-size:24px; line-height:1; padding-top:2px;">${msg.senderIcon}</div>` : '';
                 
                 let imagesHtml = '';
                 if(msg.images && msg.images.length > 0) {
@@ -188,11 +207,15 @@ const App = {
                 }
 
                 let textHtml = '';
+                const editedLabel = msg.isEdited ? `<span class="text-muted ms-1" style="font-size:9px;">(編集済)</span>` : '';
+                
                 if(msg.text) {
-                    textHtml = `<div class="p-2 rounded ${isMe ? 'text-dark' : 'bg-white border text-dark'}" style="background-color: ${isMe ? 'var(--chat-me-bg)' : ''};">${msg.text}</div>`;
+                    textHtml = `<div class="p-2 rounded ${isMe ? 'text-dark' : 'bg-white border text-dark'}" style="background-color: ${isMe ? 'var(--chat-me-bg)' : ''}; display: inline-block;">${msg.text}${editedLabel}</div>`;
+                } else if (msg.isEdited) {
+                    // 画像のみの場合の編集済ラベル
+                    textHtml = `<div class="text-end w-100">${editedLabel}</div>`;
                 }
 
-                const editedLabel = msg.isEdited ? `<div class="small text-muted text-end mt-1" style="font-size:10px;">編集済</div>` : '';
                 const reactionHtml = reactionsCount > 0 ? `<div class="reaction-badge text-danger"><i class="${hasReacted ? 'bi bi-heart-fill' : 'bi bi-heart'}"></i> ${reactionsCount}</div>` : '';
 
                 div.innerHTML = `
@@ -200,19 +223,23 @@ const App = {
                     <div class="chat-bubble">
                         ${textHtml}
                         ${imagesHtml}
-                        ${editedLabel}
                         ${reactionHtml}
                     </div>
                 `;
 
-                let pressTimer;
-                const bubble = div.querySelector('.chat-bubble');
-                bubble.addEventListener('touchstart', () => {
-                    pressTimer = setTimeout(() => { DB.toggleReaction(groupId, myId, targetId, msg.id, CURRENT_USER.id); }, 500);
-                }, {passive:true});
-                bubble.addEventListener('touchend', () => clearTimeout(pressTimer));
+                // 他人のメッセージのみ長押しでいいね可能
+                if (!isMe) {
+                    let pressTimer;
+                    const bubble = div.querySelector('.chat-bubble');
+                    bubble.addEventListener('touchstart', () => {
+                        pressTimer = setTimeout(() => { DB.toggleReaction(groupId, myId, targetId, msg.id, CURRENT_USER.id); }, 500);
+                    }, {passive:true});
+                    bubble.addEventListener('touchend', () => clearTimeout(pressTimer));
+                }
 
+                // 自分のメッセージをタップで編集
                 if (isMe && msg.text) {
+                    const bubble = div.querySelector('.chat-bubble');
                     bubble.onclick = () => {
                         const newText = prompt("メッセージを編集しますか？", msg.text);
                         if (newText !== null && newText.trim() !== "" && newText !== msg.text) {
@@ -223,16 +250,12 @@ const App = {
 
                 msgContainer.appendChild(div);
             });
-            window.scrollTo(0, document.body.scrollHeight);
+            
+            // 自動で一番下までスクロール
+            setTimeout(() => { detailContainer.scrollTop = detailContainer.scrollHeight; }, 50);
         });
         
-        document.getElementById('back-to-chat-list').onclick = () => {
-             document.getElementById('chat-detail-container').classList.add('d-none');
-             document.getElementById('chat-input-area').classList.add('d-none');
-             document.getElementById('chat-container').classList.remove('d-none');
-             if(unsubscribeChat) unsubscribeChat();
-             currentChatTargetId = null;
-        };
+        document.getElementById('back-to-chat-list').onclick = () => history.back(); // 履歴を戻して閉じる
         
         document.getElementById('chat-send-btn').onclick = async () => {
             const input = document.getElementById('chat-message-input');
@@ -244,6 +267,8 @@ const App = {
             input.style.height = '38px'; 
             chatImagesBase64 = [];
             this.updateImagePreview('chat-image-preview', chatImagesBase64);
+            // 送信後もスクロール
+            setTimeout(() => { detailContainer.scrollTop = detailContainer.scrollHeight; }, 100);
         };
     },
     
@@ -259,16 +284,16 @@ const App = {
                 if(CURRENT_USER.role === 'member' && app.userId !== CURRENT_USER.id && app.type !== 'instruction') return;
 
                 const div = document.createElement('div');
-                div.className = 'card mb-2 p-2 border-start border-4 clickable shadow-sm';
+                div.className = 'card mb-2 p-2 border-start border-4 clickable shadow-sm position-relative';
                 div.style.borderLeftColor = app.status === 'pending' ? '#ffc107' : (app.status === 'approved' ? '#198754' : '#dc3545');
                 
-                // ★修正：「指示」と「申請」の色・形を分ける
+                // アイコンの形を統一（色は青のまま）
                 const badgeHtml = app.type === 'instruction' 
-                    ? `<span class="badge bg-primary rounded-pill mb-1 px-3 py-1">指示</span>`
+                    ? `<span class="badge bg-primary px-3 py-1 mb-1">指示</span>`
                     : `<span class="badge border border-secondary text-secondary mb-1 px-3 py-1">申請</span>`;
 
                 div.innerHTML = `
-                    <div class="d-flex justify-content-between align-items-start">
+                    <div class="d-flex justify-content-between align-items-start pe-4">
                         <div>
                             ${badgeHtml}
                             <strong class="ms-1 d-block mt-1">${app.title}</strong>
@@ -278,6 +303,21 @@ const App = {
                     <div class="small text-muted mt-2">${app.userName} - ${app.createdDateStr}</div>
                 `;
                 
+                // 右上の×ボタン作成（リーダーのみ）
+                if (CURRENT_USER.role === 'leader') {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = "btn btn-link text-muted p-0 position-absolute";
+                    deleteBtn.style.cssText = "top: 8px; right: 12px; z-index: 10;";
+                    deleteBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+                    deleteBtn.onclick = async (e) => {
+                        e.stopPropagation(); // モーダルが開くのを防ぐ
+                        if(confirm("本当にこの項目を削除しますか？\n（削除後は元に戻せません）")) {
+                            await DB.deleteApplication(app.id);
+                        }
+                    };
+                    div.appendChild(deleteBtn);
+                }
+
                 div.onclick = () => this.showInboxDetail(app);
                 listContainer.appendChild(div);
             });
@@ -303,42 +343,35 @@ const App = {
         }
 
         const leaderArea = document.getElementById('leader-judge-area');
-        const deleteBtn = document.getElementById('btn-delete-app');
 
         if (CURRENT_USER.role === 'leader') {
             leaderArea.classList.remove('d-none');
             
-            // 申請の場合のみ承認/却下ボタンを見せる
             if (appData.type !== 'instruction') {
-                document.getElementById('judge-comment').parentElement.classList.remove('d-none');
-                document.getElementById('btn-approve').parentElement.classList.remove('d-none');
-                
+                document.getElementById('judge-comment-area').classList.remove('d-none');
                 const commentInput = document.getElementById('judge-comment');
                 commentInput.value = appData.resultComment || '';
-                document.getElementById('btn-approve').onclick = () => DB.updateStatus(appData.id, 'approved', commentInput.value, CURRENT_USER.id);
-                document.getElementById('btn-reject').onclick = () => DB.updateStatus(appData.id, 'rejected', commentInput.value, CURRENT_USER.id);
-                
-                const cancelBtn = document.getElementById('btn-cancel-judge');
-                if(appData.status !== 'pending') {
-                    cancelBtn.classList.remove('d-none');
-                    cancelBtn.onclick = () => DB.updateStatus(appData.id, 'pending', '', CURRENT_USER.id);
+
+                if (appData.status === 'pending') {
+                    // 承認待ちの場合：承認/却下ボタンを表示、取り消しを非表示
+                    document.getElementById('judge-btn-group').classList.remove('d-none');
+                    document.getElementById('btn-cancel-judge').classList.add('d-none');
+                    
+                    document.getElementById('btn-approve').onclick = () => DB.updateStatus(appData.id, 'approved', commentInput.value, CURRENT_USER.id);
+                    document.getElementById('btn-reject').onclick = () => DB.updateStatus(appData.id, 'rejected', commentInput.value, CURRENT_USER.id);
                 } else {
-                    cancelBtn.classList.add('d-none');
+                    // 判定済みの場合：承認/却下ボタンを非表示、取り消しを表示
+                    document.getElementById('judge-btn-group').classList.add('d-none');
+                    document.getElementById('btn-cancel-judge').classList.remove('d-none');
+                    
+                    document.getElementById('btn-cancel-judge').onclick = () => DB.updateStatus(appData.id, 'pending', '', CURRENT_USER.id);
                 }
             } else {
-                // 指示の場合は承認欄を隠す
-                document.getElementById('judge-comment').parentElement.classList.add('d-none');
-                document.getElementById('btn-approve').parentElement.classList.add('d-none');
+                // 指示の場合は判定エリア全体を隠す
+                document.getElementById('judge-comment-area').classList.add('d-none');
+                document.getElementById('judge-btn-group').classList.add('d-none');
                 document.getElementById('btn-cancel-judge').classList.add('d-none');
             }
-
-            // ★修正：リーダーなら「申請」も「指示」も削除可能。再確認アラート追加。
-            deleteBtn.onclick = async () => {
-                if(confirm("本当にこの項目を削除しますか？\n（削除後は元に戻せません）")) {
-                    await DB.deleteApplication(appData.id);
-                    bootstrap.Modal.getInstance(document.getElementById('inboxDetailModal')).hide();
-                }
-            };
         } else {
             leaderArea.classList.add('d-none');
         }
@@ -429,8 +462,8 @@ const App = {
             if (permission === 'granted') {
                 const registration = await navigator.serviceWorker.register('sw.js');
                 const token = await getToken(messaging, { 
-                    // ★重要：ご自身のVAPIDキーをここに記載してください
-                    vapidKey: "BMdNlbLwC3bEwAIp-ZG9Uwp-5n4HdyXvlsqJbt6Q5YRdCA7gUexx0G9MpjB3AdLk6iNJodLTobC3-bGG6YskB0s", 
+                    // ★重要：ご自身のVAPIDキーをここに記載してください！
+                    vapidKey: "BwmcnSZ_Kj......", 
                     serviceWorkerRegistration: registration
                 });
                 if (token) await DB.saveUserToken(CURRENT_USER, token);
