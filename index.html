@@ -30,7 +30,7 @@
 
     <div id="main-screen" class="d-none">
         
-        <header class="fixed-top bg-white border-bottom px-3 py-2 d-flex justify-content-between align-items-center" style="height: 60px;">
+        <header class="fixed-top bg-white border-bottom px-3 py-2 d-flex justify-content-between align-items-center" style="height: 60px; z-index: 1050;">
             <span class="fw-bold" id="header-title">受信箱</span>
             <div class="d-flex align-items-center">
                 <span id="user-name-display" class="me-2 small text-muted"></span>
@@ -38,9 +38,7 @@
             </div>
         </header>
 
-        <div id="ptr-indicator" style="margin-top: 60px;">↓ 引っ張って更新</div>
-
-        <div id="scrollable-content" class="container-fluid pt-2 pb-5 mb-5" style="height: calc(100vh - 120px); overflow-y: auto;">
+        <div id="scrollable-content" class="container-fluid pt-2 pb-5 mb-5" style="height: calc(100vh - 120px); overflow-y: auto; margin-top: 60px;">
             
             <div id="tab-inbox" class="tab-content">
                 <div id="inbox-list"></div>
@@ -128,14 +126,14 @@
                 <div style="font-size:10px;">カレンダー</div>
             </a>
         </nav>
-    </div> <div class="modal fade" id="imageFullscreenModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
-            <div class="modal-content bg-transparent border-0">
-                <div class="modal-header border-0 pb-0">
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body text-center d-flex align-items-center justify-content-center" style="height: 80vh;">
-                    <img id="fullscreen-img" src="" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+    </div>
+
+    <div class="modal fade" id="imageFullscreenModal" tabindex="-1" style="z-index: 2000;">
+        <div class="modal-dialog modal-dialog-centered modal-fullscreen" data-bs-dismiss="modal" style="background: rgba(0,0,0,0.85);">
+            <div class="modal-content bg-transparent border-0 d-flex justify-content-center align-items-center" style="pointer-events: none;">
+                <div class="position-relative" onclick="event.stopPropagation()" style="pointer-events: auto;">
+                    <img id="fullscreen-img" src="" style="max-width: 90vw; max-height: 80vh; object-fit: contain; border-radius: 8px;">
+                    <button type="button" class="btn-close btn-close-white position-absolute" data-bs-dismiss="modal" style="top: -15px; right: -15px; background-color: rgba(50,50,50,0.9); border-radius: 50%; padding: 10px; opacity: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.5);"></button>
                 </div>
             </div>
         </div>
@@ -162,7 +160,7 @@
                         </div>
                         <div class="d-flex justify-content-between gap-2">
                             <button id="btn-cancel-judge" class="btn btn-warning flex-fill d-none">判定を取り消す</button>
-                            <button id="btn-delete-app" class="btn btn-outline-danger flex-fill">この申請を削除</button>
+                            <button id="btn-delete-app" class="btn btn-outline-danger flex-fill">この項目を削除</button>
                         </div>
                     </div>
                 </div>
