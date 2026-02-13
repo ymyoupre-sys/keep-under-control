@@ -4,12 +4,11 @@ export const Calendar = {
     currentDate: new Date(),
     events: [],
     currentUser: null,
-    holidays: {}, // 祝日データ格納用
+    holidays: {}, 
     
     async init(user) {
         this.currentUser = user;
         
-        // 祝日データの取得 (内閣府データに基づくAPI)
         try {
             const res = await fetch('https://holidays-jp.github.io/api/v1/date.json');
             this.holidays = await res.json();
@@ -29,7 +28,8 @@ export const Calendar = {
     startListener() {
         if(!this.currentUser || !this.currentUser.group) return;
         DB.subscribeEvents(this.currentUser.group, (allEvents) => {
-            this.events = allEvents;
+            // 開始日順に並び替えておく（表示順を揃えるため）
+            this.events = allEvents.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
             this.render(); 
         });
     },
@@ -49,13 +49,10 @@ export const Calendar = {
         label.textContent = `${y1}年 ${m1 + 1}月`;
         this.buildGrid('calendar-grid', y1, m1);
 
-        // リーダーの場合は来月も表示
         const nextGrid = document.getElementById('calendar-grid-next');
         if (this.currentUser.role === 'leader' && nextGrid) {
             nextGrid.classList.remove('d-none');
-            // 次の月を計算
             const nextDate = new Date(y1, m1 + 1, 1);
-            // 枠の上に「〇月」というラベルを追加する
             nextGrid.innerHTML = `<div class="bg-light text-center fw-bold py-1 border-bottom">${nextDate.getMonth()+1}月</div>`;
             this.buildGrid('calendar-grid-next', nextDate.getFullYear(), nextDate.getMonth(), true);
         }
@@ -66,13 +63,10 @@ export const Calendar = {
         if(!grid) return;
         if(!append) grid.innerHTML = '';
 
-        // 月曜始まりの計算
         const firstDayObj = new Date(y, m, 1);
-        // getDay()は 日0, 月1...。これを 月0, 火1...日6 に変換
         const firstDay = (firstDayObj.getDay() + 6) % 7; 
         const lastDate = new Date(y, m + 1, 0).getDate();
         
-        // ヘッダー
         const weekDays = ['月', '火', '水', '木', '金', '土', '日'];
         const headerRow = document.createElement('div');
         headerRow.className = 'd-flex border-bottom bg-light fw-bold text-center';
@@ -80,8 +74,8 @@ export const Calendar = {
             const div = document.createElement('div');
             div.style.flex = '1';
             div.textContent = day;
-            if(idx === 5) div.className = 'cal-sat'; // 土曜
-            if(idx === 6) div.className = 'cal-sun'; // 日曜
+            if(idx === 5) div.className = 'cal-sat'; 
+            if(idx === 6) div.className = 'cal-sun'; 
             headerRow.appendChild(div);
         });
         grid.appendChild(headerRow);
@@ -90,7 +84,6 @@ export const Calendar = {
         for (let i = 0; i < 6; i++) {
             const row = document.createElement('div');
             row.className = 'd-flex border-bottom position-relative';
-            row.style.minHeight = '90px';
             
             for (let j = 0; j < 7; j++) {
                 const cell = document.createElement('div');
@@ -118,7 +111,6 @@ export const Calendar = {
 
                     cell.innerHTML = `<span class="day-num ${dayClass}">${date}</span>`;
 
-                    // この日のイベントを取得
                     const dayEvents = this.events.filter(e => {
                         const start = new Date(e.startDate);
                         const end = new Date(e.endDate);
@@ -126,20 +118,23 @@ export const Calendar = {
                         return cur >= start && cur <= end;
                     });
 
-                    // イベント表示 (最大3件まで)
+                    // ★修正：3件分の高さを必ず確保する（絶対配置での重なりを防ぐ）
                     const eventContainer = document.createElement('div');
                     eventContainer.className = 'mt-1 w-100 position-relative';
-                    eventContainer.style.flex = '1';
+                    eventContainer.style.height = '60px'; 
 
                     dayEvents.forEach((evt, idx) => {
-                        if (idx >= 3) return; // 3件目以降は隠す
+                        if (idx >= 3) return; 
 
                         const isStart = new Date(evt.startDate).getDate() === date;
                         const isEnd = new Date(evt.endDate).getDate() === date;
 
                         const bar = document.createElement('div');
+                        // ★修正：開始日/終了日以外は左右の枠線を貫通するように調整
                         bar.className = `event-bar ${evt.userRole === 'leader' ? 'leader-event' : ''} ${isStart ? 'start-day' : ''} ${isEnd ? 'end-day' : ''}`;
-                        bar.style.top = `${idx * 20}px`; // 縦の位置をずらす
+                        bar.style.top = `${idx * 20}px`;
+                        bar.style.left = isStart ? '2px' : '-5px';
+                        bar.style.right = isEnd ? '2px' : '-5px';
                         bar.textContent = evt.title;
                         
                         bar.onclick = (e) => {
@@ -149,7 +144,6 @@ export const Calendar = {
                         eventContainer.appendChild(bar);
                     });
 
-                    // 4件以上ある場合は「+X件」を表示
                     if (dayEvents.length > 3) {
                         const moreLabel = document.createElement('div');
                         moreLabel.className = 'event-more shadow-sm';
