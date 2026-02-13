@@ -84,7 +84,6 @@
                     <button id="cal-next-btn" class="btn btn-sm btn-outline-secondary">&gt;</button>
                 </div>
                 <div id="calendar-grid" class="border bg-white mb-4"></div>
-                
                 <div id="calendar-grid-next" class="border bg-white role-leader d-none"></div>
 
                 <div class="mt-3 text-end" style="position: fixed; bottom: 80px; right: 20px; z-index: 90;">
@@ -152,15 +151,16 @@
                     <div id="detail-images" class="image-preview-container mb-3"></div>
                     
                     <div id="leader-judge-area" class="role-leader d-none border-top pt-3 mt-3">
-                        <label class="form-label fw-bold">判定コメント (任意)</label>
-                        <textarea id="judge-comment" class="form-control mb-2" rows="2"></textarea>
-                        <div class="d-flex justify-content-between gap-2 mb-2">
+                        <div id="judge-comment-area">
+                            <label class="form-label fw-bold">判定コメント (任意)</label>
+                            <textarea id="judge-comment" class="form-control mb-2" rows="2"></textarea>
+                        </div>
+                        <div class="d-flex justify-content-between gap-2 mb-2" id="judge-btn-group">
                             <button id="btn-approve" class="btn btn-success flex-fill">承認する</button>
                             <button id="btn-reject" class="btn btn-danger flex-fill">却下する</button>
                         </div>
-                        <div class="d-flex justify-content-between gap-2">
+                        <div class="d-flex justify-content-center gap-2">
                             <button id="btn-cancel-judge" class="btn btn-warning flex-fill d-none">判定を取り消す</button>
-                            <button id="btn-delete-app" class="btn btn-outline-danger flex-fill">この項目を削除</button>
                         </div>
                     </div>
                 </div>
