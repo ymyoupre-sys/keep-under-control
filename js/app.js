@@ -367,7 +367,7 @@ const App = {
 
             // 削除ボタン
             document.getElementById('btn-delete-app').onclick = async () => {
-                if(confirm("本当にこの申請を削除しますか？")) {
+                if(confirm("この申請を削除しますか？")) {
                     await DB.deleteApplication(appData.id);
                     bootstrap.Modal.getInstance(document.getElementById('inboxDetailModal')).hide();
                 }
@@ -462,7 +462,7 @@ const App = {
             if (permission === 'granted') {
                 const registration = await navigator.serviceWorker.register('sw.js');
                 const token = await getToken(messaging, { 
-                    vapidKey: "BwmcnSZ_Kj......（※前回成功した時の本物のキーを入れてください！）",
+                    vapidKey: "BMdNlbLwC3bEwAIp-ZG9Uwp-5n4HdyXvlsqJbt6Q5YRdCA7gUexx0G9MpjB3AdLk6iNJodLTobC3-bGG6YskB0s",
                     serviceWorkerRegistration: registration
                 });
                 if (token) await DB.saveUserToken(CURRENT_USER, token);
@@ -475,3 +475,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
