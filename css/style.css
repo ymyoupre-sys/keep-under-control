@@ -28,36 +28,29 @@ html, body {
     align-items: stretch !important;
 }
 
-/* 引っ張って更新のローダー */
-#ptr-indicator {
-    text-align: center;
-    padding: 10px;
-    font-size: 14px;
-    color: #888;
-    height: 0;
-    overflow: hidden;
-    transition: height 0.3s;
-}
-
 .clickable { cursor: pointer; }
 
-/* チャット画面の調整 */
+/* --- チャット画面の調整 --- */
 .chat-bubble {
     max-width: 75%;
     word-wrap: break-word;
     white-space: pre-wrap;
     position: relative;
 }
-.chat-bubble .reaction-badge {
+
+/* ♡マークを吹き出しの右下に密着させる */
+.reaction-badge {
     position: absolute;
-    bottom: -10px;
-    right: -10px;
+    bottom: -6px;
+    right: -8px;
     background: white;
     border: 1px solid #ddd;
-    border-radius: 50%;
-    padding: 2px 5px;
-    font-size: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    padding: 1px 6px;
+    font-size: 11px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    z-index: 10;
+    line-height: 1.2;
 }
 
 /* 画像プレビュー用 */
@@ -75,13 +68,13 @@ html, body {
     border: 1px solid #ccc;
 }
 
-/* カレンダー色分け */
-.cal-sun { color: #ff3b30 !important; } /* 赤 */
-.cal-sat { color: #007aff !important; } /* 青 */
-.cal-holiday { color: #ff9500 !important; font-weight: bold; } /* オレンジ */
+/* --- カレンダー色分けとデザイン --- */
+.cal-sun { color: #ff3b30 !important; }
+.cal-sat { color: #007aff !important; }
+.cal-holiday { color: #ff9500 !important; font-weight: bold; }
 
 .calendar-day {
-    min-height: 80px;
+    min-height: 100px; /* 3件入るように高さを確保 */
     position: relative;
 }
 .calendar-day span.day-num {
@@ -92,13 +85,15 @@ html, body {
     z-index: 2;
     position: relative;
 }
+/* 今日は緑の丸枠（塗りつぶしなし） */
 .calendar-day.today span.day-num { 
-    background-color: var(--primary-color); 
-    color: white; 
+    background-color: transparent;
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
     border-radius: 50%; 
     width: 24px;
     height: 24px;
-    line-height: 24px;
+    line-height: 20px;
     margin: 4px auto 0;
     font-weight: bold; 
 }
@@ -111,28 +106,28 @@ html, body {
     font-size: 10px;
     color: white;
     background-color: var(--primary-color);
-    z-index: 1;
-    border-radius: 0; /* 貫通させるため角丸なし */
-    padding-left: 4px;
+    z-index: 5; /* 枠線の上に乗せる */
+    border-radius: 0; 
+    padding: 0 4px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    left: 0;
-    right: 0;
 }
 .event-bar.leader-event { background-color: #ff9800; }
-.event-bar.start-day { border-top-left-radius: 4px; border-bottom-left-radius: 4px; left: 4px; }
-.event-bar.end-day { border-top-right-radius: 4px; border-bottom-right-radius: 4px; right: 4px; }
+.event-bar.start-day { border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
+.event-bar.end-day { border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
 
-/* 予定多すぎ省略 */
+/* 予定多すぎ省略 (+X件) */
 .event-more {
     position: absolute;
     bottom: 2px;
     right: 2px;
     font-size: 10px;
     color: #666;
-    background: rgba(255,255,255,0.8);
+    background: rgba(255,255,255,0.9);
     padding: 0 4px;
     border-radius: 4px;
     cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    z-index: 10;
 }
