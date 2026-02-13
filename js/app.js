@@ -463,7 +463,7 @@ const App = {
                 const registration = await navigator.serviceWorker.register('sw.js');
                 const token = await getToken(messaging, { 
                     // ★重要：ご自身のVAPIDキーをここに記載してください！
-                    vapidKey: "BwmcnSZ_Kj......", 
+                    vapidKey: "BMdNlbLwC3bEwAIp-ZG9Uwp-5n4HdyXvlsqJbt6Q5YRdCA7gUexx0G9MpjB3AdLk6iNJodLTobC3-bGG6YskB0s", 
                     serviceWorkerRegistration: registration
                 });
                 if (token) await DB.saveUserToken(CURRENT_USER, token);
@@ -476,3 +476,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
