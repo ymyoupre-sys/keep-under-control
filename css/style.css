@@ -19,6 +19,12 @@ html, body {
 
 ::placeholder { color: #aaa !important; opacity: 1; }
 
+/* 入力欄の青いハイライト（フォーカス）を消す */
+.form-control:focus, .form-select:focus {
+    box-shadow: none !important;
+    border-color: #ced4da !important;
+}
+
 #app-screen {
     display: flex;
     flex-direction: column;
@@ -38,16 +44,16 @@ html, body {
     position: relative;
 }
 
-/* ♡マークを吹き出しの右下に密着させる */
+/* ♡マークを吹き出しの右下に完全に密着させる */
 .reaction-badge {
     position: absolute;
     bottom: -6px;
-    right: -8px;
+    right: -6px;
     background: white;
     border: 1px solid #ddd;
-    border-radius: 12px;
-    padding: 1px 6px;
-    font-size: 11px;
+    border-radius: 10px;
+    padding: 1px 5px;
+    font-size: 10px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.15);
     z-index: 10;
     line-height: 1.2;
@@ -74,27 +80,29 @@ html, body {
 .cal-holiday { color: #ff9500 !important; font-weight: bold; }
 
 .calendar-day {
-    min-height: 100px; /* 3件入るように高さを確保 */
+    min-height: 100px; 
     position: relative;
 }
+
+/* 日付の数字（段差が起きないように高さを厳格に固定） */
 .calendar-day span.day-num {
     display: block;
     text-align: center;
-    margin-top: 4px;
     font-size: 0.9rem;
     z-index: 2;
     position: relative;
+    width: 24px;
+    height: 24px;
+    line-height: 20px; /* border分の2pxを引いて中央揃え */
+    margin: 4px auto 0;
+    border: 2px solid transparent; /* 普段は透明な線を引いておく */
+    border-radius: 50%; 
+    box-sizing: border-box; /* 線の太さで高さが変わらないようにする */
 }
 /* 今日は緑の丸枠（塗りつぶしなし） */
 .calendar-day.today span.day-num { 
-    background-color: transparent;
+    border-color: var(--primary-color);
     color: var(--primary-color);
-    border: 2px solid var(--primary-color);
-    border-radius: 50%; 
-    width: 24px;
-    height: 24px;
-    line-height: 20px;
-    margin: 4px auto 0;
     font-weight: bold; 
 }
 
@@ -106,7 +114,7 @@ html, body {
     font-size: 10px;
     color: white;
     background-color: var(--primary-color);
-    z-index: 5; /* 枠線の上に乗せる */
+    z-index: 5; 
     border-radius: 0; 
     padding: 0 4px;
     overflow: hidden;
