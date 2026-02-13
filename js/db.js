@@ -2,15 +2,20 @@
 
 import { db } from "./firebase-config.js";
 import { 
-    collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, setDoc, deleteDoc
+    collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, setDoc, deleteDoc, getDoc, arrayUnion, arrayRemove
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+// ★追加：AさんとBさんのチャットルームIDを常に同じにするための計算関数
+const getRoomId = (groupId, id1, id2) => {
+    // IDをアルファベット順に並べ替えて結合することで、A→BでもB→Aでも同じIDになる
+    const sortedIds = [id1, id2].sort();
+    return `${groupId}_${sortedIds[0]}_${sortedIds[1]}`;
+};
+
 export const DB = {
-    // ■ 通知用トークン保存（追加）
+    // ■ 通知用トークン保存
     async saveUserToken(user, token) {
         if (!user || !user.id || !token) return;
-        // usersコレクションに、ID・権限・グループ・トークンを保存
-        // これにより、Cloud Functionsが「誰に送ればいいか」を検索できるようになります
         await setDoc(doc(db, "users", user.id), {
             name: user.name,
             role: user.role,
@@ -21,8 +26,12 @@ export const DB = {
     },
 
     // ■ チャット機能
-    subscribeChat(groupId, memberId, callback) {
-        const chatRoomId = `${groupId}_${memberId}`;
+    getChatRoomId(groupId, id1, id2) {
+        return getRoomId(groupId, id1, id2);
+    },
+
+    subscribeChat(groupId, id1, id2, callback) {
+        const chatRoomId = getRoomId(groupId, id1, id2);
         const q = query(
             collection(db, "chats", chatRoomId, "messages"),
             orderBy("createdAt", "asc")
@@ -34,27 +43,53 @@ export const DB = {
         });
     },
 
-    async sendMessage(groupId, memberId, sender, text, imageBase64 = null) {
-        const chatRoomId = `${groupId}_${memberId}`;
+    async sendMessage(groupId, id1, id2, sender, text, images = []) {
+        const chatRoomId = getRoomId(groupId, id1, id2);
         await addDoc(collection(db, "chats", chatRoomId, "messages"), {
             text: text,
             senderId: sender.id,
             senderName: sender.name,
             senderIcon: sender.icon || "👤",
-            image: imageBase64,
+            images: images, // ★修正：複数画像に対応するため配列で保存
+            reactions: [],  // ★追加：いいね機能用
+            isEdited: false,// ★追加：編集フラグ
             createdAt: serverTimestamp()
         });
         
-        await updateDoc(doc(db, "chats", chatRoomId), {
-            lastMessage: text || (imageBase64 ? '画像が送信されました' : ''),
+        const lastMsgText = text || (images.length > 0 ? '画像が送信されました' : '');
+        await setDoc(doc(db, "chats", chatRoomId), {
+            lastMessage: lastMsgText,
             updatedAt: serverTimestamp()
-        }).catch(async (e) => {
-            // ドキュメントが存在しない場合の初期作成
-            await setDoc(doc(db, "chats", chatRoomId), {
-                lastMessage: text || (imageBase64 ? '画像が送信されました' : ''),
-                updatedAt: serverTimestamp()
-            });
+        }, { merge: true });
+    },
+
+    // ★追加：メッセージの編集
+    async updateMessage(groupId, id1, id2, messageId, newText) {
+        const chatRoomId = getRoomId(groupId, id1, id2);
+        await updateDoc(doc(db, "chats", chatRoomId, "messages", messageId), {
+            text: newText,
+            isEdited: true,
+            updatedAt: serverTimestamp()
         });
+    },
+
+    // ★追加：いいね（♡）のON/OFF
+    async toggleReaction(groupId, id1, id2, messageId, userId) {
+        const chatRoomId = getRoomId(groupId, id1, id2);
+        const msgRef = doc(db, "chats", chatRoomId, "messages", messageId);
+        const snap = await getDoc(msgRef);
+        
+        if(snap.exists()) {
+            const data = snap.data();
+            const reactions = data.reactions || [];
+            if(reactions.includes(userId)) {
+                // すでにいいねしていれば外す
+                await updateDoc(msgRef, { reactions: arrayRemove(userId) });
+            } else {
+                // いいねしてなければ付ける
+                await updateDoc(msgRef, { reactions: arrayUnion(userId) });
+            }
+        }
     },
 
     // ■ 申請機能
@@ -74,8 +109,6 @@ export const DB = {
     },
 
     async submitForm(data) {
-        // groupIdが含まれているか確認し、なければdataから取得または追加
-        // 注: 呼び出し元(App.js)で user.group を data に含めるように修正します
         await addDoc(collection(db, "applications"), {
             ...data,
             status: 'pending',
