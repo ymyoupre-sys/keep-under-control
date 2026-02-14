@@ -212,7 +212,7 @@ const App = {
                 const editedLabel = msg.isEdited ? `<span class="text-muted ms-1" style="font-size:9px;">(編集済)</span>` : '';
                 
                 if(msg.text) {
-                    textHtml = `<div class="p-2 rounded text-dark shadow-sm" style="background-color: ${isMe ? 'var(--chat-me-bg)' : 'var(--chat-other-bg)'}; display: inline-block; text-align: left;">${msg.text}${editedLabel}</div>`;
+                    textHtml = `<div class="p-2 rounded text-dark shadow-sm" style="background-color: ${isMe ? 'var(--chat-me-bg)' : 'var(--chat-other-bg)'}; display: inline-block; text-align: left; white-space: pre-wrap; word-wrap: break-word;">${msg.text}${editedLabel}</div>`;
                 } else if (msg.isEdited) {
                     textHtml = `<div class="w-100 ${isMe ? 'text-end' : 'text-start'}">${editedLabel}</div>`;
                 }
