@@ -19,8 +19,8 @@ const App = {
     async init() {
         try {
             const [usersRes, settingsRes] = await Promise.all([
-                fetch('config/users.json'),
-                fetch('config/settings.json')
+                fetch('config/users.json?v=' + new Date().getTime()),
+                fetch('config/settings.json?v=' + new Date().getTime())
             ]);
             CONFIG_USERS = await usersRes.json();
             CONFIG_SETTINGS = await settingsRes.json();
@@ -100,9 +100,24 @@ const App = {
         this.setupNotifications();
         Calendar.init(CURRENT_USER);
 
-        const savedTab = sessionStorage.getItem('activeTab') || '#tab-inbox';
-        const targetNav = document.querySelector(`.bottom-nav-item[href="${savedTab}"]`);
-        if(targetNav) targetNav.click();
+        // ★追加・修正：URLのパラメータ（通知からの遷移）を読み取ってタブを開く処理
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab');
+        
+        let targetTabId = '#tab-inbox'; // デフォルトは受信箱
+        
+        if (tabParam) {
+            // URLに ?tab=xxx が付いていた場合
+            targetTabId = `#tab-${tabParam}`;
+            // パラメータを読み取ったら、URLを綺麗な状態（パラメータ無し）に戻す
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else {
+            // URLに指定がない場合は、前回開いていたタブを開く
+            targetTabId = sessionStorage.getItem('activeTab') || '#tab-inbox';
+        }
+
+        const targetNav = document.querySelector(`.bottom-nav-item[href="${targetTabId}"]`);
+        if (targetNav) targetNav.click();
     },
 
     setupTabs() {
@@ -336,7 +351,6 @@ const App = {
                 let onCheckAction = null;
 
                 if (isInstruction) {
-                    // ★修正：主人画面ではチェックボタンを出さない
                     if (CURRENT_USER.role === 'member') {
                         showCheckBtn = true;
                         btnStateCompleted = isInstructionCompleted;
@@ -566,7 +580,7 @@ const App = {
             if (permission === 'granted') {
                 const registration = await navigator.serviceWorker.register('sw.js');
                 const token = await getToken(messaging, { 
-                    // ★ご自身のVAPIDキーをここに記載してください！
+                    // ★ご自身のVAPIDキーに書き換えてください
                     vapidKey: "BMdNlbLwC3bEwAIp-ZG9Uwp-5n4HdyXvlsqJbt6Q5YRdCA7gUexx0G9MpjB3AdLk6iNJodLTobC3-bGG6YskB0s", 
                     serviceWorkerRegistration: registration
                 });
