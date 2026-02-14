@@ -3,7 +3,6 @@
   { "id": "u002", "name": "山根", "group": "A", "role": "member", "icon": "🐶" },
   { "id": "u003", "name": "リーダー", "group": "B", "role": "leader", "icon": "🧑‍💼" },
   { "id": "u004", "name": "メンバー", "group": "B", "role": "member", "icon": "😺" }
-  { "id": "u005", "name": "ひろゆき", "group": "C", "role": "leader", "icon": "👨‍💼" },
-  { "id": "u006", "name": "つばさ", "group": "C", "role": "member", "icon": "🐶" }
+  { "id": "u005", "name": "ひろゆき", "group": "C", "role": "leader", "icon": "😎" },
+  { "id": "u006", "name": "つばさ", "group": "C", "role": "member", "icon": "🐕" }
 ]
-
