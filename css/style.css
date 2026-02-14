@@ -35,25 +35,32 @@ html, body {
 
 .clickable { cursor: pointer; }
 
-/* --- 選択中のタブをテーマカラー（緑）にする --- */
-.bottom-nav-item.active {
-    color: var(--primary-color) !important;
-}
-.bottom-nav-item.active i,
-.bottom-nav-item.active div {
-    color: var(--primary-color) !important;
+/* 選択中のタブをテーマカラー（緑）にする */
+.bottom-nav-item.active { color: var(--primary-color) !important; }
+.bottom-nav-item.active i, .bottom-nav-item.active div { color: var(--primary-color) !important; }
+
+/* 通知用の赤バッジ */
+.tab-badge {
+    position: absolute;
+    top: 2px;
+    right: 20%;
+    background-color: #ff3b30;
+    color: white;
+    font-size: 9px;
+    font-weight: bold;
+    padding: 2px 5px;
+    border-radius: 10px;
+    line-height: 1;
+    border: 1px solid white;
 }
 
-/* --- チャット画面の調整 --- */
-.chat-row {
-    margin-bottom: 12px; /* メッセージ同士の距離を縮める */
-}
+/* --- チャット画面 --- */
+.chat-row { margin-bottom: 12px; }
 
-/* ♡マークを吹き出しの右下に完全に密着させる */
 .reaction-badge {
     position: absolute;
     bottom: -8px;
-    right: -8px;
+    right: 0px; /* ★枠の右端と縦ラインを揃える */
     background: white;
     border: 1px solid #ff4d4f;
     color: #ff4d4f;
@@ -66,7 +73,7 @@ html, body {
     font-weight: bold;
 }
 
-/* 画像プレビュー用 */
+/* --- 画像プレビュー＆×ボタンの透過デザイン --- */
 .image-preview-container {
     display: flex;
     flex-wrap: wrap;
@@ -81,65 +88,62 @@ html, body {
     border: 1px solid #ccc;
 }
 
-/* --- カレンダー色分けとデザイン --- */
+/* カスタム×ボタン（プレビュー用） */
+.custom-close-preview {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 22px;
+    height: 22px;
+    background-color: rgba(0, 0, 0, 0.5); /* 透過の黒 */
+    border: 1px solid white;
+    border-radius: 50%;
+    color: white;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    z-index: 10;
+}
+
+/* カスタム×ボタン（フルスクリーン用） */
+.custom-close-fullscreen {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    width: 36px;
+    height: 36px;
+    background-color: rgba(0, 0, 0, 0.5); /* 透過の黒 */
+    border: 2px solid white;
+    border-radius: 50%;
+    color: white;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    z-index: 2050;
+}
+
+/* --- カレンダー --- */
 .cal-sun { color: #ff3b30 !important; }
 .cal-sat { color: #007aff !important; }
 .cal-holiday { color: #ff9500 !important; font-weight: bold; }
 
-.calendar-day {
-    min-height: 100px; 
-    position: relative;
-}
-
+.calendar-day { min-height: 100px; position: relative; }
 .calendar-day span.day-num {
-    display: block;
-    text-align: center;
-    font-size: 0.9rem;
-    z-index: 2;
-    position: relative;
-    width: 24px;
-    height: 24px;
-    line-height: 20px; 
-    margin: 4px auto 0;
-    border: 2px solid transparent; 
-    border-radius: 50%; 
-    box-sizing: border-box; 
+    display: block; text-align: center; font-size: 0.9rem; z-index: 2; position: relative;
+    width: 24px; height: 24px; line-height: 20px; margin: 4px auto 0; border: 2px solid transparent; border-radius: 50%; box-sizing: border-box; 
 }
-
-.calendar-day.today span.day-num { 
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-    font-weight: bold; 
-}
+.calendar-day.today span.day-num { border-color: var(--primary-color); color: var(--primary-color); font-weight: bold; }
 
 .event-bar {
-    position: absolute;
-    height: 18px;
-    line-height: 18px;
-    font-size: 10px;
-    color: white;
-    background-color: var(--primary-color);
-    z-index: 5; 
-    border-radius: 0; 
-    padding: 0 4px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    position: absolute; height: 18px; line-height: 18px; font-size: 10px; color: white; background-color: var(--primary-color);
+    z-index: 5; border-radius: 0; padding: 0 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
 }
 .event-bar.leader-event { background-color: #ff9800; }
 .event-bar.start-day { border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
 .event-bar.end-day { border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
 
-.event-more {
-    position: absolute;
-    bottom: 2px;
-    right: 2px;
-    font-size: 10px;
-    color: #666;
-    background: rgba(255,255,255,0.9);
-    padding: 0 4px;
-    border-radius: 4px;
-    cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    z-index: 10;
-}
+.event-more { position: absolute; bottom: 2px; right: 2px; font-size: 10px; color: #666; background: rgba(255,255,255,0.9); padding: 0 4px; border-radius: 4px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.1); z-index: 10; }
