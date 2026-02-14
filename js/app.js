@@ -294,7 +294,7 @@ const App = {
                 if (isCompleted) leftBorderColor = '#6c757d'; // 完了時はグレー
 
                 // 命令が完了していたらカード全体をグレーアウトさせる
-                div.style.cssText = `border-left-color: ${leftBorderColor}; ${isCompleted ? 'opacity: 0.6; background-color: #f8f9fa;' : ''}`;
+                div.style.cssText = `border-left-color: ${leftBorderColor}; ${isCompleted ? 'opacity: 0.4; background-color: #e9ecef;' : ''}`;
                 
                 const badgeHtml = isInstruction 
                     ? `<span class="badge bg-primary px-3 py-1 mb-1">命令</span>`
@@ -567,3 +567,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
