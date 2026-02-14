@@ -336,13 +336,13 @@ const App = {
                 let onCheckAction = null;
 
                 if (isInstruction) {
-                    // ① 指示の場合（奴隷画面にのみボタンを表示する）
+                    // ★修正：主人画面ではチェックボタンを出さない
                     if (CURRENT_USER.role === 'member') {
                         showCheckBtn = true;
                         btnStateCompleted = isInstructionCompleted;
                         onCheckAction = async (e) => {
                             e.stopPropagation(); 
-                            if(confirm("この指示を「完了」として主人に報告しますか？")) {
+                            if(confirm("この命令を「完了」として主人に報告しますか？")) {
                                 await DB.updateStatus(app.id, 'completed', '', CURRENT_USER.id);
                             }
                         };
@@ -352,7 +352,7 @@ const App = {
                     btnStateCompleted = isAppConfirmed;
                     onCheckAction = async (e) => {
                         e.stopPropagation(); 
-                        if(confirm("この申請結果を確認済みにしますか？\n（※主人に通知は飛びません）")) {
+                        if(confirm("この申請結果を確認済みとしますか？\n（※自分用のメモ機能のため、主人に通知は飛びません）")) {
                             await DB.markAsConfirmed(app.id);
                         }
                     };
@@ -566,14 +566,13 @@ const App = {
             if (permission === 'granted') {
                 const registration = await navigator.serviceWorker.register('sw.js');
                 const token = await getToken(messaging, { 
-                    // ★ご自身のVAPIDキーに書き換えてください
+                    // ★ご自身のVAPIDキーをここに記載してください！
                     vapidKey: "BMdNlbLwC3bEwAIp-ZG9Uwp-5n4HdyXvlsqJbt6Q5YRdCA7gUexx0G9MpjB3AdLk6iNJodLTobC3-bGG6YskB0s", 
                     serviceWorkerRegistration: registration
                 });
                 if (token) await DB.saveUserToken(CURRENT_USER, token);
                 
                 onMessage(messaging, (payload) => { 
-                    // ★追加：自分が発信したアクションなら通知を無視する（自己通知ブロック）
                     const senderId = payload.data?.senderId;
                     if (senderId === CURRENT_USER.id) return; 
 
@@ -592,4 +591,3 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
-
