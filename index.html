@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>管理アプリ</title>
+    <title>奴隷管理アプリ</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#06c755">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -65,7 +65,7 @@
                 <div id="tab-form" class="tab-content d-none">
                     <div class="card p-3 border-0 shadow-sm">
                         <div class="mb-3">
-                            <label class="form-label fw-bold"><span class="role-member">申請</span><span class="role-leader d-none">指示</span>の種類</label>
+                            <label class="form-label fw-bold"><span class="role-member">申請</span><span class="role-leader d-none">命令</span>の種類</label>
                             <select id="form-type-select" class="form-select"></select>
                         </div>
                         <div class="mb-3">
@@ -122,7 +122,7 @@
                 </a>
                 <a href="#tab-form" class="bottom-nav-item text-decoration-none text-center text-secondary position-relative" style="flex:1;">
                     <i class="bi bi-pencil-square fs-4"></i>
-                    <div style="font-size:10px;"><span class="role-member">申請</span><span class="role-leader d-none">指示</span></div>
+                    <div style="font-size:10px;"><span class="role-member">申請</span><span class="role-leader d-none">命令</span></div>
                 </a>
                 <a href="#tab-calendar" class="bottom-nav-item text-decoration-none text-center text-secondary position-relative" style="flex:1;">
                     <i class="bi bi-calendar3 fs-4"></i>
@@ -183,7 +183,7 @@
                         <div class="col-6"><label class="form-label small text-muted">開始日</label><input type="date" id="event-start-date" class="form-control"></div>
                         <div class="col-6"><label class="form-label small text-muted">終了日</label><input type="date" id="event-end-date" class="form-control"></div>
                     </div>
-                    <div class="mb-3"><label class="form-label">予定の内容</label><input type="text" id="event-title-input" class="form-control" placeholder="例: 外出、出社、在宅など"></div>
+                    <div class="mb-3"><label class="form-label">予定の内容</label><input type="text" id="event-title-input" class="form-control" placeholder="例: 外出、調教など"></div>
                 </div>
                 <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button><button type="button" id="save-event-btn" class="btn btn-success">保存</button></div>
             </div>
@@ -194,4 +194,5 @@
     <script type="module" src="js/app.js?v=3"></script>
 </body>
 </html>
+
 
