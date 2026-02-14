@@ -282,6 +282,7 @@ const App = {
         };
     },
     
+    // --- 受信箱 ---
     startInboxListener() {
         if(unsubscribeInbox) unsubscribeInbox();
         
@@ -317,16 +318,32 @@ const App = {
                     : `<span class="badge border border-secondary text-secondary mb-1 px-3 py-1">申請</span>`;
 
                 const statusBadgeHtml = !isInstruction
-                    ? `<span class="badge ${CONFIG_SETTINGS.statusLabels[app.status]?.color || 'bg-secondary'} mt-1">${CONFIG_SETTINGS.statusLabels[app.status]?.label || app.status}</span>`
+                    ? `<span class="badge ${CONFIG_SETTINGS.statusLabels[app.status]?.color || 'bg-secondary'} d-inline-block">${CONFIG_SETTINGS.statusLabels[app.status]?.label || app.status}</span>`
                     : '';
 
+                // ★新規追加：コメントと画像の有無をチェックしてアイコンを生成
+                const hasContent = app.content && app.content.trim() !== '';
+                const hasImages = app.images && app.images.length > 0;
+                
+                let attachmentIconsHtml = '';
+                if (hasContent || hasImages) {
+                    attachmentIconsHtml = `<div class="mt-1 text-muted d-flex justify-content-end gap-1" style="font-size: 13px;">
+                        ${hasContent ? '<i class="bi bi-chat-text"></i>' : ''}
+                        ${hasImages ? '<i class="bi bi-image"></i>' : ''}
+                    </div>`;
+                }
+
+                // ★修正：ステータスバッジの下にアイコンエリアを配置
                 div.innerHTML = `
                     <div class="d-flex justify-content-between align-items-start pe-4">
                         <div>
                             ${badgeHtml}
                             <strong class="ms-1 d-block mt-1">${app.title}</strong>
                         </div>
-                        ${statusBadgeHtml}
+                        <div class="text-end mt-1">
+                            ${statusBadgeHtml}
+                            ${attachmentIconsHtml}
+                        </div>
                     </div>
                     <div class="small text-muted mt-2">${app.userName} - ${app.createdDateStr}</div>
                 `;
@@ -605,3 +622,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
