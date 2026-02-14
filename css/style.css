@@ -152,12 +152,6 @@ html, body {
    端末ごとの視差・セーフエリア（ノッチ/ホームバー）対策
    ========================================= */
 
-/* ① 100dvhが効かない古いブラウザ向けの保険（フォールバック） */
-.flex-column {
-    height: 100vh !important;
-    height: 100dvh !important;
-}
-
 /* ② ヘッダー：iPhoneのノッチ（切り欠き）に被らないように上部の余白を自動追加 */
 header {
     padding-top: env(safe-area-inset-top) !important;
@@ -175,3 +169,4 @@ header {
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
+
