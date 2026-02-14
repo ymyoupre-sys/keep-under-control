@@ -16,6 +16,8 @@
 </head>
 <body>
 
+    <div id="toast-container" style="position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 9999; width: 95%; max-width: 400px; pointer-events: none;"></div>
+
     <div id="login-screen" class="container d-flex flex-column justify-content-center align-items-center vh-100 bg-light" style="position:fixed; top:0; left:0; width:100%; z-index:9999;">
         <div class="card shadow border-0 p-4" style="width: 100%; max-width: 350px;">
             <div class="text-center mb-4">
@@ -107,20 +109,20 @@
             </div>
         </div>
 
-        <nav class="bottom-nav fixed-bottom bg-white border-top d-flex justify-content-around py-2" style="height:60px; z-index:1060;">
-            <a href="#tab-inbox" class="bottom-nav-item active text-decoration-none text-center text-secondary" style="flex:1;">
+        <nav class="bottom-nav fixed-bottom bg-white border-top d-flex justify-content-around py-2" style="height:60px; z-index:1060; position: relative;">
+            <a href="#tab-inbox" class="bottom-nav-item active text-decoration-none text-center text-secondary position-relative" style="flex:1;">
                 <i class="bi bi-inbox fs-4"></i>
                 <div style="font-size:10px;">受信箱</div>
             </a>
-            <a href="#tab-chat" class="bottom-nav-item text-decoration-none text-center text-secondary" style="flex:1;">
+            <a href="#tab-chat" class="bottom-nav-item text-decoration-none text-center text-secondary position-relative" style="flex:1;">
                 <i class="bi bi-chat-dots fs-4"></i>
                 <div style="font-size:10px;">チャット</div>
             </a>
-            <a href="#tab-form" class="bottom-nav-item text-decoration-none text-center text-secondary" style="flex:1;">
+            <a href="#tab-form" class="bottom-nav-item text-decoration-none text-center text-secondary position-relative" style="flex:1;">
                 <i class="bi bi-pencil-square fs-4"></i>
                 <div style="font-size:10px;"><span class="role-member">申請</span><span class="role-leader d-none">指示</span></div>
             </a>
-            <a href="#tab-calendar" class="bottom-nav-item text-decoration-none text-center text-secondary" style="flex:1;">
+            <a href="#tab-calendar" class="bottom-nav-item text-decoration-none text-center text-secondary position-relative" style="flex:1;">
                 <i class="bi bi-calendar3 fs-4"></i>
                 <div style="font-size:10px;">カレンダー</div>
             </a>
@@ -132,7 +134,7 @@
             <div class="modal-content bg-transparent border-0 d-flex justify-content-center align-items-center" style="pointer-events: none;">
                 <div class="position-relative" onclick="event.stopPropagation()" style="pointer-events: auto;">
                     <img id="fullscreen-img" src="" style="max-width: 90vw; max-height: 80vh; object-fit: contain; border-radius: 8px;">
-                    <button type="button" class="btn-close btn-close-white position-absolute" data-bs-dismiss="modal" style="top: -15px; right: -15px; background-color: rgba(50,50,50,0.9); border-radius: 50%; padding: 10px; opacity: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.5);"></button>
+                    <div class="custom-close-fullscreen" data-bs-dismiss="modal"><i class="bi bi-x"></i></div>
                 </div>
             </div>
         </div>
