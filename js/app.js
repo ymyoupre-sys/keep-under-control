@@ -336,24 +336,23 @@ const App = {
                 let onCheckAction = null;
 
                 if (isInstruction) {
-                    showCheckBtn = true;
-                    btnStateCompleted = isInstructionCompleted;
-                    onCheckAction = async (e) => {
-                        e.stopPropagation(); 
-                        if (CURRENT_USER.role === 'member') {
-                            if(confirm("この命令を「完了」として主人に報告しますか？")) {
+                    // ① 指示の場合（奴隷画面にのみボタンを表示する）
+                    if (CURRENT_USER.role === 'member') {
+                        showCheckBtn = true;
+                        btnStateCompleted = isInstructionCompleted;
+                        onCheckAction = async (e) => {
+                            e.stopPropagation(); 
+                            if(confirm("この指示を「完了」として主人に報告しますか？")) {
                                 await DB.updateStatus(app.id, 'completed', '', CURRENT_USER.id);
                             }
-                        } else {
-                            alert("奴隷が完了報告を行うためのボタンです。");
-                        }
-                    };
+                        };
+                    }
                 } else if (CURRENT_USER.role === 'member' && app.userId === CURRENT_USER.id && (app.status === 'approved' || app.status === 'rejected')) {
                     showCheckBtn = true;
                     btnStateCompleted = isAppConfirmed;
                     onCheckAction = async (e) => {
                         e.stopPropagation(); 
-                        if(confirm("この申請結果を確認済みとしてグレーアウトさせますか？\n（※自分用のメモ機能のため、主人に通知は飛びません）")) {
+                        if(confirm("この申請結果を確認済みにしますか？\n（※主人に通知は飛びません）")) {
                             await DB.markAsConfirmed(app.id);
                         }
                     };
@@ -593,3 +592,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
