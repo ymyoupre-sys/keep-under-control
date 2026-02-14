@@ -100,19 +100,14 @@ const App = {
         this.setupNotifications();
         Calendar.init(CURRENT_USER);
 
-        // ★追加・修正：URLのパラメータ（通知からの遷移）を読み取ってタブを開く処理
         const urlParams = new URLSearchParams(window.location.search);
         const tabParam = urlParams.get('tab');
         
-        let targetTabId = '#tab-inbox'; // デフォルトは受信箱
-        
+        let targetTabId = '#tab-inbox'; 
         if (tabParam) {
-            // URLに ?tab=xxx が付いていた場合
             targetTabId = `#tab-${tabParam}`;
-            // パラメータを読み取ったら、URLを綺麗な状態（パラメータ無し）に戻す
             window.history.replaceState({}, document.title, window.location.pathname);
         } else {
-            // URLに指定がない場合は、前回開いていたタブを開く
             targetTabId = sessionStorage.getItem('activeTab') || '#tab-inbox';
         }
 
@@ -282,7 +277,6 @@ const App = {
         };
     },
     
-    // --- 受信箱 ---
     startInboxListener() {
         if(unsubscribeInbox) unsubscribeInbox();
         
@@ -299,7 +293,7 @@ const App = {
                 const isGrayOut = isInstructionCompleted || isAppConfirmed;
 
                 const div = document.createElement('div');
-                div.className = 'card mb-2 p-2 border-start border-4 clickable shadow-sm position-relative';
+                div.className = 'card mb-2 p-3 border-start border-4 clickable shadow-sm position-relative';
                 
                 let leftBorderColor = '#ffc107'; 
                 if (app.status === 'approved') leftBorderColor = '#198754';
@@ -314,53 +308,54 @@ const App = {
                 }
 
                 const badgeHtml = isInstruction 
-                    ? `<span class="badge bg-primary px-3 py-1 mb-1">${instructionLabel}</span>`
-                    : `<span class="badge border border-secondary text-secondary mb-1 px-3 py-1">申請</span>`;
+                    ? `<span class="badge bg-primary px-3 py-1">${instructionLabel}</span>`
+                    : `<span class="badge border border-secondary text-secondary px-3 py-1">申請</span>`;
 
                 const statusBadgeHtml = !isInstruction
-                    ? `<span class="badge ${CONFIG_SETTINGS.statusLabels[app.status]?.color || 'bg-secondary'} d-inline-block">${CONFIG_SETTINGS.statusLabels[app.status]?.label || app.status}</span>`
+                    ? `<span class="badge ${CONFIG_SETTINGS.statusLabels[app.status]?.color || 'bg-secondary'}">${CONFIG_SETTINGS.statusLabels[app.status]?.label || app.status}</span>`
                     : '';
 
-                // ★新規追加：コメントと画像の有無をチェックしてアイコンを生成
                 const hasContent = app.content && app.content.trim() !== '';
                 const hasImages = app.images && app.images.length > 0;
                 
                 let attachmentIconsHtml = '';
                 if (hasContent || hasImages) {
-                    attachmentIconsHtml = `<div class="mt-1 text-muted d-flex justify-content-end gap-1" style="font-size: 13px;">
+                    attachmentIconsHtml = `<div class="text-muted d-flex gap-2" style="font-size: 14px;">
                         ${hasContent ? '<i class="bi bi-chat-text"></i>' : ''}
                         ${hasImages ? '<i class="bi bi-image"></i>' : ''}
                     </div>`;
                 }
 
-                // ★修正：ステータスバッジの下にアイコンエリアを配置
+                const canDelete = CURRENT_USER.role === 'leader' || (CURRENT_USER.role === 'member' && app.userId === CURRENT_USER.id && !isInstruction);
+
                 div.innerHTML = `
-                    <div class="d-flex justify-content-between align-items-start pe-4">
-                        <div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center gap-2">
                             ${badgeHtml}
-                            <strong class="ms-1 d-block mt-1">${app.title}</strong>
-                        </div>
-                        <div class="text-end mt-1">
                             ${statusBadgeHtml}
-                            ${attachmentIconsHtml}
                         </div>
+                        <div id="delete-btn-container-${app.id}" style="width: 24px; text-align: right;"></div>
                     </div>
-                    <div class="small text-muted mt-2">${app.userName} - ${app.createdDateStr}</div>
+                    <strong class="d-block mb-2 pe-4" style="font-size: 1.05rem;">${app.title}</strong>
+                    <div class="d-flex justify-content-between align-items-center small text-muted">
+                        <span>${app.userName} - ${app.createdDateStr}</span>
+                        ${attachmentIconsHtml}
+                    </div>
                 `;
                 
-                const canDelete = CURRENT_USER.role === 'leader' || (CURRENT_USER.role === 'member' && app.userId === CURRENT_USER.id && !isInstruction);
                 if (canDelete) {
                     const deleteBtn = document.createElement('button');
-                    deleteBtn.className = "btn btn-link text-muted p-0 position-absolute";
-                    deleteBtn.style.cssText = "top: 8px; right: 12px; z-index: 10;";
-                    deleteBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+                    deleteBtn.className = "btn btn-link text-muted p-0";
+                    deleteBtn.style.cssText = "z-index: 10; line-height: 1;";
+                    deleteBtn.innerHTML = '<i class="bi bi-x-lg" style="font-size: 1.1rem;"></i>';
                     deleteBtn.onclick = async (e) => {
                         e.stopPropagation(); 
                         if(confirm("本当にこの項目を取り消し（削除）しますか？\n（削除後は元に戻せません）")) {
                             await DB.deleteApplication(app.id);
                         }
                     };
-                    div.appendChild(deleteBtn);
+                    const container = div.querySelector(`#delete-btn-container-${app.id}`);
+                    if (container) container.appendChild(deleteBtn);
                 }
 
                 let showCheckBtn = false;
@@ -622,4 +617,3 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
-
