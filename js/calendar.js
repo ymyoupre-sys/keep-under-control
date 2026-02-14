@@ -28,7 +28,6 @@ export const Calendar = {
     startListener() {
         if(!this.currentUser || !this.currentUser.group) return;
         DB.subscribeEvents(this.currentUser.group, (allEvents) => {
-            // 開始日順に並び替えておく（表示順を揃えるため）
             this.events = allEvents.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
             this.render(); 
         });
@@ -118,7 +117,6 @@ export const Calendar = {
                         return cur >= start && cur <= end;
                     });
 
-                    // ★修正：3件分の高さを必ず確保する（絶対配置での重なりを防ぐ）
                     const eventContainer = document.createElement('div');
                     eventContainer.className = 'mt-1 w-100 position-relative';
                     eventContainer.style.height = '60px'; 
@@ -130,16 +128,16 @@ export const Calendar = {
                         const isEnd = new Date(evt.endDate).getDate() === date;
 
                         const bar = document.createElement('div');
-                        // ★修正：開始日/終了日以外は左右の枠線を貫通するように調整
                         bar.className = `event-bar ${evt.userRole === 'leader' ? 'leader-event' : ''} ${isStart ? 'start-day' : ''} ${isEnd ? 'end-day' : ''}`;
                         bar.style.top = `${idx * 20}px`;
                         bar.style.left = isStart ? '2px' : '-5px';
                         bar.style.right = isEnd ? '2px' : '-5px';
                         bar.textContent = evt.title;
                         
+                        // ★修正：削除時にタイトルを渡す
                         bar.onclick = (e) => {
                             e.stopPropagation();
-                            this.deleteEvent(evt.id);
+                            this.deleteEvent(evt.id, evt.title);
                         };
                         eventContainer.appendChild(bar);
                     });
@@ -186,8 +184,9 @@ export const Calendar = {
         } catch (e) { alert('保存失敗'); }
     },
 
-    async deleteEvent(id) {
-        if(!confirm('この予定を削除しますか？')) return;
+    // ★修正：アラートに予定のタイトルを表示する
+    async deleteEvent(id, title) {
+        if(!confirm(`予定「${title}」を削除しますか？`)) return;
         try { await DB.deleteEvent(id); } catch (e) { console.error("Delete Error", e); }
     }
 };
