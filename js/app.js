@@ -124,7 +124,7 @@ const App = {
                 document.querySelectorAll('.tab-content').forEach(content => content.classList.add('d-none'));
                 document.querySelector(targetId).classList.remove('d-none');
                 
-                const titleMap = { '#tab-chat': 'チャット', '#tab-inbox': '受信箱', '#tab-form': CURRENT_USER.role === 'leader' ? '指示作成' : '申請作成', '#tab-calendar': 'カレンダー' };
+                const titleMap = { '#tab-chat': 'チャット', '#tab-inbox': '受信箱', '#tab-form': CURRENT_USER.role === 'leader' ? '命令作成' : '申請作成', '#tab-calendar': 'カレンダー' };
                 document.getElementById('header-title').textContent = titleMap[targetId];
 
                 const chatInput = document.getElementById('chat-input-area');
@@ -163,7 +163,7 @@ const App = {
             div.innerHTML = `
                 <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-3" style="width:40px; height:40px; font-size:20px;">${target.icon}</div>
                 <div>
-                    <div class="fw-bold">${target.name} <span class="badge bg-light text-dark ms-1">${target.role === 'leader' ? 'リーダー' : 'メンバー'}</span></div>
+                    <div class="fw-bold">${target.name} <span class="badge bg-light text-dark ms-1">${target.role === 'leader' ? '主人' : '奴隷'}</span></div>
                     <div class="small text-muted">タップして会話を開く</div>
                 </div>
             `;
@@ -287,7 +287,7 @@ const App = {
                 div.style.borderLeftColor = app.status === 'pending' ? '#ffc107' : (app.status === 'approved' ? '#198754' : '#dc3545');
                 
                 const badgeHtml = app.type === 'instruction' 
-                    ? `<span class="badge bg-primary px-3 py-1 mb-1">指示</span>`
+                    ? `<span class="badge bg-primary px-3 py-1 mb-1">命令</span>`
                     : `<span class="badge border border-secondary text-secondary mb-1 px-3 py-1">申請</span>`;
 
                 div.innerHTML = `
@@ -301,7 +301,7 @@ const App = {
                     <div class="small text-muted mt-2">${app.userName} - ${app.createdDateStr}</div>
                 `;
                 
-                // ★修正：リーダーか、自分の申請（指示以外）なら×ボタンを表示して取り消し可能に
+                // ★修正：主人か、自分の申請（命令以外）なら×ボタンを表示して取り消し可能に
                 const canDelete = CURRENT_USER.role === 'leader' || (CURRENT_USER.role === 'member' && app.userId === CURRENT_USER.id && app.type !== 'instruction');
                 
                 if (canDelete) {
@@ -534,3 +534,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
