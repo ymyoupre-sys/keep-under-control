@@ -31,9 +31,7 @@ const App = {
             this.setupTextareaAutoResize();
             this.setupHistoryHandler();
 
-        } catch (e) {
-            console.error("Init Error", e);
-        }
+        } catch (e) { console.error("Init Error", e); }
     },
 
     setupHistoryHandler() {
@@ -151,7 +149,6 @@ const App = {
         };
     },
 
-    // --- チャット関連 ---
     renderChatList() {
         const targets = CONFIG_USERS.filter(u => u.group === CURRENT_USER.group && u.id !== CURRENT_USER.id);
         const container = document.getElementById('chat-list');
@@ -270,7 +267,6 @@ const App = {
         };
     },
     
-    // --- 受信箱 ---
     startInboxListener() {
         if(unsubscribeInbox) unsubscribeInbox();
         
@@ -282,7 +278,9 @@ const App = {
                 if(CURRENT_USER.role === 'member' && app.userId !== CURRENT_USER.id && app.type !== 'instruction') return;
 
                 const isInstruction = app.type === 'instruction';
-                const isCompleted = app.status === 'completed';
+                const isInstructionCompleted = app.status === 'completed';
+                const isAppConfirmed = app.isConfirmed === true;
+                const isGrayOut = isInstructionCompleted || isAppConfirmed;
 
                 const div = document.createElement('div');
                 div.className = 'card mb-2 p-2 border-start border-4 clickable shadow-sm position-relative';
@@ -290,13 +288,12 @@ const App = {
                 let leftBorderColor = '#ffc107'; 
                 if (app.status === 'approved') leftBorderColor = '#198754';
                 if (app.status === 'rejected') leftBorderColor = '#dc3545';
-                if (isCompleted) leftBorderColor = '#6c757d'; 
+                if (isGrayOut) leftBorderColor = '#6c757d'; 
 
-                div.style.cssText = `border-left-color: ${leftBorderColor}; ${isCompleted ? 'opacity: 0.4; background-color: #e9ecef;' : ''}`;
+                div.style.cssText = `border-left-color: ${leftBorderColor}; ${isGrayOut ? 'opacity: 0.4; background-color: #e9ecef;' : ''}`;
                 
-                // ★修正：「主人」かつ「未完了の命令」の場合のみテキストを変更
                 let instructionLabel = '命令';
-                if (isInstruction && CURRENT_USER.role === 'leader' && !isCompleted) {
+                if (isInstruction && CURRENT_USER.role === 'leader' && !isInstructionCompleted) {
                     instructionLabel = '命令（完了報告待ち）';
                 }
 
@@ -334,25 +331,44 @@ const App = {
                     div.appendChild(deleteBtn);
                 }
 
+                let showCheckBtn = false;
+                let btnStateCompleted = false;
+                let onCheckAction = null;
+
                 if (isInstruction) {
+                    showCheckBtn = true;
+                    btnStateCompleted = isInstructionCompleted;
+                    onCheckAction = async (e) => {
+                        e.stopPropagation(); 
+                        if (CURRENT_USER.role === 'member') {
+                            if(confirm("この命令を「完了」として主人に報告しますか？")) {
+                                await DB.updateStatus(app.id, 'completed', '', CURRENT_USER.id);
+                            }
+                        } else {
+                            alert("奴隷が完了報告を行うためのボタンです。");
+                        }
+                    };
+                } else if (CURRENT_USER.role === 'member' && app.userId === CURRENT_USER.id && (app.status === 'approved' || app.status === 'rejected')) {
+                    showCheckBtn = true;
+                    btnStateCompleted = isAppConfirmed;
+                    onCheckAction = async (e) => {
+                        e.stopPropagation(); 
+                        if(confirm("この申請結果を確認済みとしてグレーアウトさせますか？\n（※自分用のメモ機能のため、主人に通知は飛びません）")) {
+                            await DB.markAsConfirmed(app.id);
+                        }
+                    };
+                }
+
+                if (showCheckBtn) {
                     const checkBtn = document.createElement('button');
-                    checkBtn.className = `btn btn-sm position-absolute ${isCompleted ? 'btn-secondary' : 'btn-outline-success'}`;
+                    checkBtn.className = `btn btn-sm position-absolute ${btnStateCompleted ? 'btn-secondary' : 'btn-outline-success'}`;
                     checkBtn.style.cssText = "bottom: 12px; right: 12px; z-index: 10; border-radius: 50%; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;";
                     checkBtn.innerHTML = '<i class="bi bi-check-lg" style="font-size: 18px;"></i>';
 
-                    if (isCompleted) {
+                    if (btnStateCompleted) {
                         checkBtn.disabled = true; 
                     } else {
-                        checkBtn.onclick = async (e) => {
-                            e.stopPropagation(); 
-                            if (CURRENT_USER.role === 'member') {
-                                if(confirm("この命令を「完了」として主人に報告しますか？")) {
-                                    await DB.updateStatus(app.id, 'completed', '', CURRENT_USER.id);
-                                }
-                            } else {
-                                alert("奴隷が完了報告を行うためのボタンです。");
-                            }
-                        };
+                        checkBtn.onclick = onCheckAction;
                     }
                     div.appendChild(checkBtn);
                 }
@@ -381,10 +397,8 @@ const App = {
             });
         }
 
-        // ★追加：主人の判定コメントがあれば表示する
         const leaderCommentArea = document.getElementById('detail-leader-comment-area');
         const leaderCommentText = document.getElementById('detail-leader-comment');
-        
         if (appData.resultComment && appData.resultComment.trim() !== '') {
             leaderCommentArea.classList.remove('d-none');
             leaderCommentText.textContent = appData.resultComment;
@@ -437,7 +451,6 @@ const App = {
         modal.show();
     },
 
-    // --- 画像・フォーム関連 ---
     setupImageInputs() {
         const handleFiles = async (files, arrayRef, previewId, inputId) => {
             if (files.length + arrayRef.length > 4) { alert('画像は最大4枚までです'); return; }
@@ -519,7 +532,6 @@ const App = {
         } catch(e) { console.error(e); alert('送信に失敗しました'); }
     },
 
-    // --- 通知関連 ---
     addTabBadge(tabId) {
         const activeTab = document.querySelector('.bottom-nav-item.active').getAttribute('href');
         if (activeTab === tabId) return;
@@ -555,13 +567,17 @@ const App = {
             if (permission === 'granted') {
                 const registration = await navigator.serviceWorker.register('sw.js');
                 const token = await getToken(messaging, { 
-                    // ★ご自身のVAPIDキーをここに記載してください！
+                    // ★ご自身のVAPIDキーに書き換えてください
                     vapidKey: "BMdNlbLwC3bEwAIp-ZG9Uwp-5n4HdyXvlsqJbt6Q5YRdCA7gUexx0G9MpjB3AdLk6iNJodLTobC3-bGG6YskB0s", 
                     serviceWorkerRegistration: registration
                 });
                 if (token) await DB.saveUserToken(CURRENT_USER, token);
                 
                 onMessage(messaging, (payload) => { 
+                    // ★追加：自分が発信したアクションなら通知を無視する（自己通知ブロック）
+                    const senderId = payload.data?.senderId;
+                    if (senderId === CURRENT_USER.id) return; 
+
                     console.log('Foreground Message:', payload); 
                     const title = payload.notification?.title || '新着通知';
                     const body = payload.notification?.body || '';
@@ -577,5 +593,3 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
-
-
