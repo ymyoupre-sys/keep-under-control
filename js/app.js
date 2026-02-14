@@ -117,7 +117,6 @@ const App = {
                 const targetId = item.getAttribute('href');
                 sessionStorage.setItem('activeTab', targetId); 
 
-                // タブを開いた時にバッジ（Nマーク）を消す
                 const badge = item.querySelector('.tab-badge');
                 if (badge) badge.remove();
 
@@ -282,13 +281,29 @@ const App = {
             apps.forEach(app => {
                 if(CURRENT_USER.role === 'member' && app.userId !== CURRENT_USER.id && app.type !== 'instruction') return;
 
+                const isInstruction = app.type === 'instruction';
+                const isCompleted = app.status === 'completed';
+
                 const div = document.createElement('div');
                 div.className = 'card mb-2 p-2 border-start border-4 clickable shadow-sm position-relative';
-                div.style.borderLeftColor = app.status === 'pending' ? '#ffc107' : (app.status === 'approved' ? '#198754' : '#dc3545');
                 
-                const badgeHtml = app.type === 'instruction' 
+                // ★修正：グレーアウト処理と左側の色
+                let leftBorderColor = '#ffc107'; // デフォルトは黄色
+                if (app.status === 'approved') leftBorderColor = '#198754';
+                if (app.status === 'rejected') leftBorderColor = '#dc3545';
+                if (isCompleted) leftBorderColor = '#6c757d'; // 完了時はグレー
+
+                // 命令が完了していたらカード全体をグレーアウトさせる
+                div.style.cssText = `border-left-color: ${leftBorderColor}; ${isCompleted ? 'opacity: 0.6; background-color: #f8f9fa;' : ''}`;
+                
+                const badgeHtml = isInstruction 
                     ? `<span class="badge bg-primary px-3 py-1 mb-1">命令</span>`
                     : `<span class="badge border border-secondary text-secondary mb-1 px-3 py-1">申請</span>`;
+
+                // ★修正：命令の場合は「承認待ち」等のバッジを出さない
+                const statusBadgeHtml = !isInstruction
+                    ? `<span class="badge ${CONFIG_SETTINGS.statusLabels[app.status]?.color || 'bg-secondary'} mt-1">${CONFIG_SETTINGS.statusLabels[app.status]?.label || app.status}</span>`
+                    : '';
 
                 div.innerHTML = `
                     <div class="d-flex justify-content-between align-items-start pe-4">
@@ -296,14 +311,13 @@ const App = {
                             ${badgeHtml}
                             <strong class="ms-1 d-block mt-1">${app.title}</strong>
                         </div>
-                        <span class="badge ${CONFIG_SETTINGS.statusLabels[app.status]?.color || 'bg-secondary'} mt-1">${CONFIG_SETTINGS.statusLabels[app.status]?.label || app.status}</span>
+                        ${statusBadgeHtml}
                     </div>
                     <div class="small text-muted mt-2">${app.userName} - ${app.createdDateStr}</div>
                 `;
                 
-                // ★修正：主人か、自分の申請（命令以外）なら×ボタンを表示して取り消し可能に
-                const canDelete = CURRENT_USER.role === 'leader' || (CURRENT_USER.role === 'member' && app.userId === CURRENT_USER.id && app.type !== 'instruction');
-                
+                // 右上の×ボタン（削除・取り消し）
+                const canDelete = CURRENT_USER.role === 'leader' || (CURRENT_USER.role === 'member' && app.userId === CURRENT_USER.id && !isInstruction);
                 if (canDelete) {
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = "btn btn-link text-muted p-0 position-absolute";
@@ -316,6 +330,32 @@ const App = {
                         }
                     };
                     div.appendChild(deleteBtn);
+                }
+
+                // ★新規追加：命令の完了チェックマークボタン（右下に配置）
+                if (isInstruction) {
+                    const checkBtn = document.createElement('button');
+                    checkBtn.className = `btn btn-sm position-absolute ${isCompleted ? 'btn-secondary' : 'btn-outline-success'}`;
+                    checkBtn.style.cssText = "bottom: 12px; right: 12px; z-index: 10; border-radius: 50%; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;";
+                    checkBtn.innerHTML = '<i class="bi bi-check-lg" style="font-size: 18px;"></i>';
+
+                    if (isCompleted) {
+                        checkBtn.disabled = true; // 完了済みの場合は押せない
+                    } else {
+                        checkBtn.onclick = async (e) => {
+                            e.stopPropagation(); // モーダルを開かないようにする
+                            if (CURRENT_USER.role === 'member') {
+                                if(confirm("この命令を「完了」として主人に報告しますか？")) {
+                                    // ステータスを 'completed' に更新する
+                                    await DB.updateStatus(app.id, 'completed', '', CURRENT_USER.id);
+                                }
+                            } else {
+                                // 主人が押そうとした場合の保険
+                                alert("奴隷が完了報告を行うためのボタンです。");
+                            }
+                        };
+                    }
+                    div.appendChild(checkBtn);
                 }
 
                 div.onclick = () => this.showInboxDetail(app);
@@ -421,13 +461,12 @@ const App = {
         imageArray.forEach((img, index) => {
             const wrapper = document.createElement('div');
             wrapper.style.position = 'relative';
-            // ★修正：添付直後のプレビュー画像もタップで拡大できるようにし、透過のカスタム×ボタンを適用
             wrapper.innerHTML = `
                 <img src="${img}" class="image-preview-item clickable" onclick="window.openFullscreenImage('${img}')">
                 <div class="custom-close-preview"><i class="bi bi-x"></i></div>
             `;
             wrapper.querySelector('.custom-close-preview').onclick = (e) => {
-                e.stopPropagation(); // 拡大表示が同時に開くのを防ぐ
+                e.stopPropagation(); 
                 imageArray.splice(index, 1);
                 this.updateImagePreview(containerId, imageArray, inputId); 
             };
@@ -471,10 +510,8 @@ const App = {
     },
 
     // --- 通知関連 ---
-    // リアルタイムバッジを追加する処理
     addTabBadge(tabId) {
         const activeTab = document.querySelector('.bottom-nav-item.active').getAttribute('href');
-        // 今見ているタブならバッジは付けない
         if (activeTab === tabId) return;
 
         const navItem = document.querySelector(`.bottom-nav-item[href="${tabId}"]`);
@@ -483,19 +520,18 @@ const App = {
             if (!badge) {
                 badge = document.createElement('span');
                 badge.className = 'tab-badge';
-                badge.textContent = 'N'; // Newの意味でN
+                badge.textContent = 'N'; 
                 navItem.appendChild(badge);
             }
         }
     },
 
-    // アプリ内トースト（バナー）を表示する処理
     showToast(title, body) {
         const container = document.getElementById('toast-container');
         if (!container) return;
         const toast = document.createElement('div');
         toast.className = 'bg-dark text-white p-3 rounded shadow-lg mb-2 d-flex align-items-center';
-        toast.style.pointerEvents = 'auto'; // タップして消せるようにする
+        toast.style.pointerEvents = 'auto'; 
         toast.innerHTML = `<i class="bi bi-bell-fill text-warning me-3 fs-4"></i><div><strong class="d-block">${title}</strong><span class="small">${body}</span></div>`;
         
         toast.onclick = () => toast.remove();
@@ -515,16 +551,13 @@ const App = {
                 });
                 if (token) await DB.saveUserToken(CURRENT_USER, token);
                 
-                // ★修正：アプリを開いている時のリアルタイム通知処理
                 onMessage(messaging, (payload) => { 
                     console.log('Foreground Message:', payload); 
                     const title = payload.notification?.title || '新着通知';
                     const body = payload.notification?.body || '';
-                    const tabType = payload.data?.tab || 'inbox'; // サーバーが送ってきたタブ情報
+                    const tabType = payload.data?.tab || 'inbox'; 
                     
-                    // アプリ内バナーを表示
                     this.showToast(title, body);
-                    // 該当タブに赤バッジを付与
                     this.addTabBadge(`#tab-${tabType}`);
                 });
             }
@@ -534,4 +567,3 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
-
