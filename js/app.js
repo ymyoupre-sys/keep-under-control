@@ -117,6 +117,10 @@ const App = {
                 const targetId = item.getAttribute('href');
                 sessionStorage.setItem('activeTab', targetId); 
 
+                // タブを開いた時にバッジ（Nマーク）を消す
+                const badge = item.querySelector('.tab-badge');
+                if (badge) badge.remove();
+
                 document.querySelectorAll('.tab-content').forEach(content => content.classList.add('d-none'));
                 document.querySelector(targetId).classList.remove('d-none');
                 
@@ -191,7 +195,6 @@ const App = {
                 const hasReacted = msg.reactions && msg.reactions.includes(CURRENT_USER.id);
                 
                 const div = document.createElement('div');
-                // ★アイコンを左上に固定して密着させるレイアウト
                 div.className = `d-flex align-items-start chat-row ${isMe ? 'justify-content-end' : 'justify-content-start'}`;
                 
                 const iconHtml = !isMe ? `<div class="flex-shrink-0 me-2 mt-1" style="font-size:28px; line-height:1;">${msg.senderIcon}</div>` : '';
@@ -200,7 +203,7 @@ const App = {
                 if(msg.images && msg.images.length > 0) {
                     imagesHtml = `<div class="d-flex flex-wrap gap-1 mt-1 ${isMe ? 'justify-content-end' : 'justify-content-start'}">`;
                     msg.images.forEach(img => {
-                        imagesHtml += `<img src="${img}" class="img-fluid rounded" style="width: 100px; height: 100px; object-fit: cover;" onclick="openFullscreenImage('${img}')">`;
+                        imagesHtml += `<img src="${img}" class="img-fluid rounded clickable" style="width: 100px; height: 100px; object-fit: cover;" onclick="openFullscreenImage('${img}')">`;
                     });
                     imagesHtml += `</div>`;
                 }
@@ -298,14 +301,17 @@ const App = {
                     <div class="small text-muted mt-2">${app.userName} - ${app.createdDateStr}</div>
                 `;
                 
-                if (CURRENT_USER.role === 'leader') {
+                // ★修正：リーダーか、自分の申請（指示以外）なら×ボタンを表示して取り消し可能に
+                const canDelete = CURRENT_USER.role === 'leader' || (CURRENT_USER.role === 'member' && app.userId === CURRENT_USER.id && app.type !== 'instruction');
+                
+                if (canDelete) {
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = "btn btn-link text-muted p-0 position-absolute";
                     deleteBtn.style.cssText = "top: 8px; right: 12px; z-index: 10;";
                     deleteBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
                     deleteBtn.onclick = async (e) => {
                         e.stopPropagation(); 
-                        if(confirm("本当にこの項目を削除しますか？\n（削除後は元に戻せません）")) {
+                        if(confirm("本当にこの項目を取り消し（削除）しますか？\n（削除後は元に戻せません）")) {
                             await DB.deleteApplication(app.id);
                         }
                     };
@@ -337,7 +343,6 @@ const App = {
         }
 
         const leaderArea = document.getElementById('leader-judge-area');
-        // ★修正：モーダルを閉じる関数を用意
         const closeModal = () => bootstrap.Modal.getInstance(document.getElementById('inboxDetailModal')).hide();
 
         if (CURRENT_USER.role === 'leader') {
@@ -354,11 +359,11 @@ const App = {
                     
                     document.getElementById('btn-approve').onclick = async () => {
                         await DB.updateStatus(appData.id, 'approved', commentInput.value, CURRENT_USER.id);
-                        closeModal(); // 判定後に閉じる
+                        closeModal(); 
                     };
                     document.getElementById('btn-reject').onclick = async () => {
                         await DB.updateStatus(appData.id, 'rejected', commentInput.value, CURRENT_USER.id);
-                        closeModal(); // 判定後に閉じる
+                        closeModal(); 
                     };
                 } else {
                     document.getElementById('judge-btn-group').classList.add('d-none');
@@ -366,7 +371,7 @@ const App = {
                     
                     document.getElementById('btn-cancel-judge').onclick = async () => {
                         await DB.updateStatus(appData.id, 'pending', '', CURRENT_USER.id);
-                        closeModal(); // 取消後に閉じる
+                        closeModal(); 
                     };
                 }
             } else {
@@ -405,12 +410,10 @@ const App = {
         document.getElementById('form-submit-btn').addEventListener('click', () => this.handleFormSubmit());
     },
 
-    // ★修正：赤枠・赤字の×ボタンにし、画像0枚になったらinputタグを空にする
     updateImagePreview(containerId, imageArray, inputId) {
         const container = document.getElementById(containerId);
         container.innerHTML = '';
         
-        // 画像がすべて消されたら、ファイルの選択状態をリセットする
         if (imageArray.length === 0 && inputId) {
             document.getElementById(inputId).value = '';
         }
@@ -418,11 +421,13 @@ const App = {
         imageArray.forEach((img, index) => {
             const wrapper = document.createElement('div');
             wrapper.style.position = 'relative';
+            // ★修正：添付直後のプレビュー画像もタップで拡大できるようにし、透過のカスタム×ボタンを適用
             wrapper.innerHTML = `
-                <img src="${img}" class="image-preview-item">
-                <div class="position-absolute top-0 end-0 m-1 d-flex align-items-center justify-content-center bg-white text-danger border border-danger rounded-circle clickable shadow-sm" style="width:18px; height:18px; font-size:14px; line-height:1;" aria-label="Close">&times;</div>
+                <img src="${img}" class="image-preview-item clickable" onclick="window.openFullscreenImage('${img}')">
+                <div class="custom-close-preview"><i class="bi bi-x"></i></div>
             `;
-            wrapper.querySelector('div').onclick = () => {
+            wrapper.querySelector('.custom-close-preview').onclick = (e) => {
+                e.stopPropagation(); // 拡大表示が同時に開くのを防ぐ
                 imageArray.splice(index, 1);
                 this.updateImagePreview(containerId, imageArray, inputId); 
             };
@@ -465,19 +470,63 @@ const App = {
         } catch(e) { console.error(e); alert('送信に失敗しました'); }
     },
 
+    // --- 通知関連 ---
+    // リアルタイムバッジを追加する処理
+    addTabBadge(tabId) {
+        const activeTab = document.querySelector('.bottom-nav-item.active').getAttribute('href');
+        // 今見ているタブならバッジは付けない
+        if (activeTab === tabId) return;
+
+        const navItem = document.querySelector(`.bottom-nav-item[href="${tabId}"]`);
+        if (navItem) {
+            let badge = navItem.querySelector('.tab-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'tab-badge';
+                badge.textContent = 'N'; // Newの意味でN
+                navItem.appendChild(badge);
+            }
+        }
+    },
+
+    // アプリ内トースト（バナー）を表示する処理
+    showToast(title, body) {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = 'bg-dark text-white p-3 rounded shadow-lg mb-2 d-flex align-items-center';
+        toast.style.pointerEvents = 'auto'; // タップして消せるようにする
+        toast.innerHTML = `<i class="bi bi-bell-fill text-warning me-3 fs-4"></i><div><strong class="d-block">${title}</strong><span class="small">${body}</span></div>`;
+        
+        toast.onclick = () => toast.remove();
+        container.appendChild(toast);
+        setTimeout(() => { if (toast.parentNode) toast.remove(); }, 4000);
+    },
+
     async setupNotifications() {
         try {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
                 const registration = await navigator.serviceWorker.register('sw.js');
                 const token = await getToken(messaging, { 
-                    // ★ご自身のVAPIDキーをここに記載してください
+                    // ★ご自身のVAPIDキーをここに記載してください！
                     vapidKey: "BMdNlbLwC3bEwAIp-ZG9Uwp-5n4HdyXvlsqJbt6Q5YRdCA7gUexx0G9MpjB3AdLk6iNJodLTobC3-bGG6YskB0s", 
                     serviceWorkerRegistration: registration
                 });
                 if (token) await DB.saveUserToken(CURRENT_USER, token);
                 
-                onMessage(messaging, (payload) => { console.log('Message:', payload); });
+                // ★修正：アプリを開いている時のリアルタイム通知処理
+                onMessage(messaging, (payload) => { 
+                    console.log('Foreground Message:', payload); 
+                    const title = payload.notification?.title || '新着通知';
+                    const body = payload.notification?.body || '';
+                    const tabType = payload.data?.tab || 'inbox'; // サーバーが送ってきたタブ情報
+                    
+                    // アプリ内バナーを表示
+                    this.showToast(title, body);
+                    // 該当タブに赤バッジを付与
+                    this.addTabBadge(`#tab-${tabType}`);
+                });
             }
         } catch (error) { console.error('Notification setup failed:', error); }
     }
