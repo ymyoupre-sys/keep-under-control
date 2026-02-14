@@ -287,20 +287,23 @@ const App = {
                 const div = document.createElement('div');
                 div.className = 'card mb-2 p-2 border-start border-4 clickable shadow-sm position-relative';
                 
-                // ★修正：グレーアウト処理と左側の色
-                let leftBorderColor = '#ffc107'; // デフォルトは黄色
+                let leftBorderColor = '#ffc107'; 
                 if (app.status === 'approved') leftBorderColor = '#198754';
                 if (app.status === 'rejected') leftBorderColor = '#dc3545';
-                if (isCompleted) leftBorderColor = '#6c757d'; // 完了時はグレー
+                if (isCompleted) leftBorderColor = '#6c757d'; 
 
-                // 命令が完了していたらカード全体をグレーアウトさせる
                 div.style.cssText = `border-left-color: ${leftBorderColor}; ${isCompleted ? 'opacity: 0.4; background-color: #e9ecef;' : ''}`;
                 
+                // ★修正：「主人」かつ「未完了の命令」の場合のみテキストを変更
+                let instructionLabel = '命令';
+                if (isInstruction && CURRENT_USER.role === 'leader' && !isCompleted) {
+                    instructionLabel = '命令（完了報告待ち）';
+                }
+
                 const badgeHtml = isInstruction 
-                    ? `<span class="badge bg-primary px-3 py-1 mb-1">命令</span>`
+                    ? `<span class="badge bg-primary px-3 py-1 mb-1">${instructionLabel}</span>`
                     : `<span class="badge border border-secondary text-secondary mb-1 px-3 py-1">申請</span>`;
 
-                // ★修正：命令の場合は「承認待ち」等のバッジを出さない
                 const statusBadgeHtml = !isInstruction
                     ? `<span class="badge ${CONFIG_SETTINGS.statusLabels[app.status]?.color || 'bg-secondary'} mt-1">${CONFIG_SETTINGS.statusLabels[app.status]?.label || app.status}</span>`
                     : '';
@@ -316,7 +319,6 @@ const App = {
                     <div class="small text-muted mt-2">${app.userName} - ${app.createdDateStr}</div>
                 `;
                 
-                // 右上の×ボタン（削除・取り消し）
                 const canDelete = CURRENT_USER.role === 'leader' || (CURRENT_USER.role === 'member' && app.userId === CURRENT_USER.id && !isInstruction);
                 if (canDelete) {
                     const deleteBtn = document.createElement('button');
@@ -332,7 +334,6 @@ const App = {
                     div.appendChild(deleteBtn);
                 }
 
-                // ★新規追加：命令の完了チェックマークボタン（右下に配置）
                 if (isInstruction) {
                     const checkBtn = document.createElement('button');
                     checkBtn.className = `btn btn-sm position-absolute ${isCompleted ? 'btn-secondary' : 'btn-outline-success'}`;
@@ -340,17 +341,15 @@ const App = {
                     checkBtn.innerHTML = '<i class="bi bi-check-lg" style="font-size: 18px;"></i>';
 
                     if (isCompleted) {
-                        checkBtn.disabled = true; // 完了済みの場合は押せない
+                        checkBtn.disabled = true; 
                     } else {
                         checkBtn.onclick = async (e) => {
-                            e.stopPropagation(); // モーダルを開かないようにする
+                            e.stopPropagation(); 
                             if (CURRENT_USER.role === 'member') {
                                 if(confirm("この命令を「完了」として主人に報告しますか？")) {
-                                    // ステータスを 'completed' に更新する
                                     await DB.updateStatus(app.id, 'completed', '', CURRENT_USER.id);
                                 }
                             } else {
-                                // 主人が押そうとした場合の保険
                                 alert("奴隷が完了報告を行うためのボタンです。");
                             }
                         };
@@ -380,6 +379,17 @@ const App = {
                 el.onclick = () => window.openFullscreenImage(img);
                 imgContainer.appendChild(el);
             });
+        }
+
+        // ★追加：主人の判定コメントがあれば表示する
+        const leaderCommentArea = document.getElementById('detail-leader-comment-area');
+        const leaderCommentText = document.getElementById('detail-leader-comment');
+        
+        if (appData.resultComment && appData.resultComment.trim() !== '') {
+            leaderCommentArea.classList.remove('d-none');
+            leaderCommentText.textContent = appData.resultComment;
+        } else {
+            leaderCommentArea.classList.add('d-none');
         }
 
         const leaderArea = document.getElementById('leader-judge-area');
@@ -567,4 +577,5 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
