@@ -37,7 +37,6 @@ const App = {
     },
 
     setupHistoryHandler() {
-        // スマホの「戻る」ボタンを押したときにチャットを閉じる処理
         window.addEventListener('popstate', () => {
              const chatDetail = document.getElementById('chat-detail-container');
              if (chatDetail && !chatDetail.classList.contains('d-none')) {
@@ -170,7 +169,7 @@ const App = {
     },
 
     openChat(groupId, myId, targetId, targetName) {
-        history.pushState({chat: true}, '', '#chat'); // 戻るボタン用の履歴追加
+        history.pushState({chat: true}, '', '#chat'); 
 
         currentChatTargetId = DB.getChatRoomId(groupId, myId, targetId);
 
@@ -192,14 +191,14 @@ const App = {
                 const hasReacted = msg.reactions && msg.reactions.includes(CURRENT_USER.id);
                 
                 const div = document.createElement('div');
-                // アイコンと吹き出しを密着・上揃え・間隔を詰める
-                div.className = `d-flex mb-2 align-items-start ${isMe ? 'justify-content-end' : 'justify-content-start'}`;
+                // ★アイコンを左上に固定して密着させるレイアウト
+                div.className = `d-flex align-items-start chat-row ${isMe ? 'justify-content-end' : 'justify-content-start'}`;
                 
-                const iconHtml = !isMe ? `<div class="me-1" style="font-size:24px; line-height:1; padding-top:2px;">${msg.senderIcon}</div>` : '';
+                const iconHtml = !isMe ? `<div class="flex-shrink-0 me-2 mt-1" style="font-size:28px; line-height:1;">${msg.senderIcon}</div>` : '';
                 
                 let imagesHtml = '';
                 if(msg.images && msg.images.length > 0) {
-                    imagesHtml = `<div class="d-flex flex-wrap gap-1 mt-1">`;
+                    imagesHtml = `<div class="d-flex flex-wrap gap-1 mt-1 ${isMe ? 'justify-content-end' : 'justify-content-start'}">`;
                     msg.images.forEach(img => {
                         imagesHtml += `<img src="${img}" class="img-fluid rounded" style="width: 100px; height: 100px; object-fit: cover;" onclick="openFullscreenImage('${img}')">`;
                     });
@@ -210,36 +209,35 @@ const App = {
                 const editedLabel = msg.isEdited ? `<span class="text-muted ms-1" style="font-size:9px;">(編集済)</span>` : '';
                 
                 if(msg.text) {
-                    textHtml = `<div class="p-2 rounded ${isMe ? 'text-dark' : 'bg-white border text-dark'}" style="background-color: ${isMe ? 'var(--chat-me-bg)' : ''}; display: inline-block;">${msg.text}${editedLabel}</div>`;
+                    textHtml = `<div class="p-2 rounded text-dark shadow-sm" style="background-color: ${isMe ? 'var(--chat-me-bg)' : 'var(--chat-other-bg)'}; display: inline-block; text-align: left;">${msg.text}${editedLabel}</div>`;
                 } else if (msg.isEdited) {
-                    // 画像のみの場合の編集済ラベル
-                    textHtml = `<div class="text-end w-100">${editedLabel}</div>`;
+                    textHtml = `<div class="w-100 ${isMe ? 'text-end' : 'text-start'}">${editedLabel}</div>`;
                 }
 
-                const reactionHtml = reactionsCount > 0 ? `<div class="reaction-badge text-danger"><i class="${hasReacted ? 'bi bi-heart-fill' : 'bi bi-heart'}"></i> ${reactionsCount}</div>` : '';
+                const reactionHtml = reactionsCount > 0 ? `<div class="reaction-badge"><i class="${hasReacted ? 'bi bi-heart-fill' : 'bi bi-heart'}"></i> ${reactionsCount}</div>` : '';
 
                 div.innerHTML = `
                     ${iconHtml}
-                    <div class="chat-bubble">
-                        ${textHtml}
-                        ${imagesHtml}
+                    <div style="max-width: 75%; position: relative;">
+                        <div class="d-flex flex-column ${isMe ? 'align-items-end' : 'align-items-start'}">
+                            ${textHtml}
+                            ${imagesHtml}
+                        </div>
                         ${reactionHtml}
                     </div>
                 `;
 
-                // 他人のメッセージのみ長押しでいいね可能
                 if (!isMe) {
                     let pressTimer;
-                    const bubble = div.querySelector('.chat-bubble');
+                    const bubble = div.querySelector('div[style*="max-width"]');
                     bubble.addEventListener('touchstart', () => {
                         pressTimer = setTimeout(() => { DB.toggleReaction(groupId, myId, targetId, msg.id, CURRENT_USER.id); }, 500);
                     }, {passive:true});
                     bubble.addEventListener('touchend', () => clearTimeout(pressTimer));
                 }
 
-                // 自分のメッセージをタップで編集
                 if (isMe && msg.text) {
-                    const bubble = div.querySelector('.chat-bubble');
+                    const bubble = div.querySelector('div[style*="max-width"]');
                     bubble.onclick = () => {
                         const newText = prompt("メッセージを編集しますか？", msg.text);
                         if (newText !== null && newText.trim() !== "" && newText !== msg.text) {
@@ -251,11 +249,10 @@ const App = {
                 msgContainer.appendChild(div);
             });
             
-            // 自動で一番下までスクロール
             setTimeout(() => { detailContainer.scrollTop = detailContainer.scrollHeight; }, 50);
         });
         
-        document.getElementById('back-to-chat-list').onclick = () => history.back(); // 履歴を戻して閉じる
+        document.getElementById('back-to-chat-list').onclick = () => history.back(); 
         
         document.getElementById('chat-send-btn').onclick = async () => {
             const input = document.getElementById('chat-message-input');
@@ -266,8 +263,7 @@ const App = {
             input.value = '';
             input.style.height = '38px'; 
             chatImagesBase64 = [];
-            this.updateImagePreview('chat-image-preview', chatImagesBase64);
-            // 送信後もスクロール
+            this.updateImagePreview('chat-image-preview', chatImagesBase64, 'chat-image-file');
             setTimeout(() => { detailContainer.scrollTop = detailContainer.scrollHeight; }, 100);
         };
     },
@@ -287,7 +283,6 @@ const App = {
                 div.className = 'card mb-2 p-2 border-start border-4 clickable shadow-sm position-relative';
                 div.style.borderLeftColor = app.status === 'pending' ? '#ffc107' : (app.status === 'approved' ? '#198754' : '#dc3545');
                 
-                // アイコンの形を統一（色は青のまま）
                 const badgeHtml = app.type === 'instruction' 
                     ? `<span class="badge bg-primary px-3 py-1 mb-1">指示</span>`
                     : `<span class="badge border border-secondary text-secondary mb-1 px-3 py-1">申請</span>`;
@@ -303,14 +298,13 @@ const App = {
                     <div class="small text-muted mt-2">${app.userName} - ${app.createdDateStr}</div>
                 `;
                 
-                // 右上の×ボタン作成（リーダーのみ）
                 if (CURRENT_USER.role === 'leader') {
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = "btn btn-link text-muted p-0 position-absolute";
                     deleteBtn.style.cssText = "top: 8px; right: 12px; z-index: 10;";
                     deleteBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
                     deleteBtn.onclick = async (e) => {
-                        e.stopPropagation(); // モーダルが開くのを防ぐ
+                        e.stopPropagation(); 
                         if(confirm("本当にこの項目を削除しますか？\n（削除後は元に戻せません）")) {
                             await DB.deleteApplication(app.id);
                         }
@@ -343,6 +337,8 @@ const App = {
         }
 
         const leaderArea = document.getElementById('leader-judge-area');
+        // ★修正：モーダルを閉じる関数を用意
+        const closeModal = () => bootstrap.Modal.getInstance(document.getElementById('inboxDetailModal')).hide();
 
         if (CURRENT_USER.role === 'leader') {
             leaderArea.classList.remove('d-none');
@@ -353,21 +349,27 @@ const App = {
                 commentInput.value = appData.resultComment || '';
 
                 if (appData.status === 'pending') {
-                    // 承認待ちの場合：承認/却下ボタンを表示、取り消しを非表示
                     document.getElementById('judge-btn-group').classList.remove('d-none');
                     document.getElementById('btn-cancel-judge').classList.add('d-none');
                     
-                    document.getElementById('btn-approve').onclick = () => DB.updateStatus(appData.id, 'approved', commentInput.value, CURRENT_USER.id);
-                    document.getElementById('btn-reject').onclick = () => DB.updateStatus(appData.id, 'rejected', commentInput.value, CURRENT_USER.id);
+                    document.getElementById('btn-approve').onclick = async () => {
+                        await DB.updateStatus(appData.id, 'approved', commentInput.value, CURRENT_USER.id);
+                        closeModal(); // 判定後に閉じる
+                    };
+                    document.getElementById('btn-reject').onclick = async () => {
+                        await DB.updateStatus(appData.id, 'rejected', commentInput.value, CURRENT_USER.id);
+                        closeModal(); // 判定後に閉じる
+                    };
                 } else {
-                    // 判定済みの場合：承認/却下ボタンを非表示、取り消しを表示
                     document.getElementById('judge-btn-group').classList.add('d-none');
                     document.getElementById('btn-cancel-judge').classList.remove('d-none');
                     
-                    document.getElementById('btn-cancel-judge').onclick = () => DB.updateStatus(appData.id, 'pending', '', CURRENT_USER.id);
+                    document.getElementById('btn-cancel-judge').onclick = async () => {
+                        await DB.updateStatus(appData.id, 'pending', '', CURRENT_USER.id);
+                        closeModal(); // 取消後に閉じる
+                    };
                 }
             } else {
-                // 指示の場合は判定エリア全体を隠す
                 document.getElementById('judge-comment-area').classList.add('d-none');
                 document.getElementById('judge-btn-group').classList.add('d-none');
                 document.getElementById('btn-cancel-judge').classList.add('d-none');
@@ -382,40 +384,47 @@ const App = {
 
     // --- 画像・フォーム関連 ---
     setupImageInputs() {
-        const handleFiles = async (files, arrayRef, previewId) => {
+        const handleFiles = async (files, arrayRef, previewId, inputId) => {
             if (files.length + arrayRef.length > 4) { alert('画像は最大4枚までです'); return; }
             for (let i = 0; i < files.length; i++) {
                 const base64 = await Utils.fileToBase64(files[i]);
                 const comp = await Utils.compressImage(base64);
                 arrayRef.push(comp);
             }
-            this.updateImagePreview(previewId, arrayRef);
+            this.updateImagePreview(previewId, arrayRef, inputId);
         };
 
         document.getElementById('chat-image-file').addEventListener('change', e => {
-            handleFiles(e.target.files, chatImagesBase64, 'chat-image-preview');
+            handleFiles(e.target.files, chatImagesBase64, 'chat-image-preview', 'chat-image-file');
         });
 
         document.getElementById('form-image-file').addEventListener('change', e => {
-            handleFiles(e.target.files, formImagesBase64, 'form-image-preview');
+            handleFiles(e.target.files, formImagesBase64, 'form-image-preview', 'form-image-file');
         });
 
         document.getElementById('form-submit-btn').addEventListener('click', () => this.handleFormSubmit());
     },
 
-    updateImagePreview(containerId, imageArray) {
+    // ★修正：赤枠・赤字の×ボタンにし、画像0枚になったらinputタグを空にする
+    updateImagePreview(containerId, imageArray, inputId) {
         const container = document.getElementById(containerId);
         container.innerHTML = '';
+        
+        // 画像がすべて消されたら、ファイルの選択状態をリセットする
+        if (imageArray.length === 0 && inputId) {
+            document.getElementById(inputId).value = '';
+        }
+
         imageArray.forEach((img, index) => {
             const wrapper = document.createElement('div');
             wrapper.style.position = 'relative';
             wrapper.innerHTML = `
                 <img src="${img}" class="image-preview-item">
-                <button type="button" class="btn-close btn-close-white bg-dark position-absolute top-0 end-0 m-1" style="font-size: 10px;" aria-label="Close"></button>
+                <div class="position-absolute top-0 end-0 m-1 d-flex align-items-center justify-content-center bg-white text-danger border border-danger rounded-circle clickable shadow-sm" style="width:18px; height:18px; font-size:14px; line-height:1;" aria-label="Close">&times;</div>
             `;
-            wrapper.querySelector('button').onclick = () => {
+            wrapper.querySelector('div').onclick = () => {
                 imageArray.splice(index, 1);
-                this.updateImagePreview(containerId, imageArray); 
+                this.updateImagePreview(containerId, imageArray, inputId); 
             };
             container.appendChild(wrapper);
         });
@@ -451,7 +460,7 @@ const App = {
             alert('送信しました');
             document.getElementById('form-content').value = '';
             formImagesBase64 = [];
-            this.updateImagePreview('form-image-preview', formImagesBase64);
+            this.updateImagePreview('form-image-preview', formImagesBase64, 'form-image-file');
             document.querySelector('.bottom-nav-item[href="#tab-inbox"]').click(); 
         } catch(e) { console.error(e); alert('送信に失敗しました'); }
     },
@@ -462,7 +471,7 @@ const App = {
             if (permission === 'granted') {
                 const registration = await navigator.serviceWorker.register('sw.js');
                 const token = await getToken(messaging, { 
-                    // ★重要：ご自身のVAPIDキーをここに記載してください！
+                    // ★ご自身のVAPIDキーをここに記載してください
                     vapidKey: "BMdNlbLwC3bEwAIp-ZG9Uwp-5n4HdyXvlsqJbt6Q5YRdCA7gUexx0G9MpjB3AdLk6iNJodLTobC3-bGG6YskB0s", 
                     serviceWorkerRegistration: registration
                 });
@@ -476,4 +485,3 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
-
