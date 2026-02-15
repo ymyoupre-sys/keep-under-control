@@ -336,8 +336,8 @@ const App = {
                         </div>
                         <div id="delete-btn-container-${app.id}" style="width: 24px; text-align: right;"></div>
                     </div>
-                    <strong class="d-block mb-2 pe-4" style="font-size: 1.05rem;">${app.title}</strong>
-                    <div class="d-flex justify-content-between align-items-center small text-muted">
+                    <strong class="d-block mb-2 pe-5" style="font-size: 1.05rem;">${app.title}</strong>
+                    <div class="d-flex align-items-center gap-3 small text-muted pe-5">
                         <span>${app.userName} - ${app.createdDateStr}</span>
                         ${attachmentIconsHtml}
                     </div>
@@ -617,3 +617,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
