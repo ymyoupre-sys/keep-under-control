@@ -1,8 +1,11 @@
 import { DB } from "./db.js";
 import { Utils } from "./utils.js";
 import { Calendar } from "./calendar.js";
-import { db, messaging, getToken } from "./firebase-config.js";
+// ★修正：authを追加
+import { db, messaging, getToken, auth } from "./firebase-config.js";
 import { onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
+// ★追加：Firebase匿名認証用の関数
+import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 let CONFIG_USERS = [];
 let CONFIG_SETTINGS = {};
@@ -18,6 +21,9 @@ let formImagesBase64 = [];
 const App = {
     async init() {
         try {
+            // ★追加：アプリ起動時に裏側で自動的にFirebase匿名認証を行う
+            await signInAnonymously(auth);
+
             const [usersRes, settingsRes] = await Promise.all([
                 fetch('config/users.json?v=' + new Date().getTime()),
                 fetch('config/settings.json?v=' + new Date().getTime())
@@ -89,8 +95,7 @@ const App = {
         const typeSelect = document.getElementById('form-type-select');
         typeSelect.innerHTML = '';
         
-        // ★修正：ユーザーのグループ（CURRENT_USER.group）の設定を探す
-        // もし設定が見つからなければ、空っぽの配列にしてエラーを防ぐ
+        // ★修正：ユーザーのグループごとの設定を読み込む
         const groupData = CONFIG_SETTINGS.groups && CONFIG_SETTINGS.groups[CURRENT_USER.group] 
                           ? CONFIG_SETTINGS.groups[CURRENT_USER.group] 
                           : { instructionTypes: ["設定なし"], applicationTypes: ["設定なし"] };
@@ -336,6 +341,7 @@ const App = {
 
                 const canDelete = CURRENT_USER.role === 'leader' || (CURRENT_USER.role === 'member' && app.userId === CURRENT_USER.id && !isInstruction);
 
+                // ★レイアウトとアイコン被りの完全修正版
                 div.innerHTML = `
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <div class="d-flex align-items-center gap-2">
@@ -358,7 +364,7 @@ const App = {
                     deleteBtn.innerHTML = '<i class="bi bi-x-lg" style="font-size: 1.1rem;"></i>';
                     deleteBtn.onclick = async (e) => {
                         e.stopPropagation(); 
-                        if(confirm("本当にこの項目を取り消し（削除）しますか？\n（削除後は元に戻せません）")) {
+                        if(confirm("この項目を削除しますか？\n（削除後は元に戻せません）")) {
                             await DB.deleteApplication(app.id);
                         }
                     };
@@ -600,8 +606,8 @@ const App = {
             if (permission === 'granted') {
                 const registration = await navigator.serviceWorker.register('sw.js');
                 const token = await getToken(messaging, { 
-                    // ★ご自身のVAPIDキーに書き換えてください
-                    vapidKey: "BMdNlbLwC3bEwAIp-ZG9Uwp-5n4HdyXvlsqJbt6Q5YRdCA7gUexx0G9MpjB3AdLk6iNJodLTobC3-bGG6YskB0s", 
+                    // ⚠️ご自身のVAPIDキーに書き換えてください⚠️
+                    vapidKey: "BMdNlbLwC3bEwAIp-ZG9Uwp-5n4HdyXvlsqJbt6Q5YRdCA7gUexx0G9MpjB3AdLk6iNJodLTobC3-bGG6YskB0s",
                     serviceWorkerRegistration: registration
                 });
                 if (token) await DB.saveUserToken(CURRENT_USER, token);
@@ -625,5 +631,3 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
-
-
