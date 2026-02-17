@@ -261,10 +261,53 @@ const App = {
                 if (isMe && msg.text) {
                     const bubble = div.querySelector('div[style*="max-width"]');
                     bubble.onclick = () => {
-                        const newText = prompt("メッセージを編集しますか？", msg.text);
-                        if (newText !== null && newText.trim() !== "" && newText !== msg.text) {
-                            DB.updateMessage(groupId, myId, targetId, msg.id, newText);
+                        // 編集用のモーダル（画面）がなければ自動で作る
+                        let editModalEl = document.getElementById('chatEditModal');
+                        if (!editModalEl) {
+                            editModalEl = document.createElement('div');
+                            editModalEl.id = 'chatEditModal';
+                            editModalEl.className = 'modal fade';
+                            editModalEl.tabIndex = -1;
+                            editModalEl.innerHTML = `
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">メッセージの編集</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <textarea id="chat-edit-textarea" class="form-control" rows="5" style="resize: none;"></textarea>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                                            <button type="button" class="btn btn-primary" id="chat-edit-save-btn">保存</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            document.body.appendChild(editModalEl);
                         }
+
+                        // テキストエリアに元の文章（改行込み）をセット
+                        const textarea = document.getElementById('chat-edit-textarea');
+                        textarea.value = msg.text;
+                        
+                        // モーダルを表示
+                        const editModal = new bootstrap.Modal(editModalEl);
+                        editModal.show();
+
+                        // 保存ボタンの動作をセット（複数回登録されるのを防ぐためボタンを作り直す）
+                        const saveBtn = document.getElementById('chat-edit-save-btn');
+                        const newSaveBtn = saveBtn.cloneNode(true);
+                        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+                        
+                        newSaveBtn.onclick = () => {
+                            const newText = textarea.value;
+                            if (newText.trim() !== "" && newText !== msg.text) {
+                                DB.updateMessage(groupId, myId, targetId, msg.id, newText);
+                            }
+                            editModal.hide();
+                        };
                     };
                 }
 
@@ -631,3 +674,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
