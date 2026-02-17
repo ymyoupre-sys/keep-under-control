@@ -44,5 +44,38 @@
   { "id": "u030", "name": "3号", "group": "N", "role": "member", "icon": "🐶" },
   
   { "id": "u031", "name": "仮さん", "group": "O", "role": "leader", "icon": "👨‍💼" },
-  { "id": "u032", "name": "こうすけ", "group": "O", "role": "member", "icon": "🐶" }
+  { "id": "u032", "name": "こうすけ", "group": "O", "role": "member", "icon": "🐶" },
+
+  { "id": "u033", "name": "先輩", "group": "P", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u034", "name": "まさや", "group": "P", "role": "member", "icon": "🐶" },
+
+  { "id": "u035", "name": "たく", "group": "Q", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u036", "name": "こうじ", "group": "Q", "role": "member", "icon": "🐶" },
+  
+  { "id": "u037", "name": "あああん", "group": "R", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u038", "name": "いいいん", "group": "R", "role": "member", "icon": "🐶" },  
+
+  { "id": "u039", "name": "うううん", "group": "S", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u040", "name": "えええん", "group": "S", "role": "member", "icon": "🐶" },
+
+  { "id": "u041", "name": "おおおん", "group": "T", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u042", "name": "かかか", "group": "T", "role": "member", "icon": "🐶" },
+
+  { "id": "u043", "name": "ききき", "group": "U", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u044", "name": "くくく", "group": "U", "role": "member", "icon": "🐶" },  
+
+  { "id": "u045", "name": "けけけ", "group": "V", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u046", "name": "こここ", "group": "V", "role": "member", "icon": "🐶" }, 
+
+  { "id": "u047", "name": "さささ", "group": "W", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u048", "name": "ししし", "group": "W", "role": "member", "icon": "🐶" },  
+  
+  { "id": "u049", "name": "すすす", "group": "X", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u050", "name": "せせせ", "group": "X", "role": "member", "icon": "🐶" }, 
+
+  { "id": "u051", "name": "そそそ", "group": "Y", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u052", "name": "たたた", "group": "Y", "role": "member", "icon": "🐶" }, 
+
+  { "id": "u053", "name": "ちちち", "group": "Z", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u054", "name": "つつつ", "group": "Z", "role": "member", "icon": "🐶" }
 ]
