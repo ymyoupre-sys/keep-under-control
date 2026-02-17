@@ -88,7 +88,15 @@ const App = {
 
         const typeSelect = document.getElementById('form-type-select');
         typeSelect.innerHTML = '';
-        const types = CURRENT_USER.role === 'leader' ? CONFIG_SETTINGS.instructionTypes : CONFIG_SETTINGS.applicationTypes;
+        
+        // ★修正：ユーザーのグループ（CURRENT_USER.group）の設定を探す
+        // もし設定が見つからなければ、空っぽの配列にしてエラーを防ぐ
+        const groupData = CONFIG_SETTINGS.groups && CONFIG_SETTINGS.groups[CURRENT_USER.group] 
+                          ? CONFIG_SETTINGS.groups[CURRENT_USER.group] 
+                          : { instructionTypes: ["設定なし"], applicationTypes: ["設定なし"] };
+        
+        const types = CURRENT_USER.role === 'leader' ? groupData.instructionTypes : groupData.applicationTypes;
+        
         types.forEach(type => {
             const opt = document.createElement('option');
             opt.value = type; opt.textContent = type;
@@ -617,4 +625,5 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
