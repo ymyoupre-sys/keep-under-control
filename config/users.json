@@ -1,19 +1,48 @@
 [
   { "id": "u001", "name": "リーダー", "group": "A", "role": "leader", "icon": "👨‍💼" },
   { "id": "u002", "name": "メンバー", "group": "A", "role": "member", "icon": "😺" },
+
   { "id": "u003", "name": "本多", "group": "B", "role": "leader", "icon": "👨‍💼" },
   { "id": "u004", "name": "山根", "group": "B", "role": "member", "icon": "🐶" },
+
   { "id": "u005", "name": "ひろゆき", "group": "C", "role": "leader", "icon": "👨‍💼" },
   { "id": "u006", "name": "つばさ", "group": "C", "role": "member", "icon": "🐶" },
+
   { "id": "u007", "name": "翔真の主人", "group": "D", "role": "leader", "icon": "👨‍💼" },
   { "id": "u008", "name": "翔真", "group": "D", "role": "member", "icon": "🐶" },
+
   { "id": "u009", "name": "なきとのご主人様", "group": "E", "role": "leader", "icon": "👨‍💼" },
   { "id": "u010", "name": "なきと", "group": "E", "role": "member", "icon": "🐰" },
+
   { "id": "u011", "name": "masterofjd", "group": "F", "role": "leader", "icon": "👨‍💼" },
-  { "id": "u012", "name": "japdog", "group": "F", "role": "member", "icon": "🐶" }
+  { "id": "u012", "name": "japdog", "group": "F", "role": "member", "icon": "🐶" },
+
+  { "id": "u013", "name": "bluesky", "group": "G", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u014", "name": "りょー", "group": "G", "role": "member", "icon": "🐶" },
+
+  { "id": "u015", "name": "しょうのご主人様", "group": "H", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u016", "name": "しょう", "group": "H", "role": "member", "icon": "🐶" },
+
+  { "id": "u017", "name": "マスター", "group": "I", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u018", "name": "カズマ", "group": "I", "role": "member", "icon": "🐶" },
+
+  { "id": "u019", "name": "とうの飼い主", "group": "J", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u020", "name": "とう", "group": "J", "role": "member", "icon": "🐶" },  
+
+  { "id": "u021", "name": "さく", "group": "K", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u022", "name": "しょう-222", "group": "K", "role": "member", "icon": "🐶" },  
+
+  { "id": "u023", "name": "トシキのご主人様", "group": "L", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u024", "name": "トシキ", "group": "L", "role": "member", "icon": "🐶" },
+
+  { "id": "u025", "name": "X_master", "group": "M", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u026", "name": "X_slave", "group": "M", "role": "member", "icon": "🐶" },
+
+  { "id": "u027", "name": "トシ", "group": "N", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u028", "name": "1号", "group": "N", "role": "member", "icon": "🐶" },
+  { "id": "u029", "name": "2号", "group": "N", "role": "member", "icon": "🐶" },
+  { "id": "u030", "name": "3号", "group": "N", "role": "member", "icon": "🐶" },
+  
+  { "id": "u031", "name": "仮さん", "group": "O", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u032", "name": "こうすけ", "group": "O", "role": "member", "icon": "🐶" }
 ]
-
-
-
-
-
