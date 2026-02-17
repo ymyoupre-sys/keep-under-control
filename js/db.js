@@ -1,7 +1,8 @@
-import { db } from "./firebase-config.js";
+import { db, storage } from "./firebase-config.js";
 import { 
     collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, setDoc, deleteDoc, getDoc, arrayUnion, arrayRemove
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 const getRoomId = (groupId, id1, id2) => {
     const sortedIds = [id1, id2].sort();
@@ -27,13 +28,33 @@ export const DB = {
         });
     },
 
+    // ★新規追加：画像をStorageにアップロードしてURLを返す関数
+    async uploadImage(base64String, folderName) {
+        if (!base64String) return null;
+        // すでにURLの場合はアップロードせずそのまま返す
+        if (base64String.startsWith('http')) return base64String;
+        
+        const fileName = `${folderName}/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.jpg`;
+        const storageRef = ref(storage, fileName);
+        await uploadString(storageRef, base64String, 'data_url');
+        return await getDownloadURL(storageRef);
+    },
+
     async sendMessage(groupId, id1, id2, sender, text, images = []) {
         const chatRoomId = getRoomId(groupId, id1, id2);
+        
+        // ★Storageへアップロード
+        const imageUrls = [];
+        for (const imgBase64 of images) {
+            const url = await this.uploadImage(imgBase64, `chats/${chatRoomId}`);
+            if (url) imageUrls.push(url);
+        }
+
         await addDoc(collection(db, "chats", chatRoomId, "messages"), {
             text: text, senderId: sender.id, senderName: sender.name, senderIcon: sender.icon || "👤",
-            images: images, reactions: [], isEdited: false, createdAt: serverTimestamp()
+            images: imageUrls, reactions: [], isEdited: false, createdAt: serverTimestamp()
         });
-        const lastMsgText = text || (images.length > 0 ? '画像が送信されました' : '');
+        const lastMsgText = text || (imageUrls.length > 0 ? '画像が送信されました' : '');
         await setDoc(doc(db, "chats", chatRoomId), { lastMessage: lastMsgText, updatedAt: serverTimestamp() }, { merge: true });
     },
 
@@ -63,6 +84,16 @@ export const DB = {
     },
 
     async submitForm(data) {
+        // ★Storageへアップロード
+        const imageUrls = [];
+        if (data.images && data.images.length > 0) {
+            for (const imgBase64 of data.images) {
+                const url = await this.uploadImage(imgBase64, `applications/${data.groupId}`);
+                if (url) imageUrls.push(url);
+            }
+        }
+        data.images = imageUrls; // データベースに送る直前にURLの配列にすり替える
+
         await addDoc(collection(db, "applications"), {
             ...data, status: 'pending', createdAt: serverTimestamp(), updatedAt: serverTimestamp(), createdDateStr: new Date().toLocaleDateString('ja-JP') 
         });
@@ -74,7 +105,6 @@ export const DB = {
         });
     },
 
-    // ★追加：申請をメンバーが確認済み（グレーアウト）にする処理
     async markAsConfirmed(docId) {
         await updateDoc(doc(db, "applications", docId), {
             isConfirmed: true, updatedAt: serverTimestamp()
