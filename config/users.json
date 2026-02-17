@@ -7,6 +7,8 @@
   { "id": "u006", "name": "つばさ", "group": "C", "role": "member", "icon": "🐶" },
   { "id": "u007", "name": "翔真の主人", "group": "D", "role": "leader", "icon": "👨‍💼" },
   { "id": "u008", "name": "翔真", "group": "D", "role": "member", "icon": "🐶" }
+  { "id": "u009", "name": "なきとのご主人様", "group": "E", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u010", "name": "なきと", "group": "E", "role": "member", "icon": "🐰" }
 ]
 
 
