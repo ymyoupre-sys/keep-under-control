@@ -4,7 +4,10 @@
   { "id": "u003", "name": "本多", "group": "B", "role": "leader", "icon": "👨‍💼" },
   { "id": "u004", "name": "山根", "group": "B", "role": "member", "icon": "🐶" },
   { "id": "u005", "name": "ひろゆき", "group": "C", "role": "leader", "icon": "👨‍💼" },
-  { "id": "u006", "name": "つばさ", "group": "C", "role": "member", "icon": "🐶" }
+  { "id": "u006", "name": "つばさ", "group": "C", "role": "member", "icon": "🐶" },
+  { "id": "u007", "name": "翔真の主人", "group": "D", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u008", "name": "翔真", "group": "D", "role": "member", "icon": "🐶" }
 ]
+
 
 
