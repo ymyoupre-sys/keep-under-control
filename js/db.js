@@ -1,6 +1,6 @@
 import { db, storage } from "./firebase-config.js";
 import { 
-    collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, setDoc, deleteDoc, getDoc, arrayUnion, arrayRemove
+    collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, setDoc, deleteDoc, getDoc, arrayUnion, arrayRemove, getDocs
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
@@ -140,23 +140,28 @@ export const DB = {
         
         await updateDoc(doc(db, "applications", docId), updateData);
         
-        return imageUrls; // チャット送信用にURLを返す
-    }
-// ★移行用の一時プログラム（使い終わったら消してOK）
-    async migrateAllUsers(usersArray) {
-        let count = 0;
-        for (const user of usersArray) {
-            // users.jsonのデータを1件ずつFirestoreに保存していく
-            await setDoc(doc(db, "users", user.id), {
-                name: user.name,
-                group: user.group,
-                role: user.role,
-                icon: user.icon || "👤",
-                password: "1234" // ★初期合言葉（全員共通で1234になります）
-            });
-            count++;
-        }
-        alert(`データ移行が完了しました！\n合計 ${count} 人のメンバーをFirebaseに登録しました。`);
-    }    
-};
+        return imageUrls;
+    },
 
+    async authenticateUserById(userId, password) {
+        const docRef = doc(db, "users", userId);
+        const snap = await getDoc(docRef);
+        if (snap.exists()) {
+            const userData = snap.data();
+            if (userData.password === password) {
+                return { id: snap.id, ...userData };
+            }
+        }
+        return null;
+    },
+
+    async updatePassword(userId, newPassword) {
+        await updateDoc(doc(db, "users", userId), { password: newPassword });
+    },
+
+    async getGroupUsers(groupId) {
+        const q = query(collection(db, "users"), where("group", "==", groupId));
+        const snap = await getDocs(q);
+        return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+};
