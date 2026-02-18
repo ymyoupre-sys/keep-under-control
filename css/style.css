@@ -170,3 +170,15 @@ header {
     overflow-wrap: break-word;
 }
 
+/* ========================================================
+   ログイン画面のレイアウト調整（PC・iPad対応）
+   ======================================================== */
+#login-screen {
+    max-width: 400px;       /* 横幅が広がりすぎないようスマホサイズに制限 */
+    margin: 0 auto;         /* 左右の余白を自動計算して「水平の中央」に配置 */
+    min-height: 100dvh;     /* 画面の高さにピッタリ合わせる */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* 「垂直の中央」に配置 */
+    padding: 20px;          /* 画面端にピッタリくっつかないように余白を確保 */
+}
