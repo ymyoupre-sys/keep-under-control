@@ -59,7 +59,7 @@
   { "id": "u040", "name": "ppss", "group": "S", "role": "member", "icon": "🐶" },
 
   { "id": "u041", "name": "KAN", "group": "T", "role": "leader", "icon": "👨‍💼" },
-  { "id": "u042", "name": "KANの奴隷", "group": "T", "role": "member", "icon": "🐶" },
+  { "id": "u042", "name": "マゾ犬", "group": "T", "role": "member", "icon": "🐶" },
 
   { "id": "u043", "name": "狁猼", "group": "U", "role": "leader", "icon": "👨‍💼" },
   { "id": "u044", "name": "微塵", "group": "U", "role": "member", "icon": "🐶" },  
@@ -79,3 +79,4 @@
   { "id": "u053", "name": "ちちち", "group": "Z", "role": "leader", "icon": "👨‍💼" },
   { "id": "u054", "name": "つつつ", "group": "Z", "role": "member", "icon": "🐶" }
 ]
+
