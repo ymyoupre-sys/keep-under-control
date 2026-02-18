@@ -174,11 +174,17 @@ header {
    ログイン画面のレイアウト調整（PC・iPad対応）
    ======================================================== */
 #login-screen {
-    max-width: 400px;       /* 横幅が広がりすぎないようスマホサイズに制限 */
-    margin: 0 auto;         /* 左右の余白を自動計算して「水平の中央」に配置 */
-    min-height: 100dvh;     /* 画面の高さにピッタリ合わせる */
+    width: 100%;               /* 横幅をいったん画面いっぱいに広げる */
+    max-width: 400px;          /* ただし最大400pxまでしか広げない */
+    margin: 0 auto !important; /* 強制的に左右の余白を均等にし、ど真ん中へ配置 */
+    min-height: 100dvh;        /* 画面の高さにピッタリ合わせる */
     display: flex;
     flex-direction: column;
-    justify-content: center; /* 「垂直の中央」に配置 */
-    padding: 20px;          /* 画面端にピッタリくっつかないように余白を確保 */
+    justify-content: center;   /* 縦方向もど真ん中へ配置 */
+    padding: 20px;
+}
+
+/* （おまけ）PCで見た時に、左右の余白が真っ白にならないようにする保険 */
+body {
+    background-color: #f8f9fa;
 }
