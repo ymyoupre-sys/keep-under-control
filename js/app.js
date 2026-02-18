@@ -228,10 +228,11 @@ const App = {
                 
                 let imagesHtml = '';
                 if(msg.images && msg.images.length > 0) {
-                    // ★修正：max-width: 210px; を指定し、横幅を制限して強制的に「2枚」で改行させる
-                    imagesHtml = `<div class="d-flex flex-wrap gap-1 mt-1 ${isMe ? 'justify-content-end' : 'justify-content-start'}" style="max-width: 210px;">`;
+                    // ★修正：画像の隙間をタップした時も編集画面が開かないよう、親枠に event.stopPropagation() を追加
+                    imagesHtml = `<div class="d-flex flex-wrap gap-1 mt-1 ${isMe ? 'justify-content-end' : 'justify-content-start'}" style="max-width: 210px;" onclick="event.stopPropagation();">`;
                     msg.images.forEach(img => {
-                        imagesHtml += `<img src="${img}" class="img-fluid rounded clickable" style="width: 100px; height: 100px; object-fit: cover;" onclick="openFullscreenImage('${img}')">`;
+                        // ★修正：画像タップ時にも event.stopPropagation() を追加してクリックの貫通を完全に防ぐ
+                        imagesHtml += `<img src="${img}" class="img-fluid rounded clickable" style="width: 100px; height: 100px; object-fit: cover;" onclick="event.stopPropagation(); window.openFullscreenImage('${img}')">`;
                     });
                     imagesHtml += `</div>`;
                 }
@@ -688,5 +689,6 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
