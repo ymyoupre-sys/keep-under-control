@@ -143,7 +143,6 @@ export const DB = {
         return imageUrls;
     },
 
-    // ★修正：認証はFirebase Authが行うため、データベースからは「名前の一致するユーザー情報」だけを返すように変更
     async getUserByName(name) {
         const q = query(collection(db, "users"), where("name", "==", name));
         const snap = await getDocs(q);
@@ -151,6 +150,11 @@ export const DB = {
             return { id: snap.docs[0].id, ...snap.docs[0].data() };
         }
         return null;
+    },
+
+    // ★★★ 先ほど私が消してしまっていた機能です！ ★★★
+    async updatePassword(userId, newPassword) {
+        await updateDoc(doc(db, "users", userId), { password: newPassword });
     },
 
     async getGroupUsers(groupId) {
