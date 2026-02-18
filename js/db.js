@@ -167,8 +167,17 @@ export const DB = {
 
     async getGroupUsers(groupId) {
         const safeGroup = groupId || "NONE";
-        const q = query(collection(db, "users"), where("group", "==", safeGroup));
-        const snap = await getDocs(q);
+        // まずは "group" フィールドで検索
+        let q = query(collection(db, "users"), where("group", "==", safeGroup));
+        let snap = await getDocs(q);
+        
+        // もし見つからなければ "groupId" フィールドでも検索（念のための補完）
+        if (snap.empty) {
+            q = query(collection(db, "users"), where("groupId", "==", safeGroup));
+            snap = await getDocs(q);
+        }
+        
         return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 };
+
