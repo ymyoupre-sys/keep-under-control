@@ -30,11 +30,12 @@
         <div class="card shadow border-0 p-4" style="width: 100%; max-width: 350px;">
             <div class="text-center mb-4">
                 <h4 class="fw-bold text-success">利用開始</h4>
-                <p class="text-muted small">登録名を入力してください</p>
+                <p class="text-muted small">登録名とパスワードを入力してください</p>
             </div>
             <input type="text" id="login-name" class="form-control form-control-lg mb-3" placeholder="名前 (例: 田中)">
+            <input type="password" id="login-password" class="form-control form-control-lg mb-3" placeholder="1234 を入力">
             <button id="login-btn" class="btn btn-success btn-lg w-100 fw-bold">ログイン</button>
-            <div id="login-error" class="text-danger small mt-2 text-center d-none">ユーザーが見つかりません</div>
+            <div id="login-error" class="text-danger small mt-2 text-center d-none">名前またはパスワードが間違っています</div>
         </div>
     </div>
 
@@ -203,7 +204,7 @@
                     <p class="small text-danger fw-bold mb-3"><i class="bi bi-exclamation-triangle-fill"></i> コメントまたは証拠画像のどちらかが必須です。</p>
                     <div class="mb-3">
                         <label class="form-label fw-bold">報告コメント</label>
-                        <textarea id="completion-comment" class="form-control" rows="3" placeholder="ご確認をお願いします"></textarea>
+                        <textarea id="completion-comment" class="form-control" rows="3" placeholder="作業完了しました。"></textarea>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">証拠画像 (最大4枚)</label>
@@ -232,8 +233,30 @@
         </div>
     </div>
 
+    <div class="modal fade" id="passwordChangeModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold text-danger"><i class="bi bi-shield-lock-fill"></i> 初期パスワードの変更</h5>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted mb-3">セキュリティのため、自分専用の新しいパスワード（4文字以上）を設定してください。</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">新しいパスワード</label>
+                        <input type="password" id="new-password" class="form-control" placeholder="4文字以上の英数字">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">新しいパスワード (確認用)</label>
+                        <input type="password" id="new-password-confirm" class="form-control" placeholder="もう一度入力">
+                    </div>
+                    <button id="btn-change-password" class="btn btn-primary w-100 fw-bold">変更して利用開始</button>
+                    <div id="password-error" class="text-danger small mt-2 text-center d-none">パスワードが一致しないか、短すぎます。</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="js/app.js?v=4"></script>
+    <script type="module" src="js/app.js?v=5"></script>
 </body>
 </html>
-
