@@ -20,7 +20,8 @@ export const DB = {
     getChatRoomId(groupId, id1, id2) { return getRoomId(groupId, id1, id2); },
 
     subscribeChat(groupId, id1, id2, callback) {
-        const chatRoomId = getRoomId(groupId, id1, id2);
+        const safeGroup = groupId || "NONE";
+        const chatRoomId = getRoomId(safeGroup, id1, id2);
         const q = query(collection(db, "chats", chatRoomId, "messages"), orderBy("createdAt", "asc"));
         return onSnapshot(q, (snapshot) => {
             const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -39,7 +40,8 @@ export const DB = {
     },
 
     async sendMessage(groupId, id1, id2, sender, text, images = []) {
-        const chatRoomId = getRoomId(groupId, id1, id2);
+        const safeGroup = groupId || "NONE";
+        const chatRoomId = getRoomId(safeGroup, id1, id2);
         
         const imageUrls = [];
         for (const imgBase64 of images) {
@@ -56,12 +58,14 @@ export const DB = {
     },
 
     async updateMessage(groupId, id1, id2, messageId, newText) {
-        const chatRoomId = getRoomId(groupId, id1, id2);
+        const safeGroup = groupId || "NONE";
+        const chatRoomId = getRoomId(safeGroup, id1, id2);
         await updateDoc(doc(db, "chats", chatRoomId, "messages", messageId), { text: newText, isEdited: true, updatedAt: serverTimestamp() });
     },
 
     async toggleReaction(groupId, id1, id2, messageId, userId) {
-        const chatRoomId = getRoomId(groupId, id1, id2);
+        const safeGroup = groupId || "NONE";
+        const chatRoomId = getRoomId(safeGroup, id1, id2);
         const msgRef = doc(db, "chats", chatRoomId, "messages", messageId);
         const snap = await getDoc(msgRef);
         if(snap.exists()) {
@@ -73,7 +77,8 @@ export const DB = {
     },
 
     subscribeApplications(groupId, callback) {
-        const q = query(collection(db, "applications"), where("groupId", "==", groupId), orderBy("createdAt", "desc"));
+        const safeGroup = groupId || "NONE";
+        const q = query(collection(db, "applications"), where("groupId", "==", safeGroup), orderBy("createdAt", "desc"));
         return onSnapshot(q, (snapshot) => {
             const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             callback(apps);
@@ -110,7 +115,8 @@ export const DB = {
     async deleteApplication(docId) { await deleteDoc(doc(db, "applications", docId)); },
 
     subscribeEvents(groupId, callback) {
-        const q = query(collection(db, "events"), where("groupId", "==", groupId));
+        const safeGroup = groupId || "NONE";
+        const q = query(collection(db, "events"), where("groupId", "==", safeGroup));
         return onSnapshot(q, (snapshot) => {
             const events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             callback(events);
@@ -147,18 +153,21 @@ export const DB = {
         const q = query(collection(db, "users"), where("name", "==", name));
         const snap = await getDocs(q);
         if (!snap.empty) {
-            return { id: snap.docs[0].id, ...snap.docs[0].data() };
+            const data = snap.docs[0].data();
+            // ★安全装置：groupが空っぽ（undefined）の時は「未設定」という文字を入れてクラッシュを防ぐ
+            data.group = data.group || data.groupId || "未設定";
+            return { id: snap.docs[0].id, ...data };
         }
         return null;
     },
 
-    // ★★★ 先ほど私が消してしまっていた機能です！ ★★★
     async updatePassword(userId, newPassword) {
         await updateDoc(doc(db, "users", userId), { password: newPassword });
     },
 
     async getGroupUsers(groupId) {
-        const q = query(collection(db, "users"), where("group", "==", groupId));
+        const safeGroup = groupId || "NONE";
+        const q = query(collection(db, "users"), where("group", "==", safeGroup));
         const snap = await getDocs(q);
         return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
