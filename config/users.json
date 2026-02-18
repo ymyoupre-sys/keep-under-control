@@ -67,8 +67,8 @@
   { "id": "u045", "name": "chien", "group": "V", "role": "leader", "icon": "👨‍💼" },
   { "id": "u046", "name": "hanhan", "group": "V", "role": "member", "icon": "🐶" }, 
 
-  { "id": "u047", "name": "さささ", "group": "W", "role": "leader", "icon": "👨‍💼" },
-  { "id": "u048", "name": "ししし", "group": "W", "role": "member", "icon": "🐶" },  
+  { "id": "u047", "name": "せいじのご主人様", "group": "W", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u048", "name": "せいじ", "group": "W", "role": "member", "icon": "🐶" },  
   
   { "id": "u049", "name": "すすす", "group": "X", "role": "leader", "icon": "👨‍💼" },
   { "id": "u050", "name": "せせせ", "group": "X", "role": "member", "icon": "🐶" }, 
@@ -79,4 +79,3 @@
   { "id": "u053", "name": "ちちち", "group": "Z", "role": "leader", "icon": "👨‍💼" },
   { "id": "u054", "name": "つつつ", "group": "Z", "role": "member", "icon": "🐶" }
 ]
-
