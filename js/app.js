@@ -1,10 +1,8 @@
 import { DB } from "./db.js";
 import { Utils } from "./utils.js";
 import { Calendar } from "./calendar.js";
-// ★修正：authを追加
 import { db, messaging, getToken, auth } from "./firebase-config.js";
 import { onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
-// ★追加：Firebase匿名認証用の関数
 import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 let CONFIG_USERS = [];
@@ -17,11 +15,11 @@ let unsubscribeChat = null;
 let currentChatTargetId = null; 
 let chatImagesBase64 = []; 
 let formImagesBase64 = []; 
+let completionImagesBase64 = []; // ★追加：完了報告の証拠画像用
 
 const App = {
     async init() {
         try {
-            // ★追加：アプリ起動時に裏側で自動的にFirebase匿名認証を行う
             await signInAnonymously(auth);
 
             const [usersRes, settingsRes] = await Promise.all([
@@ -95,7 +93,6 @@ const App = {
         const typeSelect = document.getElementById('form-type-select');
         typeSelect.innerHTML = '';
         
-        // ★修正：ユーザーのグループごとの設定を読み込む
         const groupData = CONFIG_SETTINGS.groups && CONFIG_SETTINGS.groups[CURRENT_USER.group] 
                           ? CONFIG_SETTINGS.groups[CURRENT_USER.group] 
                           : { instructionTypes: ["設定なし"], applicationTypes: ["設定なし"] };
@@ -129,9 +126,23 @@ const App = {
     },
 
     setupTabs() {
+        // ★追加：アプリアイコンの数字バッジを消す処理
+        const clearBadge = () => {
+            if (navigator.clearAppBadge) {
+                navigator.clearAppBadge().catch(error => console.error(error));
+            }
+        };
+
+        // アプリがバックグラウンドから復帰した時にもバッジを消す
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') clearBadge();
+        });
+
         document.querySelectorAll('.bottom-nav-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
+                clearBadge(); // タブ切り替え時も数字バッジを消す
+
                 document.querySelectorAll('.bottom-nav-item').forEach(nav => nav.classList.remove('active'));
                 item.classList.add('active');
                 
@@ -139,7 +150,7 @@ const App = {
                 sessionStorage.setItem('activeTab', targetId); 
 
                 const badge = item.querySelector('.tab-badge');
-                if (badge) badge.remove();
+                if (badge) badge.remove(); // 該当タブの「N」マークを消す
 
                 document.querySelectorAll('.tab-content').forEach(content => content.classList.add('d-none'));
                 document.querySelector(targetId).classList.remove('d-none');
@@ -205,14 +216,11 @@ const App = {
 
         const detailContainer = document.getElementById('chat-detail-container');
         
-        // ★追加：スクロール制御のための変数
         let prevMessageCount = 0;
         let isFirstLoad = true;
 
         unsubscribeChat = DB.subscribeChat(groupId, myId, targetId, (messages) => {
             const msgContainer = document.getElementById('chat-messages');
-            
-            // ★追加：再描画前のスクロール位置を記憶しておく
             const previousScrollTop = detailContainer.scrollTop;
 
             msgContainer.innerHTML = '';
@@ -228,10 +236,8 @@ const App = {
                 
                 let imagesHtml = '';
                 if(msg.images && msg.images.length > 0) {
-                    // ★修正：画像の隙間をタップした時も編集画面が開かないよう、親枠に event.stopPropagation() を追加
                     imagesHtml = `<div class="d-flex flex-wrap gap-1 mt-1 ${isMe ? 'justify-content-end' : 'justify-content-start'}" style="max-width: 210px;" onclick="event.stopPropagation();">`;
                     msg.images.forEach(img => {
-                        // ★修正：画像タップ時にも event.stopPropagation() を追加してクリックの貫通を完全に防ぐ
                         imagesHtml += `<img src="${img}" class="img-fluid rounded clickable" style="width: 100px; height: 100px; object-fit: cover;" onclick="event.stopPropagation(); window.openFullscreenImage('${img}')">`;
                     });
                     imagesHtml += `</div>`;
@@ -320,13 +326,11 @@ const App = {
                 msgContainer.appendChild(div);
             });
             
-            // ★修正：メッセージの「件数」が増えた時（新規受信）だけ下へスクロールする
             const currentMessageCount = messages.length;
             if (isFirstLoad || currentMessageCount > prevMessageCount) {
                 setTimeout(() => { detailContainer.scrollTop = detailContainer.scrollHeight; }, 50);
                 isFirstLoad = false;
             } else {
-                // いいねや編集など「件数が変わらない更新」の時は、元のスクロール位置を維持
                 detailContainer.scrollTop = previousScrollTop;
             }
             prevMessageCount = currentMessageCount;
@@ -399,7 +403,6 @@ const App = {
 
                 const canDelete = CURRENT_USER.role === 'leader' || (CURRENT_USER.role === 'member' && app.userId === CURRENT_USER.id && !isInstruction);
 
-                // ★レイアウトとアイコン被りの完全修正版
                 div.innerHTML = `
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <div class="d-flex align-items-center gap-2">
@@ -438,11 +441,45 @@ const App = {
                     if (CURRENT_USER.role === 'member') {
                         showCheckBtn = true;
                         btnStateCompleted = isInstructionCompleted;
-                        onCheckAction = async (e) => {
+                        
+                        // ★変更：命令完了時に「証拠提出モーダル」を開く
+                        onCheckAction = (e) => {
                             e.stopPropagation(); 
-                            if(confirm("この命令を「完了」として主人に報告しますか？")) {
-                                await DB.updateStatus(app.id, 'completed', '', CURRENT_USER.id);
-                            }
+                            
+                            // モーダルの中身をリセット
+                            document.getElementById('completion-comment').value = '';
+                            completionImagesBase64 = [];
+                            this.updateImagePreview('completion-image-preview', completionImagesBase64, 'completion-image-file');
+
+                            const submitBtn = document.getElementById('completion-submit-btn');
+                            const newSubmitBtn = submitBtn.cloneNode(true);
+                            submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+
+                            const modal = new bootstrap.Modal(document.getElementById('completionModal'));
+                            modal.show();
+
+                            // 報告ボタンを押した時のバリデーション＆送信処理
+                            newSubmitBtn.onclick = async () => {
+                                const comment = document.getElementById('completion-comment').value.trim();
+                                
+                                if (!comment && completionImagesBase64.length === 0) {
+                                    alert("【エラー】コメントまたは証拠画像のどちらかを必ず入力・添付してください！");
+                                    return;
+                                }
+                                
+                                newSubmitBtn.disabled = true;
+                                newSubmitBtn.textContent = "送信中...";
+                                
+                                try {
+                                    await DB.submitCompletionReport(app.id, CURRENT_USER.id, comment, completionImagesBase64);
+                                    modal.hide();
+                                } catch(err) {
+                                    console.error(err);
+                                    alert('報告に失敗しました');
+                                    newSubmitBtn.disabled = false;
+                                    newSubmitBtn.textContent = "報告して完了にする";
+                                }
+                            };
                         };
                     }
                 } else if (CURRENT_USER.role === 'member' && app.userId === CURRENT_USER.id && (app.status === 'approved' || app.status === 'rejected')) {
@@ -501,6 +538,29 @@ const App = {
             leaderCommentText.textContent = appData.resultComment;
         } else {
             leaderCommentArea.classList.add('d-none');
+        }
+
+        // ★追加：主人が奴隷の「完了報告（証拠）」を見るための表示処理
+        const completionArea = document.getElementById('detail-completion-area');
+        const completionComment = document.getElementById('detail-completion-comment');
+        const completionImagesContainer = document.getElementById('detail-completion-images');
+        
+        if (appData.type === 'instruction' && appData.status === 'completed') {
+            completionArea.classList.remove('d-none');
+            completionComment.textContent = appData.completionComment || '（コメントなし）';
+            completionImagesContainer.innerHTML = '';
+            
+            if(appData.completionImages && appData.completionImages.length > 0) {
+                appData.completionImages.forEach(img => {
+                    const el = document.createElement('img');
+                    el.src = img;
+                    el.className = 'image-preview-item clickable';
+                    el.onclick = () => window.openFullscreenImage(img);
+                    completionImagesContainer.appendChild(el);
+                });
+            }
+        } else {
+            completionArea.classList.add('d-none');
         }
 
         const leaderArea = document.getElementById('leader-judge-area');
@@ -565,6 +625,11 @@ const App = {
 
         document.getElementById('form-image-file').addEventListener('change', e => {
             handleFiles(e.target.files, formImagesBase64, 'form-image-preview', 'form-image-file');
+        });
+        
+        // ★追加：完了報告用の画像アップロード
+        document.getElementById('completion-image-file').addEventListener('change', e => {
+            handleFiles(e.target.files, completionImagesBase64, 'completion-image-preview', 'completion-image-file');
         });
 
         document.getElementById('form-submit-btn').addEventListener('click', () => this.handleFormSubmit());
@@ -664,7 +729,7 @@ const App = {
             if (permission === 'granted') {
                 const registration = await navigator.serviceWorker.register('sw.js');
                 const token = await getToken(messaging, { 
-                    // ⚠️ご自身のVAPIDキーに書き換えてください⚠️
+                    // ⚠️VAPIDキーはご提示いただいた既存のものをそのまま維持しています⚠️
                     vapidKey: "BMdNlbLwC3bEwAIp-ZG9Uwp-5n4HdyXvlsqJbt6Q5YRdCA7gUexx0G9MpjB3AdLk6iNJodLTobC3-bGG6YskB0s",
                     serviceWorkerRegistration: registration
                 });
@@ -680,6 +745,7 @@ const App = {
                     const tabType = payload.data?.tab || 'inbox'; 
                     
                     this.showToast(title, body);
+                    // ★稼働確認済み：該当タブにNバッジをつける処理
                     this.addTabBadge(`#tab-${tabType}`);
                 });
             }
@@ -689,6 +755,3 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
-
-
-
