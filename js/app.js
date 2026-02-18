@@ -15,7 +15,7 @@ let unsubscribeChat = null;
 let currentChatTargetId = null; 
 let chatImagesBase64 = []; 
 let formImagesBase64 = []; 
-let completionImagesBase64 = []; // ★追加：完了報告の証拠画像用
+let completionImagesBase64 = []; 
 
 const App = {
     async init() {
@@ -126,14 +126,12 @@ const App = {
     },
 
     setupTabs() {
-        // ★追加：アプリアイコンの数字バッジを消す処理
         const clearBadge = () => {
             if (navigator.clearAppBadge) {
                 navigator.clearAppBadge().catch(error => console.error(error));
             }
         };
 
-        // アプリがバックグラウンドから復帰した時にもバッジを消す
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') clearBadge();
         });
@@ -141,7 +139,7 @@ const App = {
         document.querySelectorAll('.bottom-nav-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
-                clearBadge(); // タブ切り替え時も数字バッジを消す
+                clearBadge(); 
 
                 document.querySelectorAll('.bottom-nav-item').forEach(nav => nav.classList.remove('active'));
                 item.classList.add('active');
@@ -150,7 +148,7 @@ const App = {
                 sessionStorage.setItem('activeTab', targetId); 
 
                 const badge = item.querySelector('.tab-badge');
-                if (badge) badge.remove(); // 該当タブの「N」マークを消す
+                if (badge) badge.remove(); 
 
                 document.querySelectorAll('.tab-content').forEach(content => content.classList.add('d-none'));
                 document.querySelector(targetId).classList.remove('d-none');
@@ -442,11 +440,9 @@ const App = {
                         showCheckBtn = true;
                         btnStateCompleted = isInstructionCompleted;
                         
-                        // ★変更：命令完了時に「証拠提出モーダル」を開く
                         onCheckAction = (e) => {
                             e.stopPropagation(); 
                             
-                            // モーダルの中身をリセット
                             document.getElementById('completion-comment').value = '';
                             completionImagesBase64 = [];
                             this.updateImagePreview('completion-image-preview', completionImagesBase64, 'completion-image-file');
@@ -458,7 +454,6 @@ const App = {
                             const modal = new bootstrap.Modal(document.getElementById('completionModal'));
                             modal.show();
 
-                            // 報告ボタンを押した時のバリデーション＆送信処理
                             newSubmitBtn.onclick = async () => {
                                 const comment = document.getElementById('completion-comment').value.trim();
                                 
@@ -471,7 +466,11 @@ const App = {
                                 newSubmitBtn.textContent = "送信中...";
                                 
                                 try {
-                                    await DB.submitCompletionReport(app.id, CURRENT_USER.id, comment, completionImagesBase64);
+                                    const uploadedUrls = await DB.submitCompletionReport(app.id, CURRENT_USER.id, comment, completionImagesBase64);
+                                    
+                                    const autoMsg = `✅ 命令「${app.title}」を完了しました！${comment ? '\n\n' + comment : ''}`;
+                                    await DB.sendMessage(CURRENT_USER.group, CURRENT_USER.id, app.userId, CURRENT_USER, autoMsg, uploadedUrls);
+
                                     modal.hide();
                                 } catch(err) {
                                     console.error(err);
@@ -540,7 +539,6 @@ const App = {
             leaderCommentArea.classList.add('d-none');
         }
 
-        // ★追加：主人が奴隷の「完了報告（証拠）」を見るための表示処理
         const completionArea = document.getElementById('detail-completion-area');
         const completionComment = document.getElementById('detail-completion-comment');
         const completionImagesContainer = document.getElementById('detail-completion-images');
@@ -627,7 +625,6 @@ const App = {
             handleFiles(e.target.files, formImagesBase64, 'form-image-preview', 'form-image-file');
         });
         
-        // ★追加：完了報告用の画像アップロード
         document.getElementById('completion-image-file').addEventListener('change', e => {
             handleFiles(e.target.files, completionImagesBase64, 'completion-image-preview', 'completion-image-file');
         });
@@ -729,7 +726,6 @@ const App = {
             if (permission === 'granted') {
                 const registration = await navigator.serviceWorker.register('sw.js');
                 const token = await getToken(messaging, { 
-                    // ⚠️VAPIDキーはご提示いただいた既存のものをそのまま維持しています⚠️
                     vapidKey: "BMdNlbLwC3bEwAIp-ZG9Uwp-5n4HdyXvlsqJbt6Q5YRdCA7gUexx0G9MpjB3AdLk6iNJodLTobC3-bGG6YskB0s",
                     serviceWorkerRegistration: registration
                 });
@@ -745,7 +741,6 @@ const App = {
                     const tabType = payload.data?.tab || 'inbox'; 
                     
                     this.showToast(title, body);
-                    // ★稼働確認済み：該当タブにNバッジをつける処理
                     this.addTabBadge(`#tab-${tabType}`);
                 });
             }
