@@ -28,10 +28,8 @@ export const DB = {
         });
     },
 
-    // ★新規追加：画像をStorageにアップロードしてURLを返す関数
     async uploadImage(base64String, folderName) {
         if (!base64String) return null;
-        // すでにURLの場合はアップロードせずそのまま返す
         if (base64String.startsWith('http')) return base64String;
         
         const fileName = `${folderName}/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.jpg`;
@@ -43,7 +41,6 @@ export const DB = {
     async sendMessage(groupId, id1, id2, sender, text, images = []) {
         const chatRoomId = getRoomId(groupId, id1, id2);
         
-        // ★Storageへアップロード
         const imageUrls = [];
         for (const imgBase64 of images) {
             const url = await this.uploadImage(imgBase64, `chats/${chatRoomId}`);
@@ -84,7 +81,6 @@ export const DB = {
     },
 
     async submitForm(data) {
-        // ★Storageへアップロード
         const imageUrls = [];
         if (data.images && data.images.length > 0) {
             for (const imgBase64 of data.images) {
@@ -92,7 +88,7 @@ export const DB = {
                 if (url) imageUrls.push(url);
             }
         }
-        data.images = imageUrls; // データベースに送る直前にURLの配列にすり替える
+        data.images = imageUrls; 
 
         await addDoc(collection(db, "applications"), {
             ...data, status: 'pending', createdAt: serverTimestamp(), updatedAt: serverTimestamp(), createdDateStr: new Date().toLocaleDateString('ja-JP') 
@@ -125,5 +121,24 @@ export const DB = {
         await addDoc(collection(db, "events"), { ...eventData, createdAt: serverTimestamp() });
     },
 
-    async deleteEvent(id) { await deleteDoc(doc(db, "events", id)); }
+    async deleteEvent(id) { await deleteDoc(doc(db, "events", id)); },
+
+    // ★新規追加：完了報告（証拠の画像とコメント）を保存する処理
+    async submitCompletionReport(docId, userId, comment, images = []) {
+        const imageUrls = [];
+        for (const imgBase64 of images) {
+            const url = await this.uploadImage(imgBase64, `completions/${docId}`);
+            if (url) imageUrls.push(url);
+        }
+
+        const updateData = {
+            status: 'completed',
+            completedBy: userId,
+            updatedAt: serverTimestamp()
+        };
+        if (comment) updateData.completionComment = comment;
+        if (imageUrls.length > 0) updateData.completionImages = imageUrls;
+        
+        await updateDoc(doc(db, "applications", docId), updateData);
+    }
 };
