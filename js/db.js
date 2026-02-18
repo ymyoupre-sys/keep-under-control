@@ -143,16 +143,13 @@ export const DB = {
         return imageUrls;
     },
 
-    // ★修正：「名前」と「パスワード」で認証を行う
+    // ★修正：「名前」と「パスワード」で認証するように変更
     async authenticateUserByName(name, password) {
-        const q = query(collection(db, "users"), where("name", "==", name));
+        const q = query(collection(db, "users"), where("name", "==", name), where("password", "==", password));
         const snap = await getDocs(q);
         if (!snap.empty) {
             const userDoc = snap.docs[0];
-            const userData = userDoc.data();
-            if (userData.password === password) {
-                return { id: userDoc.id, ...userData };
-            }
+            return { id: userDoc.id, ...userDoc.data() };
         }
         return null;
     },
