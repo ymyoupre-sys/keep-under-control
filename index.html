@@ -26,14 +26,14 @@
 
     <div id="toast-container" style="position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 9999; width: 95%; max-width: 400px; pointer-events: none;"></div>
 
-    <div id="login-screen" class="container d-flex flex-column justify-content-center align-items-center vh-100 bg-light" style="position:fixed; top:0; left:0; width:100%; z-index:9999;">
+    <div id="login-screen" class="container d-flex flex-column justify-content-center align-items-center vh-100 bg-light" style="position:fixed; top:0; left:0; width:100%; z-index:1000;">
         <div class="card shadow border-0 p-4" style="width: 100%; max-width: 350px;">
             <div class="text-center mb-4">
                 <h4 class="fw-bold text-success">利用開始</h4>
                 <p class="text-muted small">登録名とパスワードを入力してください</p>
             </div>
             <input type="text" id="login-name" class="form-control form-control-lg mb-3" placeholder="名前 (例: 田中)">
-            <input type="password" id="login-password" class="form-control form-control-lg mb-3" placeholder="パスワード (初期: 123456)">
+            <input type="password" id="login-password" class="form-control form-control-lg mb-3" placeholder="パスワード (初期PW: 123456)">
             <button id="login-btn" class="btn btn-success btn-lg w-100 fw-bold">ログイン</button>
             <div id="login-error" class="text-danger small mt-2 text-center d-none">名前またはパスワードが間違っています</div>
         </div>
