@@ -70,14 +70,14 @@
   { "id": "u047", "name": "せいじのご主人様", "group": "W", "role": "leader", "icon": "👨‍💼" },
   { "id": "u048", "name": "せいじ", "group": "W", "role": "member", "icon": "🐶" },  
   
-  { "id": "u049", "name": "先のご主人様", "group": "X", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u049", "name": "咲のご主人様", "group": "X", "role": "leader", "icon": "👨‍💼" },
   { "id": "u050", "name": "咲", "group": "X", "role": "member", "icon": "🐶" }, 
 
   { "id": "u051", "name": "おおさこ", "group": "Y", "role": "leader", "icon": "👨‍💼" },
   { "id": "u052", "name": "ぽろ", "group": "Y", "role": "member", "icon": "🐶" }, 
 
-  { "id": "u053", "name": "ちちち", "group": "Z", "role": "leader", "icon": "👨‍💼" },
-  { "id": "u054", "name": "つつつ", "group": "Z", "role": "member", "icon": "🐶" },
+  { "id": "u053", "name": "だいちのご主人様", "group": "Z", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u054", "name": "だいち", "group": "Z", "role": "member", "icon": "🐶" },
 
   { "id": "u055", "name": "ててて", "group": "AA", "role": "leader", "icon": "👨‍💼" },
   { "id": "u056", "name": "ととと", "group": "AA", "role": "member", "icon": "🐶" },
