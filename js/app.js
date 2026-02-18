@@ -204,9 +204,17 @@ const App = {
         if(unsubscribeChat) unsubscribeChat();
 
         const detailContainer = document.getElementById('chat-detail-container');
+        
+        // ★追加：スクロール制御のための変数
+        let prevMessageCount = 0;
+        let isFirstLoad = true;
 
         unsubscribeChat = DB.subscribeChat(groupId, myId, targetId, (messages) => {
             const msgContainer = document.getElementById('chat-messages');
+            
+            // ★追加：再描画前のスクロール位置を記憶しておく
+            const previousScrollTop = detailContainer.scrollTop;
+
             msgContainer.innerHTML = '';
             messages.forEach(msg => {
                 const isMe = msg.senderId === CURRENT_USER.id;
@@ -220,7 +228,8 @@ const App = {
                 
                 let imagesHtml = '';
                 if(msg.images && msg.images.length > 0) {
-                    imagesHtml = `<div class="d-flex flex-wrap gap-1 mt-1 ${isMe ? 'justify-content-end' : 'justify-content-start'}">`;
+                    // ★修正：max-width: 210px; を指定し、横幅を制限して強制的に「2枚」で改行させる
+                    imagesHtml = `<div class="d-flex flex-wrap gap-1 mt-1 ${isMe ? 'justify-content-end' : 'justify-content-start'}" style="max-width: 210px;">`;
                     msg.images.forEach(img => {
                         imagesHtml += `<img src="${img}" class="img-fluid rounded clickable" style="width: 100px; height: 100px; object-fit: cover;" onclick="openFullscreenImage('${img}')">`;
                     });
@@ -261,7 +270,6 @@ const App = {
                 if (isMe && msg.text) {
                     const bubble = div.querySelector('div[style*="max-width"]');
                     bubble.onclick = () => {
-                        // 編集用のモーダル（画面）がなければ自動で作る
                         let editModalEl = document.getElementById('chatEditModal');
                         if (!editModalEl) {
                             editModalEl = document.createElement('div');
@@ -288,15 +296,12 @@ const App = {
                             document.body.appendChild(editModalEl);
                         }
 
-                        // テキストエリアに元の文章（改行込み）をセット
                         const textarea = document.getElementById('chat-edit-textarea');
                         textarea.value = msg.text;
                         
-                        // モーダルを表示
                         const editModal = new bootstrap.Modal(editModalEl);
                         editModal.show();
 
-                        // 保存ボタンの動作をセット（複数回登録されるのを防ぐためボタンを作り直す）
                         const saveBtn = document.getElementById('chat-edit-save-btn');
                         const newSaveBtn = saveBtn.cloneNode(true);
                         saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
@@ -314,7 +319,16 @@ const App = {
                 msgContainer.appendChild(div);
             });
             
-            setTimeout(() => { detailContainer.scrollTop = detailContainer.scrollHeight; }, 50);
+            // ★修正：メッセージの「件数」が増えた時（新規受信）だけ下へスクロールする
+            const currentMessageCount = messages.length;
+            if (isFirstLoad || currentMessageCount > prevMessageCount) {
+                setTimeout(() => { detailContainer.scrollTop = detailContainer.scrollHeight; }, 50);
+                isFirstLoad = false;
+            } else {
+                // いいねや編集など「件数が変わらない更新」の時は、元のスクロール位置を維持
+                detailContainer.scrollTop = previousScrollTop;
+            }
+            prevMessageCount = currentMessageCount;
         });
         
         document.getElementById('back-to-chat-list').onclick = () => history.back(); 
@@ -674,4 +688,5 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
