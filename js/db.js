@@ -143,13 +143,15 @@ export const DB = {
         return imageUrls;
     },
 
-    async authenticateUserById(userId, password) {
-        const docRef = doc(db, "users", userId);
-        const snap = await getDoc(docRef);
-        if (snap.exists()) {
-            const userData = snap.data();
+    // ★修正：「名前」と「パスワード」で認証を行う
+    async authenticateUserByName(name, password) {
+        const q = query(collection(db, "users"), where("name", "==", name));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+            const userDoc = snap.docs[0];
+            const userData = userDoc.data();
             if (userData.password === password) {
-                return { id: snap.id, ...userData };
+                return { id: userDoc.id, ...userData };
             }
         }
         return null;
