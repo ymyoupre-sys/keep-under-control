@@ -78,20 +78,29 @@ const App = {
             loginBtn.textContent = "認証中...";
             document.getElementById('login-error').classList.add('d-none');
 
+            console.log("【1】ボタンが押されました。");
             const dummyEmail = safeHexEncode(inputName) + "@dummy.keep-under-control.com";
+            console.log("【2】変換完了:", dummyEmail);
 
             try {
                 try {
+                    console.log("【3】Firebaseへログイン要求を送信します...");
                     await signInWithEmailAndPassword(auth, dummyEmail, inputPass);
+                    console.log("【4】既存アカウントとして認証成功！");
                 } catch (err) {
+                    console.log("【3.5】ログイン失敗（新規作成を試みます）", err.code);
                     if (inputPass === INITIAL_PASS) {
                         await createUserWithEmailAndPassword(auth, dummyEmail, inputPass);
+                        console.log("【4】新規アカウントの作成と認証に成功！");
                     } else {
                         throw new Error("wrong-password");
                     }
                 }
 
+                console.log("【5】データベースから「" + inputName + "」さんの情報を検索します...");
                 const userData = await DB.getUserByName(inputName);
+                console.log("【6】データベース検索完了:", userData ? "見つかりました" : "見つかりません");
+
                 if (!userData) {
                     await signOut(auth);
                     throw new Error("not-found-in-db");
@@ -100,6 +109,7 @@ const App = {
                 CURRENT_USER = userData;
 
                 if (inputPass === INITIAL_PASS) {
+                    console.log("【7】初期パスワードのため、変更画面を立ち上げます。");
                     const pwdModal = new bootstrap.Modal(document.getElementById('passwordChangeModal'));
                     pwdModal.show();
 
@@ -119,13 +129,14 @@ const App = {
                         changeBtn.textContent = "更新中...";
 
                         try {
+                            console.log("【8】パスワードの更新を開始します...");
                             await updatePassword(auth.currentUser, newPwd);
-                            
                             await DB.updatePassword(CURRENT_USER.id, newPwd);
                             CURRENT_USER.password = newPwd; 
                             
                             localStorage.setItem('app_user_v2', JSON.stringify(CURRENT_USER));
                             pwdModal.hide();
+                            console.log("【9】更新完了！メイン画面へ進みます。");
                             this.showMainScreen();
                         } catch (e) {
                             console.error(e);
@@ -135,12 +146,13 @@ const App = {
                         }
                     };
                 } else {
+                    console.log("【7】メイン画面へ進みます。");
                     localStorage.setItem('app_user_v2', JSON.stringify(CURRENT_USER));
                     this.showMainScreen();
                 }
 
             } catch (error) {
-                console.error(error);
+                console.error("【エラー発生】", error);
                 document.getElementById('login-error').classList.remove('d-none');
                 loginBtn.disabled = false;
                 loginBtn.textContent = "ログイン";
