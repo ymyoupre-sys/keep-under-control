@@ -16,10 +16,11 @@ export const DB = {
         const updateData = {
             name: user.name,
             role: user.role,
-            group: user.group, // groupIdではなくgroupで統一
+            group: user.group, 
             icon: user.icon || "👤",
             updatedAt: serverTimestamp()
         };
+        // passwordフィールドが消えないよう、絶対に merge: true を使う
         if (token) updateData.fcmToken = token;
         await setDoc(userRef, updateData, { merge: true });
     },
@@ -187,5 +188,6 @@ export const DB = {
         return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 };
+
 
 
