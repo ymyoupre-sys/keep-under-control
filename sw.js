@@ -13,33 +13,51 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// ■ 修正：重複通知を防ぐため、バックグラウンド受信時の手動表示を削除しました。
-// Firebaseが自動で通知を表示してくれる機能に任せます。
+let badgeCount = 0; // アプリアイコンの数字バッジ用
 
 messaging.onBackgroundMessage((payload) => {
   console.log('バックグラウンド通知を受信:', payload);
-  // ここにあった showNotification を削除しました
 });
 
-// 通知をタップした時の動作（アプリを開く）
+// ① プッシュ通知を受け取った時にアイコンバッジの数字を増やす
+self.addEventListener('push', (event) => {
+    badgeCount++;
+    if (navigator.setAppBadge) {
+        navigator.setAppBadge(badgeCount).catch(console.error);
+    }
+});
+
+// ② 通知をタップした時の動作（アプリを開く＆数字をリセット＆該当タブへジャンプ）
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
     
-    // タップされた通知にURLデータが含まれていればそれを使う、なければトップページ
-    // ※自動通知の場合、payload.data の内容は event.notification.data に入らないことがあるため
-    // 固定URLでアプリを開く安全策をとります。
-    const targetUrl = 'https://ymyoupre-sys.github.io/keep-under-control/';
+    // バッジをリセット
+    badgeCount = 0;
+    if (navigator.clearAppBadge) {
+        navigator.clearAppBadge().catch(console.error);
+    }
+    
+    // 届いた通知データから開くべきタブを判別（データがなければ受信箱へ）
+    // Firebaseの仕様上、データは event.notification.data.FCM_MSG.data 等に入る場合があります
+    let targetTab = 'inbox';
+    const payloadData = event.notification.data?.FCM_MSG?.data || event.notification.data;
+    if (payloadData && payloadData.tab) {
+        targetTab = payloadData.tab;
+    }
+    
+    // ジャンプ先のURLを生成
+    const targetUrl = `https://ymyoupre-sys.github.io/keep-under-control/?tab=${targetTab}`;
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
-            // すでに開いているタブがあればフォーカス
+            // すでに開いているタブがあればそこにフォーカスして画面遷移
             for (let i = 0; i < windowClients.length; i++) {
                 const client = windowClients[i];
                 if (client.url.includes('keep-under-control') && 'focus' in client) {
-                    return client.focus();
+                    return client.focus().then(c => c.navigate(targetUrl));
                 }
             }
-            // 開いてなければ新規で開く
+            // 開いてなければ新規で指定タブを開く
             if (clients.openWindow) {
                 return clients.openWindow(targetUrl);
             }
