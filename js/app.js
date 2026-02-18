@@ -273,6 +273,8 @@ const App = {
         const container = document.getElementById('chat-list');
         container.innerHTML = '';
         targets.forEach(target => {
+            // ここに安全装置を追加：アイコンがなければ人影アイコン「👤」を出す
+            const safeIcon = target.icon || "👤";            
             const div = document.createElement('div');
             div.className = 'p-3 border-bottom d-flex align-items-center bg-white clickable';
             div.innerHTML = `
@@ -837,3 +839,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
