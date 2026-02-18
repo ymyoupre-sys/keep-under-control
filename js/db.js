@@ -11,10 +11,17 @@ const getRoomId = (groupId, id1, id2) => {
 
 export const DB = {
     async saveUserToken(user, token) {
-        if (!user || !user.id || !token) return;
-        await setDoc(doc(db, "users", user.id), {
-            name: user.name, role: user.role, groupId: user.group, fcmToken: token, updatedAt: serverTimestamp()
-        }, { merge: true });
+        if (!user || !user.id) return;
+        const userRef = doc(db, "users", user.id);
+        const updateData = {
+            name: user.name,
+            role: user.role,
+            group: user.group, // groupIdではなくgroupで統一
+            icon: user.icon || "👤",
+            updatedAt: serverTimestamp()
+        };
+        if (token) updateData.fcmToken = token;
+        await setDoc(userRef, updateData, { merge: true });
     },
 
     getChatRoomId(groupId, id1, id2) { return getRoomId(groupId, id1, id2); },
@@ -180,4 +187,5 @@ export const DB = {
         return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 };
+
 
