@@ -46,7 +46,6 @@ const App = {
     },
 
     setupLogin() {
-        // ★修正：認証の鍵を v3 に変更。これにより旧バージョン(v2)でログイン中の全員が強制的にログアウトされます！
         const storedUser = localStorage.getItem('app_user_v3');
         if (storedUser) {
             CURRENT_USER = JSON.parse(storedUser);
@@ -69,7 +68,14 @@ const App = {
 
         loginBtn.addEventListener('click', async () => {
             const inputName = nameInput.value.trim();
-            const inputPass = passInput.value.trim();
+            // ★修正：const ではなく let にして、後から書き換えられるようにしました
+            let inputPass = passInput.value.trim(); 
+
+            // 👇【追加】共有アカウントのPW入力スキップ魔法
+            if (inputName === "リーダー" || inputName === "メンバー") {
+                inputPass = INITIAL_PASS; // 裏で強制的に 123456 をセット
+            }
+            // 👆ここまで
 
             if (!inputName || !inputPass) {
                 alert("名前とパスワードを入力してください");
@@ -103,11 +109,11 @@ const App = {
 
                 if (inputPass === INITIAL_PASS) {
                     
-                    // ★追加：共有アカウント（主人、奴隷）の場合はパスワード変更をさせない！
-                    if (inputName === "主人" || inputName === "奴隷") {
+                    // 共有アカウントの場合はパスワード変更をスキップして即ログイン！
+                    if (inputName === "リーダー" || inputName === "メンバー") {
                         localStorage.setItem('app_user_v3', JSON.stringify(CURRENT_USER));
                         this.showMainScreen();
-                        return; // ここで処理を終わらせて、下の変更画面を出さない
+                        return; 
                     }
 
                     const pwdModal = new bootstrap.Modal(document.getElementById('passwordChangeModal'));
@@ -133,7 +139,6 @@ const App = {
                             await DB.updatePassword(CURRENT_USER.id, newPwd);
                             CURRENT_USER.password = newPwd; 
                             
-                            // ★修正：新しい鍵 v3 で保存
                             localStorage.setItem('app_user_v3', JSON.stringify(CURRENT_USER));
                             pwdModal.hide();
                             this.showMainScreen();
@@ -145,7 +150,6 @@ const App = {
                         }
                     };
                 } else {
-                    // ★修正：新しい鍵 v3 で保存
                     localStorage.setItem('app_user_v3', JSON.stringify(CURRENT_USER));
                     this.showMainScreen();
                 }
@@ -838,3 +842,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
