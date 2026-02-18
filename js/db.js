@@ -142,4 +142,21 @@ export const DB = {
         
         return imageUrls; // チャット送信用にURLを返す
     }
+// ★移行用の一時プログラム（使い終わったら消してOK）
+    async migrateAllUsers(usersArray) {
+        let count = 0;
+        for (const user of usersArray) {
+            // users.jsonのデータを1件ずつFirestoreに保存していく
+            await setDoc(doc(db, "users", user.id), {
+                name: user.name,
+                group: user.group,
+                role: user.role,
+                icon: user.icon || "👤",
+                password: "1234" // ★初期合言葉（全員共通で1234になります）
+            });
+            count++;
+        }
+        alert(`データ移行が完了しました！\n合計 ${count} 人のメンバーをFirebaseに登録しました。`);
+    }    
 };
+
