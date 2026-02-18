@@ -5,7 +5,6 @@ import { db, messaging, getToken, auth } from "./firebase-config.js";
 import { onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
 import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-let CONFIG_USERS = [];
 let CONFIG_SETTINGS = {};
 let CURRENT_USER = null;
 
@@ -22,24 +21,8 @@ const App = {
         try {
             await signInAnonymously(auth);
 
-            // ★修正：users.json の読み込みを完全廃止（この部分は先ほど修正済みですね）
             const settingsRes = await fetch('config/settings.json?v=' + new Date().getTime());
             CONFIG_SETTINGS = await settingsRes.json();
-            
-            // 👇👇👇 ここから追加 👇👇👇
-            // 一時的に古いusers.jsonを読み込んで、Firebaseに丸投げする
-            try {
-                const oldUsersRes = await fetch('config/users.json');
-                const oldUsers = await oldUsersRes.json();
-                if(oldUsers && oldUsers.length > 0) {
-                    await DB.migrateAllUsers(oldUsers);
-                }
-            } catch(err) {
-                // ファイルが無い場合は何もしない（移行完了後用）
-            }
-            // 👆👆👆 ここまで追加 👆👆👆
-
-            this.setupLogin();
             
             this.setupLogin();
             this.setupTabs();
@@ -72,18 +55,69 @@ const App = {
         }
 
         const loginBtn = document.getElementById('login-btn');
+        // ★修正：idではなく「名前」の入力を受け取る
         const nameInput = document.getElementById('login-name');
-        if (!loginBtn || !nameInput) return;
+        const passInput = document.getElementById('login-password');
+        if (!loginBtn || !nameInput || !passInput) return;
 
-        loginBtn.addEventListener('click', () => {
+        loginBtn.addEventListener('click', async () => {
             const inputName = nameInput.value.trim();
-            const user = CONFIG_USERS.find(u => u.name === inputName);
+            const inputPass = passInput.value.trim();
+
+            if (!inputName || !inputPass) {
+                alert("名前とパスワードを入力してください");
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = "認証中...";
+
+            // ★修正：名前とパスワードで認証を行う
+            const user = await DB.authenticateUserByName(inputName, inputPass);
+
             if (user) {
                 CURRENT_USER = user;
-                localStorage.setItem('app_user_v2', JSON.stringify(user));
-                this.showMainScreen();
+                
+                if (user.password === "1234") {
+                    const pwdModal = new bootstrap.Modal(document.getElementById('passwordChangeModal'));
+                    pwdModal.show();
+
+                    const changeBtn = document.getElementById('btn-change-password');
+                    changeBtn.onclick = async () => {
+                        const newPwd = document.getElementById('new-password').value.trim();
+                        const confirmPwd = document.getElementById('new-password-confirm').value.trim();
+                        const errorMsg = document.getElementById('password-error');
+
+                        if (newPwd.length < 4 || newPwd !== confirmPwd) {
+                            errorMsg.classList.remove('d-none');
+                            return;
+                        }
+
+                        errorMsg.classList.add('d-none');
+                        changeBtn.disabled = true;
+                        changeBtn.textContent = "更新中...";
+
+                        try {
+                            await DB.updatePassword(CURRENT_USER.id, newPwd);
+                            CURRENT_USER.password = newPwd; 
+                            localStorage.setItem('app_user_v2', JSON.stringify(CURRENT_USER));
+                            pwdModal.hide();
+                            this.showMainScreen();
+                        } catch (e) {
+                            console.error(e);
+                            alert("パスワードの更新に失敗しました");
+                            changeBtn.disabled = false;
+                            changeBtn.textContent = "変更して利用開始";
+                        }
+                    };
+                } else {
+                    localStorage.setItem('app_user_v2', JSON.stringify(user));
+                    this.showMainScreen();
+                }
             } else {
                 document.getElementById('login-error').classList.remove('d-none');
+                loginBtn.disabled = false;
+                loginBtn.textContent = "ログイン";
             }
         });
     },
@@ -193,8 +227,10 @@ const App = {
         };
     },
 
-    renderChatList() {
-        const targets = CONFIG_USERS.filter(u => u.group === CURRENT_USER.group && u.id !== CURRENT_USER.id);
+    async renderChatList() {
+        const groupUsers = await DB.getGroupUsers(CURRENT_USER.group);
+        const targets = groupUsers.filter(u => u.id !== CURRENT_USER.id);
+        
         const container = document.getElementById('chat-list');
         container.innerHTML = '';
         targets.forEach(target => {
@@ -762,4 +798,3 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
-
