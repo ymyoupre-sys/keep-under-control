@@ -70,8 +70,8 @@
   { "id": "u047", "name": "せいじのご主人様", "group": "W", "role": "leader", "icon": "👨‍💼" },
   { "id": "u048", "name": "せいじ", "group": "W", "role": "member", "icon": "🐶" },  
   
-  { "id": "u049", "name": "すすす", "group": "X", "role": "leader", "icon": "👨‍💼" },
-  { "id": "u050", "name": "せせせ", "group": "X", "role": "member", "icon": "🐶" }, 
+  { "id": "u049", "name": "咲のご主人様", "group": "X", "role": "leader", "icon": "👨‍💼" },
+  { "id": "u050", "name": "咲", "group": "X", "role": "member", "icon": "🐶" }, 
 
   { "id": "u051", "name": "そそそ", "group": "Y", "role": "leader", "icon": "👨‍💼" },
   { "id": "u052", "name": "たたた", "group": "Y", "role": "member", "icon": "🐶" }, 
