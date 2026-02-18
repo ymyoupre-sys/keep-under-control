@@ -22,12 +22,24 @@ const App = {
         try {
             await signInAnonymously(auth);
 
-            const [usersRes, settingsRes] = await Promise.all([
-                fetch('config/users.json?v=' + new Date().getTime()),
-                fetch('config/settings.json?v=' + new Date().getTime())
-            ]);
-            CONFIG_USERS = await usersRes.json();
+            // ★修正：users.json の読み込みを完全廃止（この部分は先ほど修正済みですね）
+            const settingsRes = await fetch('config/settings.json?v=' + new Date().getTime());
             CONFIG_SETTINGS = await settingsRes.json();
+            
+            // 👇👇👇 ここから追加 👇👇👇
+            // 一時的に古いusers.jsonを読み込んで、Firebaseに丸投げする
+            try {
+                const oldUsersRes = await fetch('config/users.json');
+                const oldUsers = await oldUsersRes.json();
+                if(oldUsers && oldUsers.length > 0) {
+                    await DB.migrateAllUsers(oldUsers);
+                }
+            } catch(err) {
+                // ファイルが無い場合は何もしない（移行完了後用）
+            }
+            // 👆👆👆 ここまで追加 👆👆👆
+
+            this.setupLogin();
             
             this.setupLogin();
             this.setupTabs();
@@ -750,3 +762,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
