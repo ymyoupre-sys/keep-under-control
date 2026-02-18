@@ -4,6 +4,7 @@ import { Calendar } from "./calendar.js";
 import { db, messaging, getToken, auth } from "./firebase-config.js";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
+import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 let CONFIG_SETTINGS = {};
 let CURRENT_USER = null;
@@ -964,6 +965,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
