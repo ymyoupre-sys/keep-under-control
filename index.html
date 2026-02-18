@@ -10,7 +10,6 @@
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-
       gtag('config', 'G-LH9ZHQRLJD');
     </script>
     <link rel="manifest" href="manifest.json">
@@ -40,7 +39,6 @@
     </div>
 
     <div id="main-screen" class="d-none">
-        
         <div class="d-flex flex-column" style="height: 100dvh; overflow: hidden;">
             
             <header class="bg-white border-bottom px-3 py-2 d-flex justify-content-between align-items-center" style="height: 60px; flex-shrink: 0; z-index: 1050;">
@@ -166,8 +164,14 @@
                     <div id="detail-images" class="image-preview-container mb-3"></div>
                     
                     <div id="detail-leader-comment-area" class="d-none mb-3 p-3 rounded" style="background-color: #e8f4fd; border-left: 4px solid #0d6efd;">
-                        <div class="small fw-bold text-primary mb-1"><i class="bi bi-chat-left-text me-1"></i>リーダーからのコメント</div>
+                        <div class="small fw-bold text-primary mb-1"><i class="bi bi-chat-left-text me-1"></i>主人からのコメント</div>
                         <div id="detail-leader-comment" style="white-space: pre-wrap; font-size: 0.95rem;"></div>
+                    </div>
+
+                    <div id="detail-completion-area" class="d-none mb-3 p-3 rounded bg-light border">
+                        <div class="small fw-bold text-success mb-2"><i class="bi bi-check-circle-fill me-1"></i>完了報告の内容</div>
+                        <div id="detail-completion-comment" style="white-space: pre-wrap; font-size: 0.95rem; margin-bottom: 8px;"></div>
+                        <div id="detail-completion-images" class="image-preview-container"></div>
                     </div>
 
                     <div id="leader-judge-area" class="role-leader d-none border-top pt-3 mt-3">
@@ -183,6 +187,30 @@
                             <button id="btn-cancel-judge" class="btn btn-warning flex-fill d-none">判定を取り消す</button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="completionModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">命令の完了報告</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-danger fw-bold mb-3"><i class="bi bi-exclamation-triangle-fill"></i> コメントまたは証拠画像のどちらかが必須です。</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">報告コメント</label>
+                        <textarea id="completion-comment" class="form-control" rows="3" placeholder="作業完了しました。"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">証拠画像 (最大4枚)</label>
+                        <input type="file" id="completion-image-file" class="form-control" accept="image/*" multiple>
+                        <div id="completion-image-preview" class="image-preview-container mt-2"></div>
+                    </div>
+                    <button id="completion-submit-btn" class="btn btn-success w-100 fw-bold">報告して完了にする</button>
                 </div>
             </div>
         </div>
@@ -205,10 +233,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="js/app.js?v=3"></script>
+    <script type="module" src="js/app.js?v=4"></script>
 </body>
 </html>
-
-
-
-
