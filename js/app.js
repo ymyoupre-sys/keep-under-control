@@ -24,130 +24,6 @@ const App = {
             const settingsRes = await fetch('config/settings.json?v=' + new Date().getTime());
             CONFIG_SETTINGS = await settingsRes.json();
             
-        // 👇【超・強制注入ブロック】
-            // ここに users.json の中身を丸ごと貼り付けてください
-            const ALL_USERS_DATA = [
-                  { "id": "u001", "name": "リーダー", "group": "A", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u002", "name": "メンバー", "group": "A", "role": "member", "icon": "😺" },
-                
-                  { "id": "u003", "name": "本多", "group": "B", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u004", "name": "山根", "group": "B", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u005", "name": "ひろゆき", "group": "C", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u006", "name": "つばさ", "group": "C", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u007", "name": "翔真の主人", "group": "D", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u008", "name": "翔真", "group": "D", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u009", "name": "れい", "group": "E", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u010", "name": "なきと", "group": "E", "role": "member", "icon": "🐰" },
-                
-                  { "id": "u011", "name": "masterofjd", "group": "F", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u012", "name": "japdog", "group": "F", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u013", "name": "bluesky", "group": "G", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u014", "name": "りょー", "group": "G", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u015", "name": "しょうのご主人様", "group": "H", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u016", "name": "しょう", "group": "H", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u017", "name": "マスター", "group": "I", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u018", "name": "カズマ", "group": "I", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u019", "name": "とうの飼い主", "group": "J", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u020", "name": "とう", "group": "J", "role": "member", "icon": "🐶" },  
-                
-                  { "id": "u021", "name": "さく", "group": "K", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u022", "name": "しょう-222", "group": "K", "role": "member", "icon": "🐶" },  
-                
-                  { "id": "u023", "name": "トシキのご主人様", "group": "L", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u024", "name": "トシキ", "group": "L", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u025", "name": "X_master", "group": "M", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u026", "name": "X_slave", "group": "M", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u027", "name": "トシ", "group": "N", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u028", "name": "1号", "group": "N", "role": "member", "icon": "🐶" },
-                  { "id": "u029", "name": "2号", "group": "N", "role": "member", "icon": "🐶" },
-                  { "id": "u030", "name": "3号", "group": "N", "role": "member", "icon": "🐶" },
-                  
-                  { "id": "u031", "name": "仮さん", "group": "O", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u032", "name": "こうすけ", "group": "O", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u033", "name": "先輩", "group": "P", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u034", "name": "まさや", "group": "P", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u035", "name": "たく", "group": "Q", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u036", "name": "こうじ", "group": "Q", "role": "member", "icon": "🐶" },
-                  
-                  { "id": "u037", "name": "yukiのご主人様", "group": "R", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u038", "name": "yuki", "group": "R", "role": "member", "icon": "🐶" },  
-                
-                  { "id": "u039", "name": "kotto", "group": "S", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u040", "name": "ppss", "group": "S", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u041", "name": "KAN", "group": "T", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u042", "name": "マゾ犬", "group": "T", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u043", "name": "狁猼", "group": "U", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u044", "name": "微塵", "group": "U", "role": "member", "icon": "🐶" },  
-                
-                  { "id": "u045", "name": "chien", "group": "V", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u046", "name": "hanhan", "group": "V", "role": "member", "icon": "🐶" }, 
-                
-                  { "id": "u047", "name": "せいじのご主人様", "group": "W", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u048", "name": "せいじ", "group": "W", "role": "member", "icon": "🐶" },  
-                  
-                  { "id": "u049", "name": "咲のご主人様", "group": "X", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u050", "name": "咲", "group": "X", "role": "member", "icon": "🐶" }, 
-                
-                  { "id": "u051", "name": "おおさこ", "group": "Y", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u052", "name": "ぽろ", "group": "Y", "role": "member", "icon": "🐶" }, 
-                
-                  { "id": "u053", "name": "だいちのご主人様", "group": "Z", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u054", "name": "だいち", "group": "Z", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u055", "name": "ててて", "group": "AA", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u056", "name": "ととと", "group": "AA", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u057", "name": "ななな", "group": "BB", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u058", "name": "ににに", "group": "BB", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u059", "name": "ぬぬぬ", "group": "CC", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u060", "name": "ねねね", "group": "CC", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u061", "name": "ののの", "group": "DD", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u062", "name": "ははは", "group": "DD", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u063", "name": "ひひひ", "group": "EE", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u064", "name": "ふふふ", "group": "EE", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u065", "name": "へへへ", "group": "FF", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u066", "name": "ほほほ", "group": "FF", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u067", "name": "ままま", "group": "GG", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u068", "name": "みみみ", "group": "GG", "role": "member", "icon": "🐶" },
-                
-                  { "id": "u069", "name": "むむむ", "group": "HH", "role": "leader", "icon": "👨‍💼" },
-                  { "id": "u070", "name": "めめめ", "group": "HH", "role": "member", "icon": "🐶" }
-            ];
-
-            if (ALL_USERS_DATA.length > 0) {
-                console.log("🚀 データベースへの強制注入を開始します...");
-                for (const u of ALL_USERS_DATA) {
-                    const userRef = doc(db, "users", u.id);
-                    await setDoc(userRef, {
-                        name: u.name,
-                        group: u.group,
-                        role: u.role,
-                        icon: u.icon || "👤",
-                        password: "123456"
-                    });
-                }
-                alert("✨ 注入完了！Firestoreに全員分のデータが書き込まれました。");
-            }
-            // 👆【ここまで】
-            
             this.setupLogin();
             this.setupTabs();
             this.setupImageInputs();
@@ -965,6 +841,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
