@@ -19,8 +19,32 @@ let completionImagesBase64 = [];
 const App = {
     async init() {
         try {
+            
             const settingsRes = await fetch('config/settings.json?v=' + new Date().getTime());
             CONFIG_SETTINGS = await settingsRes.json();
+            
+            // 👇【移行用ブロック】
+            try {
+                const oldUsersRes = await fetch('config/users.json');
+                const oldUsers = await oldUsersRes.json();
+                if(oldUsers && oldUsers.length > 0) {
+                    console.log("全自動移行を開始します...");
+                    for (const u of oldUsers) {
+                        // ユーザー情報をFirestoreに登録
+                        await DB.saveUserToken({
+                            id: u.id,
+                            name: u.name,
+                            group: u.group,
+                            role: u.role,
+                            icon: u.icon || "👤"
+                        }, ""); 
+                        // パスワードを初期値(123456)で保存
+                        await DB.updatePassword(u.id, "123456");
+                    }
+                    alert("54名全員の移行が完了しました！\nこの後はusers.jsonを削除してOKです。");
+                }
+            } catch(err) { /* ファイルがない場合はスルー */ }
+            // 👆【ここまで】
             
             this.setupLogin();
             this.setupTabs();
@@ -839,4 +863,5 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
