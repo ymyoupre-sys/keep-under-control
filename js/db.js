@@ -123,7 +123,6 @@ export const DB = {
 
     async deleteEvent(id) { await deleteDoc(doc(db, "events", id)); },
 
-    // ★新規追加：完了報告（証拠の画像とコメント）を保存する処理
     async submitCompletionReport(docId, userId, comment, images = []) {
         const imageUrls = [];
         for (const imgBase64 of images) {
@@ -140,5 +139,7 @@ export const DB = {
         if (imageUrls.length > 0) updateData.completionImages = imageUrls;
         
         await updateDoc(doc(db, "applications", docId), updateData);
+        
+        return imageUrls; // チャット送信用にURLを返す
     }
 };
