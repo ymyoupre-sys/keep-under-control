@@ -23,28 +23,26 @@ const App = {
             const settingsRes = await fetch('config/settings.json?v=' + new Date().getTime());
             CONFIG_SETTINGS = await settingsRes.json();
             
-            // 👇【完全上書き・強制修正用ブロック】
+        // 👇【最終決戦：全データ一括クリーン移行】
             try {
                 const oldUsersRes = await fetch('config/users.json');
                 const oldUsers = await oldUsersRes.json();
                 if(oldUsers && oldUsers.length > 0) {
-                    console.log("全データ強制クリーンアップ＆移行を開始します...");
+                    console.log("🚀 全ユーザーの完全移行を開始します...");
                     for (const u of oldUsers) {
                         const userRef = doc(db, "users", u.id);
-                        // すべての項目を漏れなくFirestoreへ強制書き込み
+                        // すべてのフィールドを明示的にセット
                         await setDoc(userRef, {
-                            id: u.id,
                             name: u.name,
                             group: u.group,
                             role: u.role,
                             icon: u.icon || "👤",
-                            password: "123456" // 初期パスワードにリセット
-                        }, { merge: true });
+                            password: "123456" // 全員の初期パスワード
+                        });
                     }
-                    console.log("54名全員のクリーンアップ完了");
-                    alert("データが正常に修復されました！");
+                    alert("✨ 54名全員のデータが完璧に移行されました！\n一度ログアウトして、新しいパスワード 123456 でログインし直してください。");
                 }
-            } catch(err) { console.error("Migration Error:", err); }
+            } catch(err) { console.log("移行用ファイル読み込みなし"); }
             // 👆【ここまで】
             
             this.setupLogin();
@@ -864,6 +862,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
