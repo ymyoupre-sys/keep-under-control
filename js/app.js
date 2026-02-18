@@ -1,7 +1,6 @@
 import { DB } from "./db.js";
 import { Utils } from "./utils.js";
 import { Calendar } from "./calendar.js";
-// ★修正：Firebase Authの公式ログイン機能一式を読み込む
 import { db, messaging, getToken, auth } from "./firebase-config.js";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
@@ -58,8 +57,14 @@ const App = {
         const passInput = document.getElementById('login-password');
         if (!loginBtn || !nameInput || !passInput) return;
 
-        // ★Firebaseの仕様上、初期パスワードは必ず6文字以上にする必要があります
         const INITIAL_PASS = "123456"; 
+
+        // ★追加：日本語の名前をFirebaseに100%安全な英数字（16進数）に変換する関数
+        const safeHexEncode = (str) => {
+            return Array.from(new TextEncoder().encode(str))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+        };
 
         loginBtn.addEventListener('click', async () => {
             const inputName = nameInput.value.trim();
@@ -74,15 +79,13 @@ const App = {
             loginBtn.textContent = "認証中...";
             document.getElementById('login-error').classList.add('d-none');
 
-            // ★魔法の裏技：入力された「名前」を架空のメールアドレスに変換する
-            const dummyEmail = encodeURIComponent(inputName) + "@dummy.keep-under-control.com";
+            // ★修正：より安全なダミーアドレスの生成方式に変更
+            const dummyEmail = safeHexEncode(inputName) + "@dummy.keep-under-control.com";
 
             try {
                 try {
-                    // 1. まずは普通にログインを試みる
                     await signInWithEmailAndPassword(auth, dummyEmail, inputPass);
                 } catch (err) {
-                    // 2. 失敗した場合、入力されたのが「初期パスワード」なら、その場で勝手にアカウントを作成してあげる！
                     if (inputPass === INITIAL_PASS) {
                         await createUserWithEmailAndPassword(auth, dummyEmail, inputPass);
                     } else {
@@ -90,7 +93,6 @@ const App = {
                     }
                 }
 
-                // 3. ログインできたら、Firestoreの正規奴隷名簿に載っているかチェック（部外者の侵入防止）
                 const userData = await DB.getUserByName(inputName);
                 if (!userData) {
                     await signOut(auth);
@@ -99,7 +101,6 @@ const App = {
 
                 CURRENT_USER = userData;
 
-                // 4. 初期パスワードを使っている場合は、変更画面を強制的に出す
                 if (inputPass === INITIAL_PASS) {
                     const pwdModal = new bootstrap.Modal(document.getElementById('passwordChangeModal'));
                     pwdModal.show();
@@ -120,8 +121,12 @@ const App = {
                         changeBtn.textContent = "更新中...";
 
                         try {
-                            // Firebase Auth側のパスワードを安全に更新
                             await updatePassword(auth.currentUser, newPwd);
+                            
+                            // データベース側のパスワードも更新しておく
+                            await DB.updatePassword(CURRENT_USER.id, newPwd);
+                            CURRENT_USER.password = newPwd; 
+                            
                             localStorage.setItem('app_user_v2', JSON.stringify(CURRENT_USER));
                             pwdModal.hide();
                             this.showMainScreen();
@@ -239,7 +244,6 @@ const App = {
 
         document.getElementById('logout-btn').addEventListener('click', async () => {
             if(confirm('ログアウトしますか？')) {
-                // ★修正：Firebaseからも確実にログアウトさせる
                 try { await signOut(auth); } catch(e){}
                 localStorage.removeItem('app_user_v2');
                 location.reload();
