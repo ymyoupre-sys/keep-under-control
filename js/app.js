@@ -107,7 +107,7 @@ const App = {
 
                 if (inputPass === INITIAL_PASS) {
                     
-                    if (inputName === "主人" || inputName === "奴隷") {
+                    if (inputName === "リーダー" || inputName === "メンバー") {
                         localStorage.setItem('app_user_v3', JSON.stringify(CURRENT_USER));
                         this.showMainScreen();
                         return; 
@@ -863,3 +863,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
