@@ -10,6 +10,11 @@ const getRoomId = (groupId, id1, id2) => {
 };
 
 export const DB = {
+    // 👇ユーザー名簿を削除する機能を追加
+    async deleteUserAccount(userId) {
+        await deleteDoc(doc(db, "users", userId));
+    },
+
     async saveUserToken(user, token) {
         if (!user || !user.id) return;
         const userRef = doc(db, "users", user.id);
@@ -20,7 +25,6 @@ export const DB = {
             icon: user.icon || "👤",
             updatedAt: serverTimestamp()
         };
-        // passwordフィールドが消えないよう、絶対に merge: true を使う
         if (token) updateData.fcmToken = token;
         await setDoc(userRef, updateData, { merge: true });
     },
@@ -162,7 +166,6 @@ export const DB = {
         const snap = await getDocs(q);
         if (!snap.empty) {
             const data = snap.docs[0].data();
-            // ★安全装置：groupが空っぽ（undefined）の時は「未設定」という文字を入れてクラッシュを防ぐ
             data.group = data.group || data.groupId || "未設定";
             return { id: snap.docs[0].id, ...data };
         }
@@ -175,11 +178,9 @@ export const DB = {
 
     async getGroupUsers(groupId) {
         const safeGroup = groupId || "NONE";
-        // まずは "group" フィールドで検索
         let q = query(collection(db, "users"), where("group", "==", safeGroup));
         let snap = await getDocs(q);
         
-        // もし見つからなければ "groupId" フィールドでも検索（念のための補完）
         if (snap.empty) {
             q = query(collection(db, "users"), where("groupId", "==", safeGroup));
             snap = await getDocs(q);
@@ -188,6 +189,3 @@ export const DB = {
         return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 };
-
-
-
