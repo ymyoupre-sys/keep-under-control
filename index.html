@@ -53,9 +53,10 @@
             
             <header class="bg-white border-bottom px-3 py-2 d-flex justify-content-between align-items-center" style="height: 60px; flex-shrink: 0; z-index: 1050;">
                 <span class="fw-bold" id="header-title">受信箱</span>
-                <div class="d-flex align-items-center">
-                    <span id="user-name-display" class="me-2 small text-muted"></span>
+                <div class="d-flex align-items-center gap-2">
+                    <span id="user-name-display" class="fw-bold text-dark" style="font-size: 1.05rem;"></span>
                     <button id="logout-btn" class="btn btn-sm btn-outline-secondary"><i class="bi bi-box-arrow-right"></i></button>
+                    <button id="settings-btn" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#settingsModal"><i class="bi bi-gear"></i></button>
                 </div>
             </header>
 
@@ -265,10 +266,48 @@
         </div>
     </div>
 
+    <div class="modal fade" id="settingsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">設定</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="list-group list-group-flush">
+                        <button class="list-group-item list-group-item-action p-3" data-bs-toggle="modal" data-bs-target="#updatesModal" data-bs-dismiss="modal">
+                            <i class="bi bi-info-circle me-2"></i> 更新情報
+                        </button>
+                        <button class="list-group-item list-group-item-action p-3 text-danger fw-bold" id="btn-show-withdraw" data-bs-dismiss="modal">
+                            <i class="bi bi-person-x me-2"></i> 退会する
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="updatesModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">更新情報</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body small">
+                    <ul class="mb-0 ps-3" style="line-height: 1.8;">
+                        <li>アプリリリース</li>
+                        <li>セキュリティ対策のための改修</li>
+                        <li>指示への完了報告時には、画像かコメントの添付を必須としました</li>
+                        <li>アプリに通知ドットが表示されるようにしました</li>
+                        <li>退会ボタンを設置しました</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="js/app.js?v=6"></script>
 </body>
 </html>
-
-
-
