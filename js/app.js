@@ -2,7 +2,8 @@ import { DB } from "./db.js";
 import { Utils } from "./utils.js";
 import { Calendar } from "./calendar.js";
 import { db, messaging, getToken, auth } from "./firebase-config.js";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+// 👇 deleteUser を追加しています
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -68,14 +69,11 @@ const App = {
 
         loginBtn.addEventListener('click', async () => {
             const inputName = nameInput.value.trim();
-            // ★修正：const ではなく let にして、後から書き換えられるようにしました
             let inputPass = passInput.value.trim(); 
 
-            // 👇【追加】共有アカウントのPW入力スキップ魔法
-            if (inputName === "リーダー" || inputName === "メンバー") {
-                inputPass = INITIAL_PASS; // 裏で強制的に 123456 をセット
+            if (inputName === "主人" || inputName === "奴隷") {
+                inputPass = INITIAL_PASS; 
             }
-            // 👆ここまで
 
             if (!inputName || !inputPass) {
                 alert("名前とパスワードを入力してください");
@@ -109,8 +107,7 @@ const App = {
 
                 if (inputPass === INITIAL_PASS) {
                     
-                    // 共有アカウントの場合はパスワード変更をスキップして即ログイン！
-                    if (inputName === "リーダー" || inputName === "メンバー") {
+                    if (inputName === "主人" || inputName === "奴隷") {
                         localStorage.setItem('app_user_v3', JSON.stringify(CURRENT_USER));
                         this.showMainScreen();
                         return; 
@@ -257,9 +254,33 @@ const App = {
         document.getElementById('logout-btn').addEventListener('click', async () => {
             if(confirm('ログアウトしますか？')) {
                 try { await signOut(auth); } catch(e){}
-                // ★修正：ログアウト時も v3 を消す
                 localStorage.removeItem('app_user_v3');
                 location.reload();
+            }
+        });
+
+        // 👇退会ボタンの処理を追加しています
+        document.getElementById('btn-show-withdraw').addEventListener('click', async () => {
+            if(confirm("【警告】\n退会すると、あなたのアカウント情報はすべて削除され、復元することはできません。\n本当に退会してもよろしいですか？")) {
+                try {
+                    await DB.deleteUserAccount(CURRENT_USER.id);
+                    
+                    if (auth.currentUser) {
+                        await deleteUser(auth.currentUser);
+                    }
+                    
+                    localStorage.removeItem('app_user_v3');
+                    alert("退会処理が完了しました。ご利用ありがとうございました！");
+                    location.reload();
+                    
+                } catch (e) {
+                    console.error("退会エラー:", e);
+                    if (e.code === 'auth/requires-recent-login') {
+                        alert("セキュリティのため、退会処理を行うには再度ログインが必要です。\n一度ログアウトし、もう一度ログインしてから再度お試しください。");
+                    } else {
+                        alert("退会処理に失敗しました。");
+                    }
+                }
             }
         });
 
@@ -842,4 +863,3 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
-
