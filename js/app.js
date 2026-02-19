@@ -868,6 +868,3 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
-
-
-
