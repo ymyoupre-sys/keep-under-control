@@ -71,7 +71,7 @@ const App = {
             const inputName = nameInput.value.trim();
             let inputPass = passInput.value.trim(); 
 
-            if (inputName === "主人" || inputName === "奴隷") {
+            if (inputName === "リーダー" || inputName === "メンバー") {
                 inputPass = INITIAL_PASS; 
             }
 
@@ -599,7 +599,7 @@ const App = {
                     btnStateCompleted = isAppConfirmed;
                     onCheckAction = async (e) => {
                         e.stopPropagation(); 
-                        if(confirm("この申請結果を確認済みとしますか？\n（※自分用のメモ機能のため、主人に通知は飛びません）")) {
+                        if(confirm("この申請結果を確認済みとしますか？\n（※自分用のメモ機能のため、リーダーに通知は飛びません）")) {
                             await DB.markAsConfirmed(app.id);
                         }
                     };
@@ -863,4 +863,5 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
