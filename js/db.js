@@ -10,10 +10,25 @@ const getRoomId = (groupId, id1, id2) => {
 };
 
 export const DB = {
-    // 👇ユーザー名簿を削除する機能を追加
+    // ユーザー名簿を削除する機能
     async deleteUserAccount(userId) {
         await deleteDoc(doc(db, "users", userId));
     },
+
+    // 👇 追加：AuthのIDと、名簿のIDを結びつける証明書を作成する
+    async createAuthBridge(authUid, userId, group) {
+        if (!authUid || !userId) return;
+        try {
+            await setDoc(doc(db, "auth_bridge", authUid), {
+                userId: userId,
+                group: group || "未設定",
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+        } catch (e) {
+            console.error("Bridge Error:", e);
+        }
+    },
+    // 👆 ここまで追加
 
     async saveUserToken(user, token) {
         if (!user || !user.id) return;
