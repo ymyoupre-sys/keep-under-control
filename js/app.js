@@ -3,7 +3,7 @@ import { Utils } from "./utils.js";
 import { Calendar } from "./calendar.js";
 import { db, messaging, getToken, auth } from "./firebase-config.js";
 // 👇 deleteUser を追加しています
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, signOut, deleteUser, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -23,6 +23,14 @@ const App = {
         try {
             const settingsRes = await fetch('config/settings.json?v=' + new Date().getTime());
             CONFIG_SETTINGS = await settingsRes.json();
+
+            // 👇 ここから追加：アプリを開いた時に証明書を自動作成する
+            onAuthStateChanged(auth, async (user) => {
+                if (user && CURRENT_USER) {
+                    await DB.createAuthBridge(user.uid, CURRENT_USER.id, CURRENT_USER.group);
+                }
+            });
+            // 👆 ここまで追加            
             
             this.setupLogin();
             this.setupTabs();
@@ -105,6 +113,12 @@ const App = {
 
                 CURRENT_USER = userData;
 
+                // 👇【ここに追加】初回ログイン時にも、次の画面へ行く前に確実に証明書を発行する
+                if (auth.currentUser) {
+                    await DB.createAuthBridge(auth.currentUser.uid, CURRENT_USER.id, CURRENT_USER.group);
+                }
+                // 👆ここまで
+                
                 if (inputPass === INITIAL_PASS) {
                     
                     if (inputName === "リーダー" || inputName === "メンバー") {
@@ -868,3 +882,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
