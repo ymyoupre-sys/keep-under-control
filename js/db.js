@@ -122,8 +122,15 @@ export const DB = {
         }
         data.images = imageUrls; 
 
+        const now = new Date();
+        const formattedDate = `${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+
         await addDoc(collection(db, "applications"), {
-            ...data, status: 'pending', createdAt: serverTimestamp(), updatedAt: serverTimestamp(), createdDateStr: new Date().toLocaleDateString('ja-JP') 
+            ...data, 
+            status: 'pending', 
+            createdAt: serverTimestamp(), 
+            updatedAt: serverTimestamp(), 
+            createdDateStr: formattedDate // 👈 変更：時間入りの文字列を保存する
         });
     },
     
@@ -204,3 +211,4 @@ export const DB = {
         return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 };
+
