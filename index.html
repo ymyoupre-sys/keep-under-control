@@ -191,32 +191,35 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-2 small text-muted">送信者: <span id="detail-sender"></span> | 日時: <span id="detail-date"></span></div>
+                    <div class="mb-2 small text-muted">
+                        <span data-i18n="detail_sender_label">送信者:</span> <span id="detail-sender"></span>  
+                        <span data-i18n="detail_date_label">日時:</span> <span id="detail-date"></span>
+                    </div>
                     <div class="mb-3 p-3 bg-light rounded" id="detail-content" style="white-space: pre-wrap;"></div>
                     <div id="detail-images" class="image-preview-container mb-3"></div>
                     
                     <div id="detail-leader-comment-area" class="d-none mb-3 p-3 rounded" style="background-color: #e8f4fd; border-left: 4px solid #0d6efd;">
-                        <div class="small fw-bold text-primary mb-1"><i class="bi bi-chat-left-text me-1"></i>主人からのコメント</div>
+                        <div class="small fw-bold text-primary mb-1"><i class="bi bi-chat-left-text me-1"></i><span data-i18n="detail_leader_comment">主人からのコメント</span></div>
                         <div id="detail-leader-comment" style="white-space: pre-wrap; font-size: 0.95rem;"></div>
                     </div>
 
                     <div id="detail-completion-area" class="d-none mb-3 p-3 rounded bg-light border">
-                        <div class="small fw-bold text-success mb-2"><i class="bi bi-check-circle-fill me-1"></i>完了報告の内容</div>
+                        <div class="small fw-bold text-success mb-2"><i class="bi bi-check-circle-fill me-1"></i><span data-i18n="detail_completion_title">完了報告の内容</span></div>
                         <div id="detail-completion-comment" style="white-space: pre-wrap; font-size: 0.95rem; margin-bottom: 8px;"></div>
                         <div id="detail-completion-images" class="image-preview-container"></div>
                     </div>
 
                     <div id="leader-judge-area" class="role-leader d-none border-top pt-3 mt-3">
                         <div id="judge-comment-area">
-                            <label class="form-label fw-bold">判定コメント (任意)</label>
+                            <label class="form-label fw-bold" data-i18n="judge_comment_label">判定コメント (任意)</label>
                             <textarea id="judge-comment" class="form-control mb-2" rows="2"></textarea>
                         </div>
                         <div class="d-flex justify-content-between gap-2 mb-2" id="judge-btn-group">
-                            <button id="btn-approve" class="btn btn-success flex-fill">承認する</button>
-                            <button id="btn-reject" class="btn btn-danger flex-fill">却下する</button>
+                            <button id="btn-approve" class="btn btn-success flex-fill" data-i18n="btn_approve">承認する</button>
+                            <button id="btn-reject" class="btn btn-danger flex-fill" data-i18n="btn_reject">却下する</button>
                         </div>
                         <div class="d-flex justify-content-center gap-2">
-                            <button id="btn-cancel-judge" class="btn btn-warning flex-fill d-none">判定を取り消す</button>
+                            <button id="btn-cancel-judge" class="btn btn-warning flex-fill d-none" data-i18n="btn_cancel_judge">判定を取り消す</button>
                         </div>
                     </div>
                 </div>
@@ -228,21 +231,21 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold">命令の完了報告</h5>
+                    <h5 class="modal-title fw-bold" data-i18n="completion_title">命令の完了報告</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="small text-danger fw-bold mb-3"><i class="bi bi-exclamation-triangle-fill"></i> コメントまたは証拠画像のどちらかが必須です。</p>
+                    <p class="small text-danger fw-bold mb-3"><i class="bi bi-exclamation-triangle-fill"></i> <span data-i18n="completion_warning">コメントまたは証拠画像のどちらかが必須です。</span></p>
                     <div class="mb-3">
-                        <label class="form-label fw-bold">報告コメント</label>
-                        <textarea id="completion-comment" class="form-control" rows="3" placeholder="作業完了しました。"></textarea>
+                        <label class="form-label fw-bold" data-i18n="completion_comment_label">報告コメント</label>
+                        <textarea id="completion-comment" class="form-control" rows="3" placeholder="作業完了しました。" data-i18n-placeholder="completion_comment_placeholder"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold">証拠画像 (最大4枚)</label>
+                        <label class="form-label fw-bold" data-i18n="completion_image_label">証拠画像 (最大4枚)</label>
                         <input type="file" id="completion-image-file" class="form-control" accept="image/*" multiple>
                         <div id="completion-image-preview" class="image-preview-container mt-2"></div>
                     </div>
-                    <button id="completion-submit-btn" class="btn btn-success w-100 fw-bold">報告して完了にする</button>
+                    <button id="completion-submit-btn" class="btn btn-success w-100 fw-bold" data-i18n="btn_completion_submit">報告して完了にする</button>
                 </div>
             </div>
         </div>
@@ -251,19 +254,28 @@
     <div class="modal fade" id="eventModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">予定の追加</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header">
+                    <h5 class="modal-title" data-i18n="event_modal_title">予定の追加</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
                 <div class="modal-body">
                     <div class="row mb-3">
-                        <div class="col-6"><label class="form-label small text-muted">開始日</label><input type="date" id="event-start-date" class="form-control"></div>
-                        <div class="col-6"><label class="form-label small text-muted">終了日</label><input type="date" id="event-end-date" class="form-control"></div>
+                        <div class="col-6"><label class="form-label small text-muted" data-i18n="event_start_date">開始日</label><input type="date" id="event-start-date" class="form-control"></div>
+                        <div class="col-6"><label class="form-label small text-muted" data-i18n="event_end_date">終了日</label><input type="date" id="event-end-date" class="form-control"></div>
                     </div>
-                    <div class="mb-3"><label class="form-label">予定の内容</label><input type="text" id="event-title-input" class="form-control" placeholder="例: 外出、調教など"></div>
+                    <div class="mb-3">
+                        <label class="form-label" data-i18n="event_title_label">予定の内容</label>
+                        <input type="text" id="event-title-input" class="form-control" placeholder="例: 外出、調教など" data-i18n-placeholder="event_title_placeholder">
+                    </div>
                 </div>
-                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button><button type="button" id="save-event-btn" class="btn btn-success">保存</button></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="btn_cancel">キャンセル</button>
+                    <button type="button" id="save-event-btn" class="btn btn-success" data-i18n="btn_save">保存</button>
+                </div>
             </div>
         </div>
     </div>
-
+    
     <div class="modal fade" id="passwordChangeModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -333,5 +345,6 @@
     <script type="module" src="js/app.js?v=10"></script>
 </body>
 </html>
+
 
 
