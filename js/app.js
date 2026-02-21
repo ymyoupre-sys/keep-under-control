@@ -17,44 +17,25 @@ let chatImagesBase64 = [];
 let formImagesBase64 = []; 
 let completionImagesBase64 = []; 
 
-// 👇 追加：多言語化（i18n）用の辞書データと現在の言語設定
 const TRANSLATIONS = {
-    "login_title": { 
-        ja: "利用開始", 
-        en: "Start Using", 
-        zh: "开始使用" 
-    },
-    "login_notice": {
-        ja: `<strong>【重要なお知らせ】</strong><br>システムの大規模なセキュリティ改修を行いました。<br>お手数ですが、初回ログイン時に<strong>自分専用のパスワード（6文字以上）</strong>の設定をお願いいたします。<br><span class="text-danger">※初期パスワードは「123456」です。<br>※テストアカウント「リーダー」「メンバー」はPWなしでログイン可能です。</span>`,
-        en: `<strong>[Important Notice]</strong><br>We have implemented major security upgrades.<br>Please set your <strong>personal password (6+ characters)</strong> upon your first login.<br><span class="text-danger">* Default password is '123456'.<br>* Test accounts 'Leader' and 'Member' can login without a password.</span>`,
-        zh: `<strong>【重要通知】</strong><br>系统进行了大规模的安全升级。<br>首次登录时，请设置<strong>专属密码（6位以上）</strong>。<br><span class="text-danger">※初始密码为“123456”。<br>※测试账号“Leader”和“Member”可无密码登录。</span>`
-    },
-    "login_name_placeholder": { 
-        ja: "名前 (例: 田中)", 
-        en: "Name (e.g., John)", 
-        zh: "姓名 (例: 田中)" 
-    },
-    "login_pass_placeholder": { 
-        ja: "パスワード", 
-        en: "Password", 
-        zh: "密码" 
-    },
-    "login_button": { 
-        ja: "ログイン", 
-        en: "Login", 
-        zh: "登录" 
-    },
-    "login_authenticating": { 
-        ja: "認証中...", 
-        en: "Authenticating...", 
-        zh: "验证中..." 
-    },
-    "login_error": { 
-        ja: "名前またはパスワードが間違っています", 
-        en: "Invalid name or password.", 
-        zh: "姓名或密码错误。" 
-    }
+    // --- 既存のログイン画面用 ---
+    "login_title": { ja: "利用開始", en: "Start Using", zh: "开始使用" },
+    "login_notice": { /* 省略 */ },
+    "login_name_placeholder": { ja: "名前 (例: 田中)", en: "Name (e.g., John)", zh: "姓名 (例: 田中)" },
+    "login_pass_placeholder": { ja: "パスワード", en: "Password", zh: "密码" },
+    "login_button": { ja: "ログイン", en: "Login", zh: "登录" },
+    "login_authenticating": { ja: "認証中...", en: "Authenticating...", zh: "验证中..." },
+    "login_error": { ja: "名前またはパスワードが間違っています", en: "Invalid name or password.", zh: "姓名或密码错误。" },
+    
+    "nav_chat": { ja: "チャット", en: "Chat", zh: "聊天" },
+    "nav_inbox": { ja: "受信箱", en: "Inbox", zh: "收件箱" },
+    "nav_form_leader": { ja: "命令作成", en: "Create Instruction", zh: "发布指令" },
+    "nav_form_member": { ja: "申請作成", en: "Create Request", zh: "创建申请" },
+    "nav_calendar": { ja: "カレンダー", en: "Calendar", zh: "日历" },
+    "menu_logout": { ja: "ログアウト", en: "Logout", zh: "退出登录" },
+    "menu_withdraw": { ja: "退会する", en: "Delete Account", zh: "注销账户" }
 };
+
 let currentLang = localStorage.getItem('app_lang') || 'ja'; // 保存された言語（初期は日本語）
 // 👆 ここまで追加
 
@@ -1020,3 +1001,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
