@@ -27,6 +27,12 @@ const TRANSLATIONS = {
         en: `<strong>[Important Notice]</strong><br>We have implemented major security upgrades.<br>Please set your <strong>personal password (6+ characters)</strong> upon your first login.<br><span class="text-danger">* Default password is '123456'.<br>* Test accounts can login without a password.</span>`,
         zh: `<strong>【重要通知】</strong><br>系统进行了大规模的安全升级。<br>首次登录时，请设置<strong>专属密码（6位以上）</strong>。<br><span class="text-danger">※初始密码为“123456”。<br>※测试账号可无密码登录。</span>`
     },
+    "login_account_creation": {
+        ja: `<strong>【個人用アカウント作成について】</strong><br>個人用アカウントの作成を希望される方は、<a href="https://x.com/FvFA4yNQfW15814" target="_blank" rel="noopener noreferrer" class="text-decoration-none fw-bold">@FvFA4yNQfW15814</a> までDMにてお問い合わせください。`,
+        en: `<strong>[Regarding Personal Account Creation]</strong><br>If you wish to create a personal account, please contact <a href="https://x.com/FvFA4yNQfW15814" target="_blank" rel="noopener noreferrer" class="text-decoration-none fw-bold">@FvFA4yNQfW15814</a> via DM.`,
+        zh: `<strong>【关于个人账户创建】</strong><br>如果希望创建个人账户，请通过私信联系 <a href="https://x.com/FvFA4yNQfW15814" target="_blank" rel="noopener noreferrer" class="text-decoration-none fw-bold">@FvFA4yNQfW15814</a>。`
+    },
+    
     "login_name_placeholder": { ja: "名前 (例: 田中)", en: "Name (e.g., John)", zh: "姓名 (例: 王)" },
     "login_pass_placeholder": { ja: "パスワード", en: "Password", zh: "密码" },
     "login_button": { ja: "ログイン", en: "Login", zh: "登录" },
@@ -1086,4 +1092,5 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
