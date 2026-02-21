@@ -496,7 +496,7 @@ const App = {
             this.updateImagePreview('chat-image-preview', chatImagesBase64, 'chat-image-file');
             setTimeout(() => { detailContainer.scrollTop = detailContainer.scrollHeight; }, 100);
         };
-    }
+    },
     
     startInboxListener() {
         if(unsubscribeInbox) unsubscribeInbox();
@@ -898,6 +898,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
