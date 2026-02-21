@@ -1,9 +1,18 @@
 {
   "groups": {
-    "A": {
+    "test_J": {
       "instructionTypes":["自慰命令", "射精命令", "排泄命令", "剃毛命令", "貞操帯装着命令", "服装指示", "脱衣命令", "その他命令", "🚫自慰禁止命令", "🚫射精禁止命令", "🚫排泄禁止命令", "🚫その他禁止命令"],
       "applicationTypes":["外出申請", "自慰申請", "射精申請", "排泄申請", "貞操帯解錠申請", "その他申請", "射精返上宣言", "排泄返上宣言", "服従宣言", "その他宣言", "その他返上宣言"]
     },
+    "test_C": {
+      "instructionTypes":["自慰指令", "射精指令", "排泄指令", "剃毛指令", "佩戴贞操带指令", "穿衣指令", "脱衣指令", "其他指令", "🚫禁止自慰指令", "🚫禁止射精指令", "🚫禁止排泄指令", "🚫其他禁止指令"],
+      "applicationTypes":["外出请求", "自慰请求", "射精请求", "排泄请求", "请求取下贞操带", "其他请求", "拒绝射精声明", "拒绝排泄声明", "服从声明", "其他声明", "其他拒绝声明"]
+    },
+    "test_E": {
+      "instructionTypes":["Masturbation Command", "Ejaculation Command", "Excretion Command", "Shaving Command", "Chastity device wearing command", "Dressing Command", "Undressing Command", "Other Commands", "🚫No Masturbation Command", "🚫No Ejaculation Command", "🚫No Excretion Command", "🚫Other Prohibition Commands"],
+      "applicationTypes":["Going out request", "Masturbation request", "Ejaculation request", "Excretion request", "Request to remove chastity device", "Other requests", "Ejaculation refusal declaration", "Excretion refusal declaration", "Submission declaration", "Other declaration", "Other refusal declaration"]
+    },    
+    
     "B": {
       "instructionTypes":["自慰命令", "射精命令", "排泄命令", "剃毛命令", "貞操帯装着命令", "服装指示", "脱衣命令", "その他命令", "🚫自慰禁止命令", "🚫射精禁止命令", "🚫排泄禁止命令", "🚫その他禁止命令"],
       "applicationTypes":["外出申請", "自慰申請", "射精申請", "排泄申請", "貞操帯解錠申請", "その他申請", "射精返上宣言", "排泄返上宣言", "服従宣言", "その他宣言", "その他返上宣言"]
@@ -280,5 +289,3 @@
     "completed": { "label": "完了", "color": "bg-secondary text-white" }
   }
 }
-
-
