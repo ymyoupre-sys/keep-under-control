@@ -283,9 +283,10 @@
     }
   },
   "statusLabels": {
-    "pending": { "label": "承認待ち", "color": "bg-warning text-dark" },
-    "approved": { "label": "承認済", "color": "bg-success text-white" },
-    "rejected": { "label": "却下", "color": "bg-danger text-white" },
-    "completed": { "label": "完了", "color": "bg-secondary text-white" }
+    "pending": { "label": "pending", "color": "bg-warning text-dark" },
+    "approved": { "label": "approved", "color": "bg-success text-white" },
+    "rejected": { "label": "rejected", "color": "bg-danger text-white" },
+    "completed": { "label": "completed", "color": "bg-secondary text-white" }
   }
 }
+
