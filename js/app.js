@@ -316,7 +316,13 @@ const App = {
                 document.querySelectorAll('.tab-content').forEach(content => content.classList.add('d-none'));
                 document.querySelector(targetId).classList.remove('d-none');
                 
-                const titleMap = { '#tab-chat': 'チャット', '#tab-inbox': '受信箱', '#tab-form': CURRENT_USER.role === 'leader' ? '命令作成' : '申請作成', '#tab-calendar': 'カレンダー' };
+                // 👇 変更：翻訳辞書（TRANSLATIONS）から現在の言語の単語を引っ張ってくるように変更
+                const titleMap = { 
+                    '#tab-chat': TRANSLATIONS["nav_chat"][currentLang], 
+                    '#tab-inbox': TRANSLATIONS["nav_inbox"][currentLang], 
+                    '#tab-form': CURRENT_USER.role === 'leader' ? TRANSLATIONS["nav_form_leader"][currentLang] : TRANSLATIONS["nav_form_member"][currentLang], 
+                    '#tab-calendar': TRANSLATIONS["nav_calendar"][currentLang] 
+                };
                 document.getElementById('header-title').textContent = titleMap[targetId];
 
                 const chatInput = document.getElementById('chat-input-area');
@@ -1001,4 +1007,5 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
