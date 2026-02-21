@@ -359,7 +359,7 @@ const App = {
                 const reactionsCount = msg.reactions ? msg.reactions.length : 0;
                 const hasReacted = msg.reactions && msg.reactions.includes(CURRENT_USER.id);
                 
-                // 👇 追加：日時のフォーマット処理
+                // 日時のフォーマット
                 let timeStr = "";
                 if (msg.createdAt) {
                     const date = msg.createdAt.toDate();
@@ -369,104 +369,138 @@ const App = {
                     const min = String(date.getMinutes()).padStart(2, '0');
                     timeStr = `${m}/${d} ${h}:${min}`;
                 }
-                // 時間表示用のHTML（吹き出しの下端に揃える）
                 const timeHtml = timeStr ? `<div style="font-size: 0.65rem; color: #888; margin: 0 4px; align-self: flex-end; padding-bottom: 2px; white-space: nowrap;">${timeStr}</div>` : '';
+
+                // リアクション
+                const reactionHtml = reactionsCount > 0 ? `<div class="reaction-badge"><i class="${hasReacted ? 'bi bi-heart-fill' : 'bi bi-heart'}"></i> ${reactionsCount}</div>` : '';
 
                 const div = document.createElement('div');
                 div.className = `d-flex align-items-start chat-row ${isMe ? 'justify-content-end' : 'justify-content-start'}`;
                 
                 const iconHtml = !isMe ? `<div class="flex-shrink-0 me-2 mt-1" style="font-size:28px; line-height:1;">${msg.senderIcon}</div>` : '';
-                
-                let imagesHtml = '';
-                if(msg.images && msg.images.length > 0) {
-                    imagesHtml = `<div class="d-flex flex-wrap gap-1 mt-1 ${isMe ? 'justify-content-end' : 'justify-content-start'}" style="max-width: 210px;" onclick="event.stopPropagation();">`;
-                    msg.images.forEach(img => {
-                        imagesHtml += `<img src="${img}" class="img-fluid rounded clickable" style="width: 100px; height: 100px; object-fit: cover;" onclick="event.stopPropagation(); window.openFullscreenImage('${img}')">`;
-                    });
-                    imagesHtml += `</div>`;
-                }
-
-                let textHtml = '';
                 const editedLabel = msg.isEdited ? `<span class="text-muted ms-1" style="font-size:9px;">(編集済)</span>` : '';
-                
+
+                // 1. 本文ブロック（テキストがある場合は、この本文に時間と♡をピッタリくっつける）
+                let textBlock = '';
                 if(msg.text) {
-                    textHtml = `<div class="p-2 rounded text-dark shadow-sm" style="background-color: ${isMe ? 'var(--chat-me-bg)' : 'var(--chat-other-bg)'}; display: inline-block; text-align: left; white-space: pre-wrap; word-wrap: break-word;">${msg.text}${editedLabel}</div>`;
+                    textBlock = `
+                        <div class="d-flex align-items-end mb-1">
+                            ${isMe ? timeHtml : ''}
+                            <div style="position: relative;" class="chat-bubble-content">
+                                <div class="p-2 rounded text-dark shadow-sm" style="background-color: ${isMe ? 'var(--chat-me-bg)' : 'var(--chat-other-bg)'}; display: inline-block; text-align: left; white-space: pre-wrap; word-wrap: break-word;">${msg.text}${editedLabel}</div>
+                                ${reactionHtml}
+                            </div>
+                            ${!isMe ? timeHtml : ''}
+                        </div>
+                    `;
                 } else if (msg.isEdited) {
-                    textHtml = `<div class="w-100 ${isMe ? 'text-end' : 'text-start'}">${editedLabel}</div>`;
+                    textBlock = `<div class="w-100 ${isMe ? 'text-end' : 'text-start'} mb-1">${editedLabel}</div>`;
                 }
 
-                const reactionHtml = reactionsCount > 0 ? `<div class="reaction-badge"><i class="${hasReacted ? 'bi bi-heart-fill' : 'bi bi-heart'}"></i> ${reactionsCount}</div>` : '';
+                // 2. 画像ブロック（テキストが無く、画像「のみ」の場合は画像に時間と♡をくっつける）
+                let imagesBlock = '';
+                if(msg.images && msg.images.length > 0) {
+                    let imgs = '';
+                    msg.images.forEach(img => {
+                        imgs += `<img src="${img}" class="img-fluid rounded clickable" style="width: 100px; height: 100px; object-fit: cover;" onclick="event.stopPropagation(); window.openFullscreenImage('${img}')">`;
+                    });
 
-                // 👇 変更：timeHtml を自分の場合は左側、相手の場合は右側に配置
+                    if (!msg.text) {
+                        imagesBlock = `
+                            <div class="d-flex align-items-end">
+                                ${isMe ? timeHtml : ''}
+                                <div style="position: relative;" class="chat-bubble-content">
+                                    <div class="d-flex flex-wrap gap-1 mt-1 ${isMe ? 'justify-content-end' : 'justify-content-start'}" style="max-width: 210px;" onclick="event.stopPropagation();">
+                                        ${imgs}
+                                    </div>
+                                    ${reactionHtml}
+                                </div>
+                                ${!isMe ? timeHtml : ''}
+                            </div>
+                        `;
+                    } else {
+                        // テキストがある場合は、すでに本文側に時間があるので単に画像だけを表示する
+                        imagesBlock = `
+                            <div class="d-flex flex-wrap gap-1 ${isMe ? 'justify-content-end' : 'justify-content-start'}" style="max-width: 210px;" onclick="event.stopPropagation();">
+                                ${imgs}
+                            </div>
+                        `;
+                    }
+                }
+
+                // 3. 組み立て
                 div.innerHTML = `
                     ${iconHtml}
-                    ${isMe ? timeHtml : ''}
-                    <div style="max-width: 75%; position: relative;">
+                    <div style="max-width: 75%;">
                         <div class="d-flex flex-column ${isMe ? 'align-items-end' : 'align-items-start'}">
-                            ${textHtml}
-                            ${imagesHtml}
+                            ${textBlock}
+                            ${imagesBlock}
                         </div>
-                        ${reactionHtml}
                     </div>
-                    ${!isMe ? timeHtml : ''}
                 `;
 
+                // リアクションを付けるイベント
                 if (!isMe) {
                     let pressTimer;
-                    const bubble = div.querySelector('div[style*="max-width"]');
-                    bubble.addEventListener('touchstart', () => {
-                        pressTimer = setTimeout(() => { DB.toggleReaction(groupId, myId, targetId, msg.id, CURRENT_USER.id); }, 500);
-                    }, {passive:true});
-                    bubble.addEventListener('touchend', () => clearTimeout(pressTimer));
+                    const bubbles = div.querySelectorAll('.chat-bubble-content');
+                    bubbles.forEach(bubble => {
+                        bubble.addEventListener('touchstart', () => {
+                            pressTimer = setTimeout(() => { DB.toggleReaction(groupId, myId, targetId, msg.id, CURRENT_USER.id); }, 500);
+                        }, {passive:true});
+                        bubble.addEventListener('touchend', () => clearTimeout(pressTimer));
+                    });
                 }
 
+                // メッセージ編集のイベント
                 if (isMe && msg.text) {
-                    const bubble = div.querySelector('div[style*="max-width"]');
-                    bubble.onclick = () => {
-                        let editModalEl = document.getElementById('chatEditModal');
-                        if (!editModalEl) {
-                            editModalEl = document.createElement('div');
-                            editModalEl.id = 'chatEditModal';
-                            editModalEl.className = 'modal fade';
-                            editModalEl.tabIndex = -1;
-                            editModalEl.innerHTML = `
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">メッセージの編集</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <textarea id="chat-edit-textarea" class="form-control" rows="5" style="resize: none;"></textarea>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
-                                            <button type="button" class="btn btn-primary" id="chat-edit-save-btn">保存</button>
+                    const bubble = div.querySelector('.chat-bubble-content .p-2');
+                    if (bubble) {
+                        bubble.onclick = () => {
+                            let editModalEl = document.getElementById('chatEditModal');
+                            if (!editModalEl) {
+                                editModalEl = document.createElement('div');
+                                editModalEl.id = 'chatEditModal';
+                                editModalEl.className = 'modal fade';
+                                editModalEl.tabIndex = -1;
+                                editModalEl.innerHTML = `
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">メッセージの編集</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <textarea id="chat-edit-textarea" class="form-control" rows="5" style="resize: none;"></textarea>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                                                <button type="button" class="btn btn-primary" id="chat-edit-save-btn">保存</button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            `;
-                            document.body.appendChild(editModalEl);
-                        }
-
-                        const textarea = document.getElementById('chat-edit-textarea');
-                        textarea.value = msg.text;
-                        
-                        const editModal = new bootstrap.Modal(editModalEl);
-                        editModal.show();
-
-                        const saveBtn = document.getElementById('chat-edit-save-btn');
-                        const newSaveBtn = saveBtn.cloneNode(true);
-                        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
-                        
-                        newSaveBtn.onclick = () => {
-                            const newText = textarea.value;
-                            if (newText.trim() !== "" && newText !== msg.text) {
-                                DB.updateMessage(groupId, myId, targetId, msg.id, newText);
+                                `;
+                                document.body.appendChild(editModalEl);
                             }
-                            editModal.hide();
+
+                            const textarea = document.getElementById('chat-edit-textarea');
+                            textarea.value = msg.text;
+                            
+                            const editModal = new bootstrap.Modal(editModalEl);
+                            editModal.show();
+
+                            const saveBtn = document.getElementById('chat-edit-save-btn');
+                            const newSaveBtn = saveBtn.cloneNode(true);
+                            saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+                            
+                            newSaveBtn.onclick = () => {
+                                const newText = textarea.value;
+                                if (newText.trim() !== "" && newText !== msg.text) {
+                                    DB.updateMessage(groupId, myId, targetId, msg.id, newText);
+                                }
+                                editModal.hide();
+                            };
                         };
-                    };
+                    }
                 }
 
                 msgContainer.appendChild(div);
@@ -898,6 +932,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
