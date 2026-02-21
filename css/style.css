@@ -13,7 +13,7 @@ html, body {
     background-color: var(--bg-color);
     font-family: 'Noto Sans JP', sans-serif;
     color: #333;
-    user-select: none;
+    /* user-select: none; を削除しました */
     -webkit-tap-highlight-color: transparent;
 }
 
@@ -169,3 +169,4 @@ header {
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
+
