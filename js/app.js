@@ -316,6 +316,22 @@ const App = {
         
         const container = document.getElementById('chat-list');
         container.innerHTML = '';
+        // 👇 修正：グループの総人数が「3人以上」の場合のみ、全体チャットを表示する
+        if (groupUsers.length >= 3) {
+            const allDiv = document.createElement('div');
+            allDiv.className = 'p-3 border-bottom d-flex align-items-center clickable';
+            allDiv.style.backgroundColor = '#e8f5e9';
+            allDiv.innerHTML = `
+                <div class="rounded-circle text-white d-flex align-items-center justify-content-center me-3 shadow-sm" style="width:40px; height:40px; font-size:20px; background-color: var(--primary-color);">📢</div>
+                <div>
+                    <div class="fw-bold">グループ全体チャット <span class="badge bg-secondary ms-1">全員</span></div>
+                    <div class="small text-muted">参加者全員にメッセージを送信できます</div>
+                </div>
+            `;
+            allDiv.onclick = () => this.openChat(CURRENT_USER.group, CURRENT_USER.id, "ALL", "グループ全体チャット");
+            container.appendChild(allDiv);
+        }
+        // 👆 ここまで        
         targets.forEach(target => {
             const safeIcon = target.icon || "👤";
             const div = document.createElement('div');
@@ -932,9 +948,3 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
-
-
-
-
-
-
