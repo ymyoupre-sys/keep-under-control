@@ -33,7 +33,7 @@ const TRANSLATIONS = {
     "nav_form_member": { ja: "申請作成", en: "Create Request", zh: "创建申请" },
     "nav_calendar": { ja: "カレンダー", en: "Calendar", zh: "日历" },
     "menu_logout": { ja: "ログアウト", en: "Logout", zh: "退出登录" },
-    "menu_withdraw": { ja: "退会する", en: "Delete Account", zh: "注销账户" }
+    "menu_withdraw": { ja: "退会する", en: "Delete Account", zh: "注销账户" },
 
     "form_type_suffix": { ja: "の種類", en: " Type", zh: "类型" },
     "form_content": { ja: "内容", en: "Content", zh: "内容" },
@@ -41,8 +41,35 @@ const TRANSLATIONS = {
     "form_image": { ja: "画像添付", en: "Attach Images", zh: "附加图片" },
     "form_image_limit": { ja: "(最大4枚)", en: "(Max 4)", zh: "(最多4张)" },
     "form_submit": { ja: "送信", en: "Submit", zh: "发送" },
-    "chat_placeholder": { ja: "メッセージ...", en: "Message...", zh: "输入消息..." }
- 
+    "chat_placeholder": { ja: "メッセージ...", en: "Message...", zh: "输入消息..." },
+
+    // 1. 受信箱の詳細画面
+    "detail_sender_label": { ja: "送信者:", en: "Sender:", zh: "发送者:" },
+    "detail_date_label": { ja: "日時:", en: "Date:", zh: "日期:" },
+    "detail_leader_comment": { ja: "リーダーからのコメント", en: "Master's Comment", zh: "大师的评论" },
+    "detail_completion_title": { ja: "完了報告の内容", en: "Completion Report", zh: "完成报告" },
+    "judge_comment_label": { ja: "判定コメント (任意)", en: "Comment (Optional)", zh: "审批留言 (选填)" },
+    "btn_approve": { ja: "承認する", en: "Approve", zh: "批准" },
+    "btn_reject": { ja: "却下する", en: "Reject", zh: "驳回" },
+    "btn_cancel_judge": { ja: "判定を取り消す", en: "Cancel Judgment", zh: "取消判定" },
+
+    // 2. 完了報告画面
+    "completion_title": { ja: "命令の完了報告", en: "Report Completion", zh: "汇报完成" },
+    "completion_warning": { ja: "コメントまたは証拠画像のどちらかが必須です。", en: "A comment or image is required.", zh: "必须提供留言或证明图片。" },
+    "completion_comment_label": { ja: "報告コメント", en: "Report Comment", zh: "汇报留言" },
+    "completion_comment_placeholder": { ja: "作業完了しました。", en: "Task completed.", zh: "任务已完成。" },
+    "completion_image_label": { ja: "証拠画像 (最大4枚)", en: "Evidence Image (Max 4)", zh: "证明图片 (最多4张)" },
+    "btn_completion_submit": { ja: "報告して完了にする", en: "Submit Report", zh: "提交报告" },
+
+    // 3. カレンダー予定追加画面
+    "event_modal_title": { ja: "予定の追加", en: "Add Event", zh: "添加日程" },
+    "event_start_date": { ja: "開始日", en: "Start Date", zh: "开始日期" },
+    "event_end_date": { ja: "終了日", en: "End Date", zh: "结束日期" },
+    "event_title_label": { ja: "予定の内容", en: "Event Details", zh: "日程内容" },
+    "event_title_placeholder": { ja: "例: 外出、調教など", en: "e.g., Outing, Training", zh: "例: 外出、训练等" },
+    "btn_cancel": { ja: "キャンセル", en: "Cancel", zh: "取消" },
+    "btn_save": { ja: "保存", en: "Save", zh: "保存" }
+
 };
 
 let currentLang = localStorage.getItem('app_lang') || 'ja'; // 保存された言語（初期は日本語）
@@ -1016,6 +1043,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
