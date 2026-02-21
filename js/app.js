@@ -57,7 +57,7 @@ const TRANSLATIONS = {
 
     "detail_sender_label": { ja: "送信者:", en: "Sender:", zh: "发送者:" },
     "detail_date_label": { ja: "日時:", en: "Date:", zh: "日期:" },
-    "detail_leader_comment": { ja: "主人からのコメント", en: "master's Comment", zh: "师父留言" },
+    "detail_leader_comment": { ja: "主人からのコメント", en: "master's Comment", zh: "主人留言" },
     "detail_completion_title": { ja: "完了報告の内容", en: "Completion Report", zh: "完成报告" },
     "judge_comment_label": { ja: "判定コメント (任意)", en: "Comment (Optional)", zh: "审批留言 (选填)" },
     "btn_approve": { ja: "承認する", en: "Approve", zh: "批准" },
@@ -100,7 +100,7 @@ const TRANSLATIONS = {
     "msg_max_images": { ja: "画像は最大4枚までです", en: "Maximum of 4 images allowed.", zh: "最多只能上传4张图片。" },
     "msg_completion_error": { ja: "【エラー】コメントまたは証拠画像のどちらかを必ず入力・添付してください！", en: "[Error] A comment or evidence image is required!", zh: "【错误】必须填写留言或上传证明图片！" },
     "msg_report_fail": { ja: "報告に失敗しました", en: "Failed to report.", zh: "汇报失败。" },
-    "msg_confirm_mark_read": { ja: "この申請結果を確認済みとしますか？\n（※自分用のメモ機能のため、主人に通知は飛びません）", en: "Mark this result as confirmed?\n(*Memo only, master will not be notified)", zh: "是否确认此结果？\n(※此为备忘功能，不会通知师父)" },
+    "msg_confirm_mark_read": { ja: "この申請結果を確認済みとしますか？\n（※自分用のメモ機能のため、主人に通知は飛びません）", en: "Mark this result as confirmed?\n(*Memo only, master will not be notified)", zh: "是否确认此结果？\n(※此为备忘功能，不会通知主人)" },
     
     // 👇 バッジの文字（JS内）の翻訳
     "badge_instruction": { ja: "命令", en: "Instruction", zh: "指令" },
@@ -1095,6 +1095,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
