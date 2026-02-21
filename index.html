@@ -28,11 +28,20 @@
 
     <div id="login-screen" class="container d-flex flex-column justify-content-center align-items-center vh-100 bg-light" style="position:fixed; top:0; left:0; width:100%; z-index:1000;">
         <div class="card shadow border-0 p-4" style="width: 100%; max-width: 350px;">
+            
+            <div class="text-end mb-2">
+                <select id="lang-select" class="form-select form-select-sm d-inline-block w-auto shadow-none border-secondary">
+                    <option value="ja">日本語</option>
+                    <option value="en">English</option>
+                    <option value="zh">简体中文</option>
+                </select>
+            </div>
+
             <div class="text-center mb-3">
-                <h4 class="fw-bold text-success">利用開始</h4>
+                <h4 class="fw-bold text-success" data-i18n="login_title">利用開始</h4>
             </div>
             
-            <div class="alert alert-info small p-2 mb-3" role="alert" style="font-size: 0.85rem;">
+            <div class="alert alert-info small p-2 mb-3" role="alert" style="font-size: 0.85rem;" data-i18n-html="login_notice">
                 <strong>【重要なお知らせ】</strong><br>
                 システムの大規模なセキュリティ改修を行いました。<br>
                 お手数ですが、初回ログイン時に<strong>自分専用のパスワード（6文字以上）</strong>の設定をお願いいたします。<br>
@@ -41,10 +50,13 @@
                     ※テストアカウント「リーダー」「メンバー」はPWなしでログイン可能です。
                 </span>
             </div>
-            <input type="text" id="login-name" class="form-control form-control-lg mb-3" placeholder="名前 (例: 田中)">
-            <input type="password" id="login-password" class="form-control form-control-lg mb-3" placeholder="パスワード">
-            <button id="login-btn" class="btn btn-success btn-lg w-100 fw-bold">ログイン</button>
-            <div id="login-error" class="text-danger small mt-2 text-center d-none">名前またはパスワードが間違っています</div>
+            
+            <input type="text" id="login-name" class="form-control form-control-lg mb-3" placeholder="名前 (例: 田中)" data-i18n-placeholder="login_name_placeholder">
+            <input type="password" id="login-password" class="form-control form-control-lg mb-3" placeholder="パスワード" data-i18n-placeholder="login_pass_placeholder">
+            
+            <button id="login-btn" class="btn btn-success btn-lg w-100 fw-bold" data-i18n="login_button">ログイン</button>
+            
+            <div id="login-error" class="text-danger small mt-2 text-center d-none" data-i18n="login_error">名前またはパスワードが間違っています</div>
         </div>
     </div>
 
@@ -312,10 +324,3 @@
     <script type="module" src="js/app.js?v=10"></script>
 </body>
 </html>
-
-
-
-
-
-
-
