@@ -479,7 +479,7 @@ const App = {
             div.innerHTML = `
                 <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-3" style="width:40px; height:40px; font-size:20px;">${safeIcon}</div>
                 <div>
-                    <div class="fw-bold">${target.name} <span class="badge bg-light text-dark ms-1">${target.role === 'leader' ? '主人' : '奴隷'}</span></div>
+                    <div class="fw-bold">${target.name} <span class="badge bg-light text-dark ms-1">${target.role === 'leader' ? 'master' : 'slave'}</span></div>
                     <div class="small text-muted">タップして会話を開く</div>
                 </div>
             `;
@@ -1092,5 +1092,6 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
