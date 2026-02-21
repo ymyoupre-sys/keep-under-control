@@ -359,6 +359,19 @@ const App = {
                 const reactionsCount = msg.reactions ? msg.reactions.length : 0;
                 const hasReacted = msg.reactions && msg.reactions.includes(CURRENT_USER.id);
                 
+                // 👇 追加：日時のフォーマット処理
+                let timeStr = "";
+                if (msg.createdAt) {
+                    const date = msg.createdAt.toDate();
+                    const m = date.getMonth() + 1;
+                    const d = date.getDate();
+                    const h = date.getHours();
+                    const min = String(date.getMinutes()).padStart(2, '0');
+                    timeStr = `${m}/${d} ${h}:${min}`;
+                }
+                // 時間表示用のHTML（吹き出しの下端に揃える）
+                const timeHtml = timeStr ? `<div style="font-size: 0.65rem; color: #888; margin: 0 4px; align-self: flex-end; padding-bottom: 2px; white-space: nowrap;">${timeStr}</div>` : '';
+
                 const div = document.createElement('div');
                 div.className = `d-flex align-items-start chat-row ${isMe ? 'justify-content-end' : 'justify-content-start'}`;
                 
@@ -384,8 +397,10 @@ const App = {
 
                 const reactionHtml = reactionsCount > 0 ? `<div class="reaction-badge"><i class="${hasReacted ? 'bi bi-heart-fill' : 'bi bi-heart'}"></i> ${reactionsCount}</div>` : '';
 
+                // 👇 変更：timeHtml を自分の場合は左側、相手の場合は右側に配置
                 div.innerHTML = `
                     ${iconHtml}
+                    ${isMe ? timeHtml : ''}
                     <div style="max-width: 75%; position: relative;">
                         <div class="d-flex flex-column ${isMe ? 'align-items-end' : 'align-items-start'}">
                             ${textHtml}
@@ -393,6 +408,7 @@ const App = {
                         </div>
                         ${reactionHtml}
                     </div>
+                    ${!isMe ? timeHtml : ''}
                 `;
 
                 if (!isMe) {
@@ -480,7 +496,7 @@ const App = {
             this.updateImagePreview('chat-image-preview', chatImagesBase64, 'chat-image-file');
             setTimeout(() => { detailContainer.scrollTop = detailContainer.scrollHeight; }, 100);
         };
-    },
+    }
     
     startInboxListener() {
         if(unsubscribeInbox) unsubscribeInbox();
@@ -882,4 +898,5 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
