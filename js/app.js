@@ -34,6 +34,15 @@ const TRANSLATIONS = {
     "nav_calendar": { ja: "カレンダー", en: "Calendar", zh: "日历" },
     "menu_logout": { ja: "ログアウト", en: "Logout", zh: "退出登录" },
     "menu_withdraw": { ja: "退会する", en: "Delete Account", zh: "注销账户" }
+
+    "form_type_suffix": { ja: "の種類", en: " Type", zh: "类型" },
+    "form_content": { ja: "内容", en: "Content", zh: "内容" },
+    "form_optional": { ja: "(任意)", en: "(Optional)", zh: "(选填)" },
+    "form_image": { ja: "画像添付", en: "Attach Images", zh: "附加图片" },
+    "form_image_limit": { ja: "(最大4枚)", en: "(Max 4)", zh: "(最多4张)" },
+    "form_submit": { ja: "送信", en: "Submit", zh: "发送" },
+    "chat_placeholder": { ja: "メッセージ...", en: "Message...", zh: "输入消息..." }
+ 
 };
 
 let currentLang = localStorage.getItem('app_lang') || 'ja'; // 保存された言語（初期は日本語）
@@ -1007,5 +1016,6 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
