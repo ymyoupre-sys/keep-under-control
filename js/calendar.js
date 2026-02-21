@@ -45,14 +45,16 @@ export const Calendar = {
         const y1 = this.currentDate.getFullYear();
         const m1 = this.currentDate.getMonth();
         
-        label.textContent = `${y1}年 ${m1 + 1}月`;
+        // 👇 変更：年月を世界共通の「YYYY / MM」フォーマットに変更
+        label.textContent = `${y1} / ${String(m1 + 1).padStart(2, '0')}`;
         this.buildGrid('calendar-grid', y1, m1);
 
         const nextGrid = document.getElementById('calendar-grid-next');
         if (this.currentUser.role === 'leader' && nextGrid) {
             nextGrid.classList.remove('d-none');
             const nextDate = new Date(y1, m1 + 1, 1);
-            nextGrid.innerHTML = `<div class="bg-light text-center fw-bold py-1 border-bottom">${nextDate.getMonth()+1}月</div>`;
+            // 👇 変更：翌月カレンダーのヘッダーも「YYYY / MM」フォーマットに変更
+            nextGrid.innerHTML = `<div class="bg-light text-center fw-bold py-1 border-bottom">${nextDate.getFullYear()} / ${String(nextDate.getMonth()+1).padStart(2, '0')}</div>`;
             this.buildGrid('calendar-grid-next', nextDate.getFullYear(), nextDate.getMonth(), true);
         }
     },
@@ -66,7 +68,8 @@ export const Calendar = {
         const firstDay = (firstDayObj.getDay() + 6) % 7; 
         const lastDate = new Date(y, m + 1, 0).getDate();
         
-        const weekDays = ['月', '火', '水', '木', '金', '土', '日'];
+        // 👇 変更：曜日を英語（Mon, Tue...）に統一
+        const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         const headerRow = document.createElement('div');
         headerRow.className = 'd-flex border-bottom bg-light fw-bold text-center';
         weekDays.forEach((day, idx) => {
@@ -134,7 +137,6 @@ export const Calendar = {
                         bar.style.right = isEnd ? '2px' : '-5px';
                         bar.textContent = evt.title;
                         
-                        // ★修正：削除時にタイトルを渡す
                         bar.onclick = (e) => {
                             e.stopPropagation();
                             this.deleteEvent(evt.id, evt.title);
@@ -145,8 +147,10 @@ export const Calendar = {
                     if (dayEvents.length > 3) {
                         const moreLabel = document.createElement('div');
                         moreLabel.className = 'event-more shadow-sm';
-                        moreLabel.textContent = `+${dayEvents.length - 3}件`;
-                        moreLabel.onclick = () => alert(`【${m+1}/${date}の予定】\n` + dayEvents.map(e => e.title).join('\n'));
+                        // 👇 変更：「+X件」を英語の「+X more」に変更
+                        moreLabel.textContent = `+${dayEvents.length - 3} more`;
+                        // 👇 変更：ポップアップのタイトルを英語に変更
+                        moreLabel.onclick = () => alert(`[ ${m+1}/${date} Events ]\n` + dayEvents.map(e => e.title).join('\n'));
                         cell.appendChild(moreLabel);
                     }
 
@@ -165,8 +169,9 @@ export const Calendar = {
         const endDate = document.getElementById('event-end-date').value;
         const title = document.getElementById('event-title-input').value.trim();
         
-        if (!title || !startDate || !endDate) { alert('日付と内容を入力してください'); return; }
-        if (startDate > endDate) { alert('終了日は開始日より後にしてください'); return; }
+        // 👇 変更：エラー時のアラート文言を英語に統一
+        if (!title || !startDate || !endDate) { alert('Please enter the date and details.'); return; }
+        if (startDate > endDate) { alert('End date must be after start date.'); return; }
 
         try {
             await DB.addEvent({
@@ -181,12 +186,12 @@ export const Calendar = {
             
             bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
             document.getElementById('event-title-input').value = '';
-        } catch (e) { alert('保存失敗'); }
+        } catch (e) { alert('Failed to save.'); } // 👈 英語に統一
     },
 
-    // ★修正：アラートに予定のタイトルを表示する
     async deleteEvent(id, title) {
-        if(!confirm(`予定「${title}」を削除しますか？`)) return;
+        // 👇 変更：削除確認のアラート文言を英語に統一
+        if(!confirm(`Delete event "${title}"?`)) return;
         try { await DB.deleteEvent(id); } catch (e) { console.error("Delete Error", e); }
     }
 };
