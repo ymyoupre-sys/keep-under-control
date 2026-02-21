@@ -95,19 +95,25 @@
                 <div id="tab-form" class="tab-content d-none">
                     <div class="card p-3 border-0 shadow-sm">
                         <div class="mb-3">
-                            <label class="form-label fw-bold"><span class="role-member">申請</span><span class="role-leader d-none">命令</span>の種類</label>
+                            <label class="form-label fw-bold">
+                                <span class="role-member" data-i18n="nav_form_member">申請</span><span class="role-leader d-none" data-i18n="nav_form_leader">命令</span><span data-i18n="form_type_suffix">の種類</span>
+                            </label>
                             <select id="form-type-select" class="form-select"></select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold">内容 <span class="text-muted small">(任意)</span></label>
+                            <label class="form-label fw-bold">
+                                <span data-i18n="form_content">内容</span> <span class="text-muted small" data-i18n="form_optional">(任意)</span>
+                            </label>
                             <textarea id="form-content" class="form-control" rows="5"></textarea>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold">画像添付 <span class="text-muted small">(最大4枚)</span></label>
+                            <label class="form-label fw-bold">
+                                <span data-i18n="form_image">画像添付</span> <span class="text-muted small" data-i18n="form_image_limit">(最大4枚)</span>
+                            </label>
                             <input type="file" id="form-image-file" class="form-control" accept="image/*" multiple>
                             <div id="form-image-preview" class="image-preview-container mt-2"></div>
                         </div>
-                        <button id="form-submit-btn" class="btn btn-success w-100">送信</button>
+                        <button id="form-submit-btn" class="btn btn-success w-100 fw-bold" data-i18n="form_submit">送信</button>
                     </div>
                 </div>
 
@@ -136,7 +142,7 @@
                         <i class="bi bi-image"></i>
                         <input type="file" id="chat-image-file" hidden accept="image/*" multiple>
                     </label>
-                    <textarea id="chat-message-input" class="form-control" rows="1" style="resize: none; overflow-y: hidden;" placeholder="メッセージ..."></textarea>
+                    <textarea id="chat-message-input" class="form-control" rows="1" style="resize: none; overflow-y: hidden;" placeholder="メッセージ..." data-i18n-placeholder="chat_placeholder"></textarea>
                     <button id="chat-send-btn" class="btn btn-success" style="height: 38px;"><i class="bi bi-send"></i></button>
                 </div>
             </div>
@@ -327,4 +333,5 @@
     <script type="module" src="js/app.js?v=10"></script>
 </body>
 </html>
+
 
