@@ -82,6 +82,9 @@ const TRANSLATIONS = {
     "updates_title": { ja: "更新情報", en: "Updates", zh: "更新日志" },
     "btn_choose_file": { ja: "ファイルを選択", en: "Choose Files", zh: "选择文件" },
 
+    "chat_edited": { ja: "(編集済)", en: "(Edited)", zh: "(已编辑)" },
+    "detail_no_content": { ja: "（内容なし）", en: "(No content)", zh: "（无内容）" },    
+
     // 👇 システムメッセージ（JS内）の翻訳
     "msg_enter_name_pass": { ja: "名前とパスワードを入力してください", en: "Please enter your name and password.", zh: "请输入姓名和密码。" },
     "msg_pwd_update_fail": { ja: "パスワードの更新に失敗しました", en: "Failed to update password.", zh: "密码更新失败。" },
@@ -537,7 +540,7 @@ const App = {
                         <div style="font-size: 0.55rem; color: #666; margin-top: 2px; text-align: center; line-height: 1.1; word-break: break-all;">${msg.senderName}</div>
                     </div>
                 ` : '';
-                const editedLabel = msg.isEdited ? `<span class="text-muted ms-1" style="font-size:9px;">(編集済)</span>` : '';
+                const editedLabel = msg.isEdited ? `<span class="text-muted ms-1" style="font-size:9px;">${TRANSLATIONS["chat_edited"][currentLang]}</span>` : '';
 
                 let textBlock = '';
                 if(msg.text) {
@@ -852,7 +855,7 @@ const App = {
         document.getElementById('detail-title').textContent = appData.title;
         document.getElementById('detail-sender').textContent = appData.userName;
         document.getElementById('detail-date').textContent = appData.createdDateStr;
-        document.getElementById('detail-content').textContent = appData.content || '（内容なし）';
+        document.getElementById('detail-content').textContent = appData.content || TRANSLATIONS["detail_no_content"][currentLang];
 
         const imgContainer = document.getElementById('detail-images');
         imgContainer.innerHTML = '';
@@ -1092,6 +1095,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
