@@ -99,6 +99,11 @@
 
                 <div id="tab-form" class="tab-content d-none">
                     <div class="card p-3 border-0 shadow-sm">
+                        
+                        <div id="form-target-container" class="mb-3 d-none">
+                            <label class="form-label fw-bold" data-i18n="form_target_label">宛先</label>
+                            <select id="form-target-select" class="form-select"></select>
+                        </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">
                                 <span class="role-member" data-i18n="nav_form_member">申請</span><span class="role-leader d-none" data-i18n="nav_form_leader">命令</span><span data-i18n="form_type_suffix">の種類</span>
@@ -346,7 +351,8 @@
                         <li>アプリに通知ドットが表示されるようにしました</li>
                         <li>退会ボタンを設置しました</li>
                         <li>命令/申請、チャット欄に日時が表示されるようにしました</li>       
-                        <li>英語、中国語に対応しました</li>     
+                        <li>英語、中国語に対応しました</li>  
+                        <li>3名以上のグループの場合、通知の宛先を設定できるようにしました</li>                          
                     </ul>
                 </div>
             </div>
@@ -357,8 +363,3 @@
     <script type="module" src="js/app.js?v=10"></script>
 </body>
 </html>
-
-
-
-
-
