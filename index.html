@@ -144,19 +144,22 @@
             <nav class="bottom-nav bg-white border-top d-flex justify-content-around py-2" style="height: 60px; flex-shrink: 0; z-index: 1060;">
                 <a href="#tab-inbox" class="bottom-nav-item active text-decoration-none text-center text-secondary position-relative" style="flex:1;">
                     <i class="bi bi-inbox fs-4"></i>
-                    <div style="font-size:10px;">受信箱</div>
+                    <div style="font-size:10px;" data-i18n="nav_inbox">受信箱</div>
                 </a>
                 <a href="#tab-chat" class="bottom-nav-item text-decoration-none text-center text-secondary position-relative" style="flex:1;">
                     <i class="bi bi-chat-dots fs-4"></i>
-                    <div style="font-size:10px;">チャット</div>
+                    <div style="font-size:10px;" data-i18n="nav_chat">チャット</div>
                 </a>
                 <a href="#tab-form" class="bottom-nav-item text-decoration-none text-center text-secondary position-relative" style="flex:1;">
                     <i class="bi bi-pencil-square fs-4"></i>
-                    <div style="font-size:10px;"><span class="role-member">申請</span><span class="role-leader d-none">命令</span></div>
+                    <div style="font-size:10px;">
+                        <span class="role-member" data-i18n="nav_form_member">申請</span>
+                        <span class="role-leader d-none" data-i18n="nav_form_leader">命令</span>
+                    </div>
                 </a>
                 <a href="#tab-calendar" class="bottom-nav-item text-decoration-none text-center text-secondary position-relative" style="flex:1;">
                     <i class="bi bi-calendar3 fs-4"></i>
-                    <div style="font-size:10px;">カレンダー</div>
+                    <div style="font-size:10px;" data-i18n="nav_calendar">カレンダー</div>
                 </a>
             </nav>
             
@@ -291,7 +294,7 @@
                             <i class="bi bi-info-circle me-2"></i> 更新情報
                         </button>
                         <button class="list-group-item list-group-item-action p-3 text-danger fw-bold" id="btn-show-withdraw" data-bs-dismiss="modal">
-                            <i class="bi bi-person-x me-2"></i> 退会する
+                            <i class="bi bi-person-x me-2"></i> <span data-i18n="menu_withdraw">退会する</span>
                         </button>
                     </div>
                 </div>
@@ -324,3 +327,4 @@
     <script type="module" src="js/app.js?v=10"></script>
 </body>
 </html>
+
