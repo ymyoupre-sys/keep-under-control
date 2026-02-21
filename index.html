@@ -110,7 +110,10 @@
                             <label class="form-label fw-bold">
                                 <span data-i18n="form_image">画像添付</span> <span class="text-muted small" data-i18n="form_image_limit">(最大4枚)</span>
                             </label>
-                            <input type="file" id="form-image-file" class="form-control" accept="image/*" multiple>
+                            <label class="btn btn-outline-secondary w-100 mb-0 text-start">
+                                <i class="bi bi-image me-2"></i><span data-i18n="btn_choose_file">ファイルを選択</span>
+                                <input type="file" id="form-image-file" class="d-none" accept="image/*" multiple>
+                            </label>
                             <div id="form-image-preview" class="image-preview-container mt-2"></div>
                         </div>
                         <button id="form-submit-btn" class="btn btn-success w-100 fw-bold" data-i18n="form_submit">送信</button>
@@ -242,7 +245,10 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold" data-i18n="completion_image_label">証拠画像 (最大4枚)</label>
-                        <input type="file" id="completion-image-file" class="form-control" accept="image/*" multiple>
+                        <label class="btn btn-outline-secondary w-100 mb-0 text-start">
+                            <i class="bi bi-image me-2"></i><span data-i18n="btn_choose_file">ファイルを選択</span>
+                            <input type="file" id="completion-image-file" class="d-none" accept="image/*" multiple>
+                        </label>
                         <div id="completion-image-preview" class="image-preview-container mt-2"></div>
                     </div>
                     <button id="completion-submit-btn" class="btn btn-success w-100 fw-bold" data-i18n="btn_completion_submit">報告して完了にする</button>
@@ -324,17 +330,18 @@
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold">更新情報</h5>
+                    <h5 class="modal-title fw-bold" data-i18n="updates_title">更新情報</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body small">
+                <div class="modal-body small" data-i18n-html="updates_content">
                     <ul class="mb-0 ps-3" style="line-height: 1.8;">
                         <li>アプリリリース</li>
                         <li>セキュリティ対策のための改修</li>
                         <li>命令への完了報告時には、画像かコメントの添付を必須としました</li>
                         <li>アプリに通知ドットが表示されるようにしました</li>
                         <li>退会ボタンを設置しました</li>
-                        <li>命令/申請、チャット欄に日時が表示されるようにしました</li>                        
+                        <li>命令/申請、チャット欄に日時が表示されるようにしました</li>       
+                        <li>英語、中国語に対応しました</li>     
                     </ul>
                 </div>
             </div>
@@ -345,6 +352,7 @@
     <script type="module" src="js/app.js?v=10"></script>
 </body>
 </html>
+
 
 
 
