@@ -17,16 +17,25 @@ let chatImagesBase64 = [];
 let formImagesBase64 = []; 
 let completionImagesBase64 = []; 
 
+// 👇 追加：PWなしで入れるテストアカウントの名前リスト
+const TEST_ACCOUNT_NAMES = ["リーダー", "メンバー", "领导者", "成员", "leader", "member"];
+
+// 👇 追加：多言語化（i18n）用の全辞書データ
 const TRANSLATIONS = {
-    // --- 既存のログイン画面用 ---
+    // --- ログイン画面用 ---
     "login_title": { ja: "利用開始", en: "Start Using", zh: "开始使用" },
-    "login_notice": { /* 省略 */ },
-    "login_name_placeholder": { ja: "名前 (例: 田中)", en: "Name (e.g., John)", zh: "姓名 (例: 田中)" },
+    "login_notice": {
+        ja: `<strong>【重要なお知らせ】</strong><br>システムの大規模なセキュリティ改修を行いました。<br>お手数ですが、初回ログイン時に<strong>自分専用のパスワード（6文字以上）</strong>の設定をお願いいたします。<br><span class="text-danger">※初期パスワードは「123456」です。<br>※テストアカウント「リーダー」「メンバー」等はPWなしでログイン可能です。</span>`,
+        en: `<strong>[Important Notice]</strong><br>We have implemented major security upgrades.<br>Please set your <strong>personal password (6+ characters)</strong> upon your first login.<br><span class="text-danger">* Default password is '123456'.<br>* Test accounts can login without a password.</span>`,
+        zh: `<strong>【重要通知】</strong><br>系统进行了大规模的安全升级。<br>首次登录时，请设置<strong>专属密码（6位以上）</strong>。<br><span class="text-danger">※初始密码为“123456”。<br>※测试账号可无密码登录。</span>`
+    },
+    "login_name_placeholder": { ja: "名前 (例: 田中)", en: "Name (e.g., John)", zh: "姓名 (例: 王)" },
     "login_pass_placeholder": { ja: "パスワード", en: "Password", zh: "密码" },
     "login_button": { ja: "ログイン", en: "Login", zh: "登录" },
     "login_authenticating": { ja: "認証中...", en: "Authenticating...", zh: "验证中..." },
     "login_error": { ja: "名前またはパスワードが間違っています", en: "Invalid name or password.", zh: "姓名或密码错误。" },
     
+    // --- メイン画面（タブ等）用 ---
     "nav_chat": { ja: "チャット", en: "Chat", zh: "聊天" },
     "nav_inbox": { ja: "受信箱", en: "Inbox", zh: "收件箱" },
     "nav_form_leader": { ja: "命令作成", en: "Create Instruction", zh: "发布指令" },
@@ -35,6 +44,7 @@ const TRANSLATIONS = {
     "menu_logout": { ja: "ログアウト", en: "Logout", zh: "退出登录" },
     "menu_withdraw": { ja: "退会する", en: "Delete Account", zh: "注销账户" },
 
+    // --- 作成フォーム＆チャット入力欄用 ---
     "form_type_suffix": { ja: "の種類", en: " Type", zh: "类型" },
     "form_content": { ja: "内容", en: "Content", zh: "内容" },
     "form_optional": { ja: "(任意)", en: "(Optional)", zh: "(选填)" },
@@ -43,7 +53,7 @@ const TRANSLATIONS = {
     "form_submit": { ja: "送信", en: "Submit", zh: "发送" },
     "chat_placeholder": { ja: "メッセージ...", en: "Message...", zh: "输入消息..." },
 
-    // 1. 受信箱の詳細画面
+    // --- ポップアップ（モーダル）画面用 ---
     "detail_sender_label": { ja: "送信者:", en: "Sender:", zh: "发送者:" },
     "detail_date_label": { ja: "日時:", en: "Date:", zh: "日期:" },
     "detail_leader_comment": { ja: "リーダーからのコメント", en: "Master's Comment", zh: "大师的评论" },
@@ -53,7 +63,6 @@ const TRANSLATIONS = {
     "btn_reject": { ja: "却下する", en: "Reject", zh: "驳回" },
     "btn_cancel_judge": { ja: "判定を取り消す", en: "Cancel Judgment", zh: "取消判定" },
 
-    // 2. 完了報告画面
     "completion_title": { ja: "命令の完了報告", en: "Report Completion", zh: "汇报完成" },
     "completion_warning": { ja: "コメントまたは証拠画像のどちらかが必須です。", en: "A comment or image is required.", zh: "必须提供留言或证明图片。" },
     "completion_comment_label": { ja: "報告コメント", en: "Report Comment", zh: "汇报留言" },
@@ -61,7 +70,6 @@ const TRANSLATIONS = {
     "completion_image_label": { ja: "証拠画像 (最大4枚)", en: "Evidence Image (Max 4)", zh: "证明图片 (最多4张)" },
     "btn_completion_submit": { ja: "報告して完了にする", en: "Submit Report", zh: "提交报告" },
 
-    // 3. カレンダー予定追加画面
     "event_modal_title": { ja: "予定の追加", en: "Add Event", zh: "添加日程" },
     "event_start_date": { ja: "開始日", en: "Start Date", zh: "开始日期" },
     "event_end_date": { ja: "終了日", en: "End Date", zh: "结束日期" },
@@ -69,11 +77,8 @@ const TRANSLATIONS = {
     "event_title_placeholder": { ja: "例: 外出、調教など", en: "e.g., Outing, Training", zh: "例: 外出、训练等" },
     "btn_cancel": { ja: "キャンセル", en: "Cancel", zh: "取消" },
     "btn_save": { ja: "保存", en: "Save", zh: "保存" }
-
 };
-
-let currentLang = localStorage.getItem('app_lang') || 'ja'; // 保存された言語（初期は日本語）
-// 👆 ここまで追加
+let currentLang = localStorage.getItem('app_lang') || 'ja'; 
 
 const App = {
     async init() {
@@ -87,7 +92,6 @@ const App = {
                 }
             });
             
-            // 👇 追加：言語設定の初期化をログイン画面のセットアップ前に呼び出す
             this.setupLanguage();
 
             this.setupLogin();
@@ -99,7 +103,6 @@ const App = {
         } catch (e) { console.error("Init Error", e); }
     },
 
-    // 👇 追加：多言語化機能（イベント設定と反映処理）
     setupLanguage() {
         const langSelect = document.getElementById('lang-select');
         if (langSelect) {
@@ -108,14 +111,13 @@ const App = {
                 this.applyTranslations(e.target.value);
             });
         }
-        this.applyTranslations(currentLang); // 初期表示時に翻訳を実行
+        this.applyTranslations(currentLang); 
     },
 
     applyTranslations(lang) {
         currentLang = lang;
-        localStorage.setItem('app_lang', lang); // 選択した言語をスマホに記憶させる
+        localStorage.setItem('app_lang', lang); 
         
-        // 1. 通常のテキストを翻訳 (textContent)
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
             if(TRANSLATIONS[key] && TRANSLATIONS[key][lang]) {
@@ -123,7 +125,6 @@ const App = {
             }
         });
 
-        // 2. HTML構造が含まれるテキストを翻訳 (innerHTML)
         document.querySelectorAll('[data-i18n-html]').forEach(el => {
             const key = el.getAttribute('data-i18n-html');
             if(TRANSLATIONS[key] && TRANSLATIONS[key][lang]) {
@@ -131,15 +132,26 @@ const App = {
             }
         });
         
-        // 3. プレースホルダー（入力欄の薄い文字）を翻訳
         document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
             const key = el.getAttribute('data-i18n-placeholder');
             if(TRANSLATIONS[key] && TRANSLATIONS[key][lang]) {
                 el.setAttribute('placeholder', TRANSLATIONS[key][lang]);
             }
         });
+        
+        // ヘッダータイトルの再描画（タブを開き直したときと同じ処理）
+        const targetTabId = sessionStorage.getItem('activeTab') || '#tab-inbox';
+        if(CURRENT_USER) {
+            const titleMap = { 
+                '#tab-chat': TRANSLATIONS["nav_chat"][currentLang], 
+                '#tab-inbox': TRANSLATIONS["nav_inbox"][currentLang], 
+                '#tab-form': CURRENT_USER.role === 'leader' ? TRANSLATIONS["nav_form_leader"][currentLang] : TRANSLATIONS["nav_form_member"][currentLang], 
+                '#tab-calendar': TRANSLATIONS["nav_calendar"][currentLang] 
+            };
+            const headerTitle = document.getElementById('header-title');
+            if(headerTitle && titleMap[targetTabId]) headerTitle.textContent = titleMap[targetTabId];
+        }
     },
-    // 👆 ここまで追加
 
     setupHistoryHandler() {
         window.addEventListener('popstate', () => {
@@ -179,18 +191,18 @@ const App = {
             const inputName = nameInput.value.trim();
             let inputPass = passInput.value.trim(); 
 
-            if (inputName === "リーダー" || inputName === "メンバー") {
+            // 👇 変更：リストの中に名前が含まれていたらPWを自動入力
+            if (TEST_ACCOUNT_NAMES.includes(inputName)) {
                 inputPass = INITIAL_PASS; 
             }
 
             if (!inputName || !inputPass) {
-                // ※アラートは一旦日本語固定にしています
+                // ※アラートの多言語化は次のステップで行います
                 alert("名前とパスワードを入力してください");
                 return;
             }
 
             loginBtn.disabled = true;
-            // 👇 変更：「認証中...」の文字を現在の言語に合わせて翻訳辞書から取得
             loginBtn.textContent = TRANSLATIONS["login_authenticating"][currentLang];
             document.getElementById('login-error').classList.add('d-none');
 
@@ -221,7 +233,8 @@ const App = {
                 
                 if (inputPass === INITIAL_PASS) {
                     
-                    if (inputName === "リーダー" || inputName === "メンバー") {
+                    // 👇 変更：リストの中に名前が含まれていたらPW変更をスキップ
+                    if (TEST_ACCOUNT_NAMES.includes(inputName)) {
                         localStorage.setItem('app_user_v3', JSON.stringify(CURRENT_USER));
                         this.showMainScreen();
                         return; 
@@ -269,7 +282,6 @@ const App = {
                 console.error(error);
                 document.getElementById('login-error').classList.remove('d-none');
                 loginBtn.disabled = false;
-                // 👇 変更：エラーで戻った時の「ログイン」の文字を現在の言語に合わせて取得
                 loginBtn.textContent = TRANSLATIONS["login_button"][currentLang];
             }
         });
@@ -352,7 +364,7 @@ const App = {
                 document.querySelectorAll('.tab-content').forEach(content => content.classList.add('d-none'));
                 document.querySelector(targetId).classList.remove('d-none');
                 
-                // 👇 変更：翻訳辞書（TRANSLATIONS）から現在の言語の単語を引っ張ってくるように変更
+                // 👇 変更：ヘッダータイトルを翻訳辞書から取得
                 const titleMap = { 
                     '#tab-chat': TRANSLATIONS["nav_chat"][currentLang], 
                     '#tab-inbox': TRANSLATIONS["nav_inbox"][currentLang], 
@@ -381,7 +393,8 @@ const App = {
         });
 
         document.getElementById('btn-show-withdraw').addEventListener('click', async () => {
-            if (CURRENT_USER.name === "リーダー" || CURRENT_USER.name === "メンバー") {
+            // 👇 変更：リストに含まれている場合は退会処理をブロック
+            if (TEST_ACCOUNT_NAMES.includes(CURRENT_USER.name)) {
                 alert("テスト用アカウントのため、退会処理は実行できません。");
                 return; 
             }
@@ -494,7 +507,12 @@ const App = {
                 const div = document.createElement('div');
                 div.className = `d-flex align-items-start chat-row ${isMe ? 'justify-content-end' : 'justify-content-start'}`;
                 
-                const iconHtml = !isMe ? `<div class="flex-shrink-0 me-2 mt-1" style="font-size:28px; line-height:1;">${msg.senderIcon}</div>` : '';
+                const iconHtml = !isMe ? `
+                    <div class="flex-shrink-0 me-2 mt-1 d-flex flex-column align-items-center" style="width: 45px;">
+                        <div style="font-size:28px; line-height:1;">${msg.senderIcon}</div>
+                        <div style="font-size: 0.55rem; color: #666; margin-top: 2px; text-align: center; line-height: 1.1; word-break: break-all;">${msg.senderName}</div>
+                    </div>
+                ` : '';
                 const editedLabel = msg.isEdited ? `<span class="text-muted ms-1" style="font-size:9px;">(編集済)</span>` : '';
 
                 let textBlock = '';
@@ -769,7 +787,7 @@ const App = {
                                     console.error(err);
                                     alert('報告に失敗しました');
                                     newSubmitBtn.disabled = false;
-                                    newSubmitBtn.textContent = "報告して完了にする";
+                                    newSubmitBtn.textContent = TRANSLATIONS["btn_completion_submit"][currentLang] || "報告して完了にする";
                                 }
                             };
                         };
@@ -1043,7 +1061,3 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
-
-
-
-
