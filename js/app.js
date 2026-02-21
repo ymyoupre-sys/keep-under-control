@@ -19,7 +19,6 @@ let completionImagesBase64 = [];
 
 const TEST_ACCOUNT_NAMES = ["リーダー", "メンバー", "领导者", "成员", "leader", "member"];
 
-// 👇 追加：アラートやバッジ用の翻訳辞書を追加しました
 const TRANSLATIONS = {
     "login_title": { ja: "利用開始", en: "Start Using", zh: "开始使用" },
     "login_notice": {
@@ -32,7 +31,6 @@ const TRANSLATIONS = {
         en: `<strong>[Regarding Personal Account Creation]</strong><br>If you wish to create a personal account, please contact <a href="https://x.com/FvFA4yNQfW15814" target="_blank" rel="noopener noreferrer" class="text-decoration-none fw-bold">@FvFA4yNQfW15814</a> via DM.`,
         zh: `<strong>【关于个人账户创建】</strong><br>如果希望创建个人账户，请通过私信联系 <a href="https://x.com/FvFA4yNQfW15814" target="_blank" rel="noopener noreferrer" class="text-decoration-none fw-bold">@FvFA4yNQfW15814</a>。`
     },
-    
     "login_name_placeholder": { ja: "名前 (例: 田中)", en: "Name (e.g., John)", zh: "姓名 (例: 王)" },
     "login_pass_placeholder": { ja: "パスワード", en: "Password", zh: "密码" },
     "login_button": { ja: "ログイン", en: "Login", zh: "登录" },
@@ -47,6 +45,8 @@ const TRANSLATIONS = {
     "menu_logout": { ja: "ログアウト", en: "Logout", zh: "退出登录" },
     "menu_withdraw": { ja: "退会する", en: "Delete Account", zh: "注销账户" },
 
+    "form_target_label": { ja: "宛先", en: "To", zh: "收件人" },
+    "target_all": { ja: "全員 (指定なし)", en: "All", zh: "所有人" },
     "form_type_suffix": { ja: "の種類", en: " Type", zh: "类型" },
     "form_content": { ja: "内容", en: "Content", zh: "内容" },
     "form_optional": { ja: "(任意)", en: "(Optional)", zh: "(选填)" },
@@ -54,10 +54,12 @@ const TRANSLATIONS = {
     "form_image_limit": { ja: "(最大4枚)", en: "(Max 4)", zh: "(最多4张)" },
     "form_submit": { ja: "送信", en: "Submit", zh: "发送" },
     "chat_placeholder": { ja: "メッセージ...", en: "Message...", zh: "输入消息..." },
+    "chat_edited": { ja: "(編集済)", en: "(Edited)", zh: "(已编辑)" },
 
     "detail_sender_label": { ja: "送信者:", en: "Sender:", zh: "发送者:" },
     "detail_date_label": { ja: "日時:", en: "Date:", zh: "日期:" },
-    "detail_leader_comment": { ja: "主人からのコメント", en: "master's Comment", zh: "主人留言" },
+    "detail_no_content": { ja: "（内容なし）", en: "(No content)", zh: "（无内容）" },
+    "detail_leader_comment": { ja: "主人からのコメント", en: "Master's Comment", zh: "主人留言" },
     "detail_completion_title": { ja: "完了報告の内容", en: "Completion Report", zh: "完成报告" },
     "judge_comment_label": { ja: "判定コメント (任意)", en: "Comment (Optional)", zh: "审批留言 (选填)" },
     "btn_approve": { ja: "承認する", en: "Approve", zh: "批准" },
@@ -80,12 +82,13 @@ const TRANSLATIONS = {
     "btn_save": { ja: "保存", en: "Save", zh: "保存" },
 
     "updates_title": { ja: "更新情報", en: "Updates", zh: "更新日志" },
+    "updates_content": {
+        ja: `<ul class="mb-0 ps-3" style="line-height: 1.8;"><li>アプリをリリース</li><li>セキュリティ対策のための改修</li><li>命令への完了報告時には、画像かコメントの添付を必須としました</li><li>アプリに通知ドットが表示されるようにしました</li><li>退会ボタンを設置しました</li><li>命令/申請、チャット欄に日時が表示されるようにしました</li><li>英語、中国語に対応しました</li><li>3名以上のグループの場合、通知の宛先を設定できるようにしました</li></ul>`,
+        en: `<ul class="mb-0 ps-3" style="line-height: 1.8;"><li>App released</li><li>Security improvements</li><li>Image or comment is now required when reporting completion</li><li>Added notification dots to the app</li><li>Added account deletion button</li><li>Added timestamps to requests/instructions, and chats</li><li>Added support for English and Chinese</li><li>Added the ability to specify notification recipients for groups of 3 or more members</li></ul>`,
+        zh: `<ul class="mb-0 ps-3" style="line-height: 1.8;"><li>应用发布</li><li>安全升级</li><li>汇报完成指令时，必须附带图片或留言</li><li>应用内新增通知红点显示</li><li>新增注销账户按钮</li><li>指令/申请和聊天栏现在会显示日期时间</li><li>新增对英语和中文的支持</li><li>3人及以上群组支持设置通知收件人</li></ul>`
+    },
     "btn_choose_file": { ja: "ファイルを選択", en: "Choose Files", zh: "选择文件" },
 
-    "chat_edited": { ja: "(編集済)", en: "(Edited)", zh: "(已编辑)" },
-    "detail_no_content": { ja: "（内容なし）", en: "(No content)", zh: "（无内容）" },    
-
-    // 👇 システムメッセージ（JS内）の翻訳
     "msg_enter_name_pass": { ja: "名前とパスワードを入力してください", en: "Please enter your name and password.", zh: "请输入姓名和密码。" },
     "msg_pwd_update_fail": { ja: "パスワードの更新に失敗しました", en: "Failed to update password.", zh: "密码更新失败。" },
     "msg_confirm_logout": { ja: "ログアウトしますか？", en: "Are you sure you want to log out?", zh: "确定要退出登录吗？" },
@@ -98,16 +101,14 @@ const TRANSLATIONS = {
     "msg_submit_success": { ja: "送信しました", en: "Submitted successfully.", zh: "发送成功。" },
     "msg_submit_fail": { ja: "送信に失敗しました", en: "Failed to submit.", zh: "发送失败。" },
     "msg_max_images": { ja: "画像は最大4枚までです", en: "Maximum of 4 images allowed.", zh: "最多只能上传4张图片。" },
-    "msg_completion_error": { ja: "【エラー】コメントまたは証拠画像のどちらかを必ず入力・添付してください！", en: "[Error] A comment or evidence image is required!", zh: "【错误】必须填写留言或上传证明图片！" },
+    "msg_completion_error": { ja: "【エラー】コメントまたは証拠画像のどちらかを必ず入力・添付してください", en: "[Error] A comment or evidence image is required", zh: "【错误】必须填写留言或上传证明图片" },
     "msg_report_fail": { ja: "報告に失敗しました", en: "Failed to report.", zh: "汇报失败。" },
     "msg_confirm_mark_read": { ja: "この申請結果を確認済みとしますか？\n（※自分用のメモ機能のため、主人に通知は飛びません）", en: "Mark this result as confirmed?\n(*Memo only, master will not be notified)", zh: "是否确认此结果？\n(※此为备忘功能，不会通知主人)" },
     
-    // 👇 バッジの文字（JS内）の翻訳
     "badge_instruction": { ja: "命令", en: "Instruction", zh: "指令" },
     "badge_instruction_wait": { ja: "命令（完了報告待ち）", en: "Instruction (Pending Report)", zh: "指令 (待汇报)" },
     "badge_request": { ja: "申請", en: "Request", zh: "申请" }
 };
-
 let currentLang = localStorage.getItem('app_lang') || 'ja'; 
 
 const App = {
@@ -180,8 +181,10 @@ const App = {
             const headerTitle = document.getElementById('header-title');
             if(headerTitle && titleMap[targetTabId]) headerTitle.textContent = titleMap[targetTabId];
             
-            // タブを切り替えた時の再描画（バッジの言語切り替え用）
             if (targetTabId === '#tab-inbox') this.startInboxListener();
+            
+            // 宛先ドロップダウンの言語も更新する
+            this.setupFormTargets();
         }
     },
 
@@ -228,7 +231,7 @@ const App = {
             }
 
             if (!inputName || !inputPass) {
-                alert(TRANSLATIONS["msg_enter_name_pass"][currentLang]); // 翻訳対応
+                alert(TRANSLATIONS["msg_enter_name_pass"][currentLang]); 
                 return;
             }
 
@@ -297,7 +300,7 @@ const App = {
                             this.showMainScreen();
                         } catch (e) {
                             console.error(e);
-                            alert(TRANSLATIONS["msg_pwd_update_fail"][currentLang]); // 翻訳対応
+                            alert(TRANSLATIONS["msg_pwd_update_fail"][currentLang]); 
                             changeBtn.disabled = false;
                             changeBtn.textContent = "変更して利用開始";
                         }
@@ -345,6 +348,9 @@ const App = {
             typeSelect.appendChild(opt);
         });
 
+        // 👇 宛先ドロップダウンの構築（3人以上の場合のみ）
+        this.setupFormTargets();
+
         this.startInboxListener();
         this.renderChatList();
         this.setupNotifications();
@@ -363,6 +369,50 @@ const App = {
 
         const targetNav = document.querySelector(`.bottom-nav-item[href="${targetTabId}"]`);
         if (targetNav) targetNav.click();
+    },
+
+    // 👇 追加：宛先ドロップダウンを構築する処理
+    async setupFormTargets() {
+        const groupUsers = await DB.getGroupUsers(CURRENT_USER.group);
+        const targetContainer = document.getElementById('form-target-container');
+        const targetSelect = document.getElementById('form-target-select');
+        
+        if (!targetContainer || !targetSelect) return;
+
+        // グループが3人以上の場合のみ表示
+        if (groupUsers.length >= 3) {
+            targetContainer.classList.remove('d-none');
+            
+            // 現在選択されている値を保持
+            const currentValue = targetSelect.value;
+            
+            targetSelect.innerHTML = '';
+            
+            // 選択肢1：「全員（指定なし）」
+            const optAll = document.createElement('option');
+            optAll.value = "all";
+            optAll.textContent = TRANSLATIONS["target_all"][currentLang];
+            optAll.setAttribute('data-i18n', 'target_all');
+            targetSelect.appendChild(optAll);
+            
+            // 選択肢2以降：自分がリーダーならメンバーを、メンバーならリーダーをリスト化
+            const targetRole = CURRENT_USER.role === 'leader' ? 'member' : 'leader';
+            const targets = groupUsers.filter(u => u.role === targetRole);
+            
+            targets.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.name;
+                targetSelect.appendChild(opt);
+            });
+            
+            // 以前の選択状態を復元（言語切り替え時用）
+            if (currentValue) {
+                targetSelect.value = currentValue;
+            }
+        } else {
+            targetContainer.classList.add('d-none');
+        }
     },
 
     setupTabs() {
@@ -413,7 +463,7 @@ const App = {
         });
 
         document.getElementById('logout-btn').addEventListener('click', async () => {
-            if(confirm(TRANSLATIONS["msg_confirm_logout"][currentLang])) { // 翻訳対応
+            if(confirm(TRANSLATIONS["msg_confirm_logout"][currentLang])) { 
                 try { await signOut(auth); } catch(e){}
                 localStorage.removeItem('app_user_v3');
                 location.reload();
@@ -422,10 +472,10 @@ const App = {
 
         document.getElementById('btn-show-withdraw').addEventListener('click', async () => {
             if (TEST_ACCOUNT_NAMES.includes(CURRENT_USER.name)) {
-                alert(TRANSLATIONS["msg_test_acc_block"][currentLang]); // 翻訳対応
+                alert(TRANSLATIONS["msg_test_acc_block"][currentLang]); 
                 return; 
             }
-            if(confirm(TRANSLATIONS["msg_confirm_withdraw"][currentLang])) { // 翻訳対応
+            if(confirm(TRANSLATIONS["msg_confirm_withdraw"][currentLang])) { 
                 try {
                     await DB.deleteUserAccount(CURRENT_USER.id);
                     
@@ -434,15 +484,15 @@ const App = {
                     }
                     
                     localStorage.removeItem('app_user_v3');
-                    alert(TRANSLATIONS["msg_withdraw_success"][currentLang]); // 翻訳対応
+                    alert(TRANSLATIONS["msg_withdraw_success"][currentLang]); 
                     location.reload();
                     
                 } catch (e) {
                     console.error("退会エラー:", e);
                     if (e.code === 'auth/requires-recent-login') {
-                        alert(TRANSLATIONS["msg_withdraw_relogin"][currentLang]); // 翻訳対応
+                        alert(TRANSLATIONS["msg_withdraw_relogin"][currentLang]); 
                     } else {
-                        alert(TRANSLATIONS["msg_withdraw_fail"][currentLang]); // 翻訳対応
+                        alert(TRANSLATIONS["msg_withdraw_fail"][currentLang]); 
                     }
                 }
             }
@@ -540,6 +590,7 @@ const App = {
                         <div style="font-size: 0.55rem; color: #666; margin-top: 2px; text-align: center; line-height: 1.1; word-break: break-all;">${msg.senderName}</div>
                     </div>
                 ` : '';
+                
                 const editedLabel = msg.isEdited ? `<span class="text-muted ms-1" style="font-size:9px;">${TRANSLATIONS["chat_edited"][currentLang]}</span>` : '';
 
                 let textBlock = '';
@@ -696,7 +747,14 @@ const App = {
             listContainer.innerHTML = '';
 
             apps.forEach(app => {
-                if(CURRENT_USER.role === 'member' && app.userId !== CURRENT_USER.id && app.type !== 'instruction') return;
+                
+                // 👇 宛先が指定されている場合、自分に関係ないものは完全に非表示にする
+                if (app.targetUserId) {
+                    if (CURRENT_USER.id !== app.userId && CURRENT_USER.id !== app.targetUserId) return;
+                } else {
+                    // 指定なし（旧データ含む）の場合はこれまで通り
+                    if(CURRENT_USER.role === 'member' && app.userId !== CURRENT_USER.id && app.type !== 'instruction') return;
+                }
 
                 const isInstruction = app.type === 'instruction';
                 const isInstructionCompleted = app.status === 'completed';
@@ -713,7 +771,6 @@ const App = {
 
                 div.style.cssText = `border-left-color: ${leftBorderColor}; ${isGrayOut ? 'opacity: 0.4; background-color: #e9ecef;' : ''}`;
                 
-                // 👇 変更：バッジの文字を翻訳辞書から取得
                 let instructionLabel = TRANSLATIONS["badge_instruction"][currentLang];
                 if (isInstruction && CURRENT_USER.role === 'leader' && !isInstructionCompleted) {
                     instructionLabel = TRANSLATIONS["badge_instruction_wait"][currentLang];
@@ -740,6 +797,13 @@ const App = {
 
                 const canDelete = CURRENT_USER.role === 'leader' || (CURRENT_USER.role === 'member' && app.userId === CURRENT_USER.id && !isInstruction);
 
+                // 👇 送信者と宛先の表示を作成
+                let senderReceiverText = app.userName;
+                if (app.targetUserName) {
+                    senderReceiverText += ` <i class="bi bi-caret-right-fill text-muted"></i> ${app.targetUserName}`;
+                }
+                senderReceiverText += ` <span class="ms-1">- ${app.createdDateStr}</span>`;
+
                 div.innerHTML = `
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <div class="d-flex align-items-center gap-2">
@@ -749,8 +813,8 @@ const App = {
                         <div id="delete-btn-container-${app.id}" style="width: 24px; text-align: right;"></div>
                     </div>
                     <strong class="d-block mb-2 pe-5" style="font-size: 1.05rem;">${app.title}</strong>
-                    <div class="d-flex align-items-center gap-3 small text-muted pe-5">
-                        <span>${app.userName} - ${app.createdDateStr}</span>
+                    <div class="d-flex align-items-center gap-2 small text-muted pe-5">
+                        <span>${senderReceiverText}</span>
                         ${attachmentIconsHtml}
                     </div>
                 `;
@@ -762,7 +826,7 @@ const App = {
                     deleteBtn.innerHTML = '<i class="bi bi-x-lg" style="font-size: 1.1rem;"></i>';
                     deleteBtn.onclick = async (e) => {
                         e.stopPropagation(); 
-                        if(confirm(TRANSLATIONS["msg_confirm_delete"][currentLang])) { // 翻訳対応
+                        if(confirm(TRANSLATIONS["msg_confirm_delete"][currentLang])) { 
                             await DB.deleteApplication(app.id);
                         }
                     };
@@ -797,7 +861,7 @@ const App = {
                                 const comment = document.getElementById('completion-comment').value.trim();
                                 
                                 if (!comment && completionImagesBase64.length === 0) {
-                                    alert(TRANSLATIONS["msg_completion_error"][currentLang]); // 翻訳対応
+                                    alert(TRANSLATIONS["msg_completion_error"][currentLang]); 
                                     return;
                                 }
                                 
@@ -813,7 +877,7 @@ const App = {
                                     modal.hide();
                                 } catch(err) {
                                     console.error(err);
-                                    alert(TRANSLATIONS["msg_report_fail"][currentLang]); // 翻訳対応
+                                    alert(TRANSLATIONS["msg_report_fail"][currentLang]); 
                                     newSubmitBtn.disabled = false;
                                     newSubmitBtn.textContent = TRANSLATIONS["btn_completion_submit"][currentLang] || "報告して完了にする";
                                 }
@@ -825,7 +889,7 @@ const App = {
                     btnStateCompleted = isAppConfirmed;
                     onCheckAction = async (e) => {
                         e.stopPropagation(); 
-                        if(confirm(TRANSLATIONS["msg_confirm_mark_read"][currentLang])) { // 翻訳対応
+                        if(confirm(TRANSLATIONS["msg_confirm_mark_read"][currentLang])) { 
                             await DB.markAsConfirmed(app.id);
                         }
                     };
@@ -948,7 +1012,7 @@ const App = {
     setupImageInputs() {
         const handleFiles = async (files, arrayRef, previewId, inputId) => {
             if (files.length + arrayRef.length > 4) { 
-                alert(TRANSLATIONS["msg_max_images"][currentLang]); // 翻訳対応
+                alert(TRANSLATIONS["msg_max_images"][currentLang]); 
                 return; 
             }
             for (let i = 0; i < files.length; i++) {
@@ -1009,9 +1073,20 @@ const App = {
         }, false);
     },
 
+    // 👇 宛先データを含めて送信するように改修
     async handleFormSubmit() {
         const title = document.getElementById('form-type-select').value;
         const content = document.getElementById('form-content').value;
+        
+        const targetContainer = document.getElementById('form-target-container');
+        const targetSelect = document.getElementById('form-target-select');
+        let targetUserId = null;
+        let targetUserName = null;
+        
+        if (targetContainer && !targetContainer.classList.contains('d-none') && targetSelect && targetSelect.value && targetSelect.value !== 'all') {
+            targetUserId = targetSelect.value;
+            targetUserName = targetSelect.options[targetSelect.selectedIndex].text;
+        }
         
         const data = {
             title: title,
@@ -1020,19 +1095,21 @@ const App = {
             userName: CURRENT_USER.name,
             groupId: CURRENT_USER.group,
             type: CURRENT_USER.role === 'leader' ? 'instruction' : 'request',
-            images: formImagesBase64
+            images: formImagesBase64,
+            targetUserId: targetUserId,
+            targetUserName: targetUserName
         };
         
         try {
             await DB.submitForm(data);
-            alert(TRANSLATIONS["msg_submit_success"][currentLang]); // 翻訳対応
+            alert(TRANSLATIONS["msg_submit_success"][currentLang]); 
             document.getElementById('form-content').value = '';
             formImagesBase64 = [];
             this.updateImagePreview('form-image-preview', formImagesBase64, 'form-image-file');
             document.querySelector('.bottom-nav-item[href="#tab-inbox"]').click(); 
         } catch(e) { 
             console.error(e); 
-            alert(TRANSLATIONS["msg_submit_fail"][currentLang]); // 翻訳対応
+            alert(TRANSLATIONS["msg_submit_fail"][currentLang]); 
         }
     },
 
@@ -1095,9 +1172,3 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
-
-
-
-
-
-
