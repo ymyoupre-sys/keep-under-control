@@ -5,6 +5,9 @@ import {
 import { ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 const getRoomId = (groupId, id1, id2) => {
+    // 👇 追加：対象が「ALL」の場合は、全体チャット専用の部屋を作る
+    if (id1 === "ALL" || id2 === "ALL") return `${groupId}_ALL`;
+
     const sortedIds = [id1, id2].sort();
     return `${groupId}_${sortedIds[0]}_${sortedIds[1]}`;
 };
