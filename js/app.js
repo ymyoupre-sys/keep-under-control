@@ -73,6 +73,9 @@ const TRANSLATIONS = {
     "btn_cancel": { ja: "キャンセル", en: "Cancel", zh: "取消" },
     "btn_save": { ja: "保存", en: "Save", zh: "保存" },
 
+    "updates_title": { ja: "更新情報", en: "Updates", zh: "更新日志" },
+    "btn_choose_file": { ja: "ファイルを選択", en: "Choose Files", zh: "选择文件" },
+
     // 👇 システムメッセージ（JS内）の翻訳
     "msg_enter_name_pass": { ja: "名前とパスワードを入力してください", en: "Please enter your name and password.", zh: "请输入姓名和密码。" },
     "msg_pwd_update_fail": { ja: "パスワードの更新に失敗しました", en: "Failed to update password.", zh: "密码更新失败。" },
@@ -95,6 +98,7 @@ const TRANSLATIONS = {
     "badge_instruction_wait": { ja: "命令（完了報告待ち）", en: "Instruction (Pending Report)", zh: "指令 (待汇报)" },
     "badge_request": { ja: "申請", en: "Request", zh: "申请" }
 };
+
 let currentLang = localStorage.getItem('app_lang') || 'ja'; 
 
 const App = {
@@ -1082,3 +1086,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
