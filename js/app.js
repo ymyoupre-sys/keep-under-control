@@ -17,12 +17,10 @@ let chatImagesBase64 = [];
 let formImagesBase64 = []; 
 let completionImagesBase64 = []; 
 
-// 👇 追加：PWなしで入れるテストアカウントの名前リスト
 const TEST_ACCOUNT_NAMES = ["リーダー", "メンバー", "领导者", "成员", "leader", "member"];
 
-// 👇 追加：多言語化（i18n）用の全辞書データ
+// 👇 追加：アラートやバッジ用の翻訳辞書を追加しました
 const TRANSLATIONS = {
-    // --- ログイン画面用 ---
     "login_title": { ja: "利用開始", en: "Start Using", zh: "开始使用" },
     "login_notice": {
         ja: `<strong>【重要なお知らせ】</strong><br>システムの大規模なセキュリティ改修を行いました。<br>お手数ですが、初回ログイン時に<strong>自分専用のパスワード（6文字以上）</strong>の設定をお願いいたします。<br><span class="text-danger">※初期パスワードは「123456」です。<br>※テストアカウント「リーダー」「メンバー」等はPWなしでログイン可能です。</span>`,
@@ -35,7 +33,6 @@ const TRANSLATIONS = {
     "login_authenticating": { ja: "認証中...", en: "Authenticating...", zh: "验证中..." },
     "login_error": { ja: "名前またはパスワードが間違っています", en: "Invalid name or password.", zh: "姓名或密码错误。" },
     
-    // --- メイン画面（タブ等）用 ---
     "nav_chat": { ja: "チャット", en: "Chat", zh: "聊天" },
     "nav_inbox": { ja: "受信箱", en: "Inbox", zh: "收件箱" },
     "nav_form_leader": { ja: "命令作成", en: "Create Instruction", zh: "发布指令" },
@@ -44,7 +41,6 @@ const TRANSLATIONS = {
     "menu_logout": { ja: "ログアウト", en: "Logout", zh: "退出登录" },
     "menu_withdraw": { ja: "退会する", en: "Delete Account", zh: "注销账户" },
 
-    // --- 作成フォーム＆チャット入力欄用 ---
     "form_type_suffix": { ja: "の種類", en: " Type", zh: "类型" },
     "form_content": { ja: "内容", en: "Content", zh: "内容" },
     "form_optional": { ja: "(任意)", en: "(Optional)", zh: "(选填)" },
@@ -53,10 +49,9 @@ const TRANSLATIONS = {
     "form_submit": { ja: "送信", en: "Submit", zh: "发送" },
     "chat_placeholder": { ja: "メッセージ...", en: "Message...", zh: "输入消息..." },
 
-    // --- ポップアップ（モーダル）画面用 ---
     "detail_sender_label": { ja: "送信者:", en: "Sender:", zh: "发送者:" },
     "detail_date_label": { ja: "日時:", en: "Date:", zh: "日期:" },
-    "detail_leader_comment": { ja: "リーダーからのコメント", en: "Master's Comment", zh: "大师的评论" },
+    "detail_leader_comment": { ja: "主人からのコメント", en: "master's Comment", zh: "师父留言" },
     "detail_completion_title": { ja: "完了報告の内容", en: "Completion Report", zh: "完成报告" },
     "judge_comment_label": { ja: "判定コメント (任意)", en: "Comment (Optional)", zh: "审批留言 (选填)" },
     "btn_approve": { ja: "承認する", en: "Approve", zh: "批准" },
@@ -76,7 +71,29 @@ const TRANSLATIONS = {
     "event_title_label": { ja: "予定の内容", en: "Event Details", zh: "日程内容" },
     "event_title_placeholder": { ja: "例: 外出、調教など", en: "e.g., Outing, Training", zh: "例: 外出、训练等" },
     "btn_cancel": { ja: "キャンセル", en: "Cancel", zh: "取消" },
-    "btn_save": { ja: "保存", en: "Save", zh: "保存" }
+    "btn_save": { ja: "保存", en: "Save", zh: "保存" },
+
+    // 👇 システムメッセージ（JS内）の翻訳
+    "msg_enter_name_pass": { ja: "名前とパスワードを入力してください", en: "Please enter your name and password.", zh: "请输入姓名和密码。" },
+    "msg_pwd_update_fail": { ja: "パスワードの更新に失敗しました", en: "Failed to update password.", zh: "密码更新失败。" },
+    "msg_confirm_logout": { ja: "ログアウトしますか？", en: "Are you sure you want to log out?", zh: "确定要退出登录吗？" },
+    "msg_test_acc_block": { ja: "テスト用アカウントのため、退会処理は実行できません。", en: "Test accounts cannot be deleted.", zh: "测试账号无法注销。" },
+    "msg_confirm_withdraw": { ja: "【警告】\n退会すると、あなたのアカウント情報はすべて削除され、復元することはできません。\n本当に退会してもよろしいですか？", en: "[Warning]\nDeleting your account will erase all your data. This cannot be undone.\nAre you sure you want to proceed?", zh: "【警告】\n注销后，您的所有账户信息将被删除且无法恢复。\n确定要注销吗？" },
+    "msg_withdraw_success": { ja: "退会処理が完了しました。ご利用ありがとうございました！", en: "Account deleted successfully. Thank you!", zh: "注销成功。感谢您的使用！" },
+    "msg_withdraw_fail": { ja: "退会処理に失敗しました。", en: "Failed to delete account.", zh: "注销失败。" },
+    "msg_withdraw_relogin": { ja: "セキュリティのため、退会処理を行うには再度ログインが必要です。\n一度ログアウトし、もう一度ログインしてから再度お試しください。", en: "For security reasons, please log in again to delete your account.", zh: "出于安全考虑，请重新登录后再尝试注销。" },
+    "msg_confirm_delete": { ja: "この項目を削除しますか？\n（削除後は元に戻せません）", en: "Delete this item?\n(Cannot be undone)", zh: "确定删除此项目吗？\n(删除后无法恢复)" },
+    "msg_submit_success": { ja: "送信しました", en: "Submitted successfully.", zh: "发送成功。" },
+    "msg_submit_fail": { ja: "送信に失敗しました", en: "Failed to submit.", zh: "发送失败。" },
+    "msg_max_images": { ja: "画像は最大4枚までです", en: "Maximum of 4 images allowed.", zh: "最多只能上传4张图片。" },
+    "msg_completion_error": { ja: "【エラー】コメントまたは証拠画像のどちらかを必ず入力・添付してください！", en: "[Error] A comment or evidence image is required!", zh: "【错误】必须填写留言或上传证明图片！" },
+    "msg_report_fail": { ja: "報告に失敗しました", en: "Failed to report.", zh: "汇报失败。" },
+    "msg_confirm_mark_read": { ja: "この申請結果を確認済みとしますか？\n（※自分用のメモ機能のため、主人に通知は飛びません）", en: "Mark this result as confirmed?\n(*Memo only, master will not be notified)", zh: "是否确认此结果？\n(※此为备忘功能，不会通知师父)" },
+    
+    // 👇 バッジの文字（JS内）の翻訳
+    "badge_instruction": { ja: "命令", en: "Instruction", zh: "指令" },
+    "badge_instruction_wait": { ja: "命令（完了報告待ち）", en: "Instruction (Pending Report)", zh: "指令 (待汇报)" },
+    "badge_request": { ja: "申請", en: "Request", zh: "申请" }
 };
 let currentLang = localStorage.getItem('app_lang') || 'ja'; 
 
@@ -139,7 +156,6 @@ const App = {
             }
         });
         
-        // ヘッダータイトルの再描画（タブを開き直したときと同じ処理）
         const targetTabId = sessionStorage.getItem('activeTab') || '#tab-inbox';
         if(CURRENT_USER) {
             const titleMap = { 
@@ -150,6 +166,9 @@ const App = {
             };
             const headerTitle = document.getElementById('header-title');
             if(headerTitle && titleMap[targetTabId]) headerTitle.textContent = titleMap[targetTabId];
+            
+            // タブを切り替えた時の再描画（バッジの言語切り替え用）
+            if (targetTabId === '#tab-inbox') this.startInboxListener();
         }
     },
 
@@ -191,14 +210,12 @@ const App = {
             const inputName = nameInput.value.trim();
             let inputPass = passInput.value.trim(); 
 
-            // 👇 変更：リストの中に名前が含まれていたらPWを自動入力
             if (TEST_ACCOUNT_NAMES.includes(inputName)) {
                 inputPass = INITIAL_PASS; 
             }
 
             if (!inputName || !inputPass) {
-                // ※アラートの多言語化は次のステップで行います
-                alert("名前とパスワードを入力してください");
+                alert(TRANSLATIONS["msg_enter_name_pass"][currentLang]); // 翻訳対応
                 return;
             }
 
@@ -233,7 +250,6 @@ const App = {
                 
                 if (inputPass === INITIAL_PASS) {
                     
-                    // 👇 変更：リストの中に名前が含まれていたらPW変更をスキップ
                     if (TEST_ACCOUNT_NAMES.includes(inputName)) {
                         localStorage.setItem('app_user_v3', JSON.stringify(CURRENT_USER));
                         this.showMainScreen();
@@ -268,7 +284,7 @@ const App = {
                             this.showMainScreen();
                         } catch (e) {
                             console.error(e);
-                            alert("パスワードの更新に失敗しました");
+                            alert(TRANSLATIONS["msg_pwd_update_fail"][currentLang]); // 翻訳対応
                             changeBtn.disabled = false;
                             changeBtn.textContent = "変更して利用開始";
                         }
@@ -364,7 +380,6 @@ const App = {
                 document.querySelectorAll('.tab-content').forEach(content => content.classList.add('d-none'));
                 document.querySelector(targetId).classList.remove('d-none');
                 
-                // 👇 変更：ヘッダータイトルを翻訳辞書から取得
                 const titleMap = { 
                     '#tab-chat': TRANSLATIONS["nav_chat"][currentLang], 
                     '#tab-inbox': TRANSLATIONS["nav_inbox"][currentLang], 
@@ -385,7 +400,7 @@ const App = {
         });
 
         document.getElementById('logout-btn').addEventListener('click', async () => {
-            if(confirm('ログアウトしますか？')) {
+            if(confirm(TRANSLATIONS["msg_confirm_logout"][currentLang])) { // 翻訳対応
                 try { await signOut(auth); } catch(e){}
                 localStorage.removeItem('app_user_v3');
                 location.reload();
@@ -393,12 +408,11 @@ const App = {
         });
 
         document.getElementById('btn-show-withdraw').addEventListener('click', async () => {
-            // 👇 変更：リストに含まれている場合は退会処理をブロック
             if (TEST_ACCOUNT_NAMES.includes(CURRENT_USER.name)) {
-                alert("テスト用アカウントのため、退会処理は実行できません。");
+                alert(TRANSLATIONS["msg_test_acc_block"][currentLang]); // 翻訳対応
                 return; 
             }
-            if(confirm("【警告】\n退会すると、あなたのアカウント情報はすべて削除され、復元することはできません。\n本当に退会してもよろしいですか？")) {
+            if(confirm(TRANSLATIONS["msg_confirm_withdraw"][currentLang])) { // 翻訳対応
                 try {
                     await DB.deleteUserAccount(CURRENT_USER.id);
                     
@@ -407,15 +421,15 @@ const App = {
                     }
                     
                     localStorage.removeItem('app_user_v3');
-                    alert("退会処理が完了しました。ご利用ありがとうございました！");
+                    alert(TRANSLATIONS["msg_withdraw_success"][currentLang]); // 翻訳対応
                     location.reload();
                     
                 } catch (e) {
                     console.error("退会エラー:", e);
                     if (e.code === 'auth/requires-recent-login') {
-                        alert("セキュリティのため、退会処理を行うには再度ログインが必要です。\n一度ログアウトし、もう一度ログインしてから再度お試しください。");
+                        alert(TRANSLATIONS["msg_withdraw_relogin"][currentLang]); // 翻訳対応
                     } else {
-                        alert("退会処理に失敗しました。");
+                        alert(TRANSLATIONS["msg_withdraw_fail"][currentLang]); // 翻訳対応
                     }
                 }
             }
@@ -686,14 +700,15 @@ const App = {
 
                 div.style.cssText = `border-left-color: ${leftBorderColor}; ${isGrayOut ? 'opacity: 0.4; background-color: #e9ecef;' : ''}`;
                 
-                let instructionLabel = '命令';
+                // 👇 変更：バッジの文字を翻訳辞書から取得
+                let instructionLabel = TRANSLATIONS["badge_instruction"][currentLang];
                 if (isInstruction && CURRENT_USER.role === 'leader' && !isInstructionCompleted) {
-                    instructionLabel = '命令（完了報告待ち）';
+                    instructionLabel = TRANSLATIONS["badge_instruction_wait"][currentLang];
                 }
 
                 const badgeHtml = isInstruction 
                     ? `<span class="badge bg-primary px-3 py-1">${instructionLabel}</span>`
-                    : `<span class="badge border border-secondary text-secondary px-3 py-1">申請</span>`;
+                    : `<span class="badge border border-secondary text-secondary px-3 py-1">${TRANSLATIONS["badge_request"][currentLang]}</span>`;
 
                 const statusBadgeHtml = !isInstruction
                     ? `<span class="badge ${CONFIG_SETTINGS.statusLabels[app.status]?.color || 'bg-secondary'}">${CONFIG_SETTINGS.statusLabels[app.status]?.label || app.status}</span>`
@@ -734,7 +749,7 @@ const App = {
                     deleteBtn.innerHTML = '<i class="bi bi-x-lg" style="font-size: 1.1rem;"></i>';
                     deleteBtn.onclick = async (e) => {
                         e.stopPropagation(); 
-                        if(confirm("この項目を削除しますか？\n（削除後は元に戻せません）")) {
+                        if(confirm(TRANSLATIONS["msg_confirm_delete"][currentLang])) { // 翻訳対応
                             await DB.deleteApplication(app.id);
                         }
                     };
@@ -769,7 +784,7 @@ const App = {
                                 const comment = document.getElementById('completion-comment').value.trim();
                                 
                                 if (!comment && completionImagesBase64.length === 0) {
-                                    alert("【エラー】コメントまたは証拠画像のどちらかを必ず入力・添付してください！");
+                                    alert(TRANSLATIONS["msg_completion_error"][currentLang]); // 翻訳対応
                                     return;
                                 }
                                 
@@ -785,7 +800,7 @@ const App = {
                                     modal.hide();
                                 } catch(err) {
                                     console.error(err);
-                                    alert('報告に失敗しました');
+                                    alert(TRANSLATIONS["msg_report_fail"][currentLang]); // 翻訳対応
                                     newSubmitBtn.disabled = false;
                                     newSubmitBtn.textContent = TRANSLATIONS["btn_completion_submit"][currentLang] || "報告して完了にする";
                                 }
@@ -797,7 +812,7 @@ const App = {
                     btnStateCompleted = isAppConfirmed;
                     onCheckAction = async (e) => {
                         e.stopPropagation(); 
-                        if(confirm("この申請結果を確認済みとしますか？\n（※自分用のメモ機能のため、主人に通知は飛びません）")) {
+                        if(confirm(TRANSLATIONS["msg_confirm_mark_read"][currentLang])) { // 翻訳対応
                             await DB.markAsConfirmed(app.id);
                         }
                     };
@@ -919,7 +934,10 @@ const App = {
 
     setupImageInputs() {
         const handleFiles = async (files, arrayRef, previewId, inputId) => {
-            if (files.length + arrayRef.length > 4) { alert('画像は最大4枚までです'); return; }
+            if (files.length + arrayRef.length > 4) { 
+                alert(TRANSLATIONS["msg_max_images"][currentLang]); // 翻訳対応
+                return; 
+            }
             for (let i = 0; i < files.length; i++) {
                 const base64 = await Utils.fileToBase64(files[i]);
                 const comp = await Utils.compressImage(base64);
@@ -994,12 +1012,15 @@ const App = {
         
         try {
             await DB.submitForm(data);
-            alert('送信しました');
+            alert(TRANSLATIONS["msg_submit_success"][currentLang]); // 翻訳対応
             document.getElementById('form-content').value = '';
             formImagesBase64 = [];
             this.updateImagePreview('form-image-preview', formImagesBase64, 'form-image-file');
             document.querySelector('.bottom-nav-item[href="#tab-inbox"]').click(); 
-        } catch(e) { console.error(e); alert('送信に失敗しました'); }
+        } catch(e) { 
+            console.error(e); 
+            alert(TRANSLATIONS["msg_submit_fail"][currentLang]); // 翻訳対応
+        }
     },
 
     addTabBadge(tabId) {
