@@ -2,7 +2,6 @@ import { DB } from "./db.js";
 import { Utils } from "./utils.js";
 import { Calendar } from "./calendar.js";
 import { db, messaging, getToken, auth } from "./firebase-config.js";
-// 👇 deleteUser を追加しています
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, signOut, deleteUser, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -18,20 +17,62 @@ let chatImagesBase64 = [];
 let formImagesBase64 = []; 
 let completionImagesBase64 = []; 
 
+// 👇 追加：多言語化（i18n）用の辞書データと現在の言語設定
+const TRANSLATIONS = {
+    "login_title": { 
+        ja: "利用開始", 
+        en: "Start Using", 
+        zh: "开始使用" 
+    },
+    "login_notice": {
+        ja: `<strong>【重要なお知らせ】</strong><br>システムの大規模なセキュリティ改修を行いました。<br>お手数ですが、初回ログイン時に<strong>自分専用のパスワード（6文字以上）</strong>の設定をお願いいたします。<br><span class="text-danger">※初期パスワードは「123456」です。<br>※テストアカウント「リーダー」「メンバー」はPWなしでログイン可能です。</span>`,
+        en: `<strong>[Important Notice]</strong><br>We have implemented major security upgrades.<br>Please set your <strong>personal password (6+ characters)</strong> upon your first login.<br><span class="text-danger">* Default password is '123456'.<br>* Test accounts 'Leader' and 'Member' can login without a password.</span>`,
+        zh: `<strong>【重要通知】</strong><br>系统进行了大规模的安全升级。<br>首次登录时，请设置<strong>专属密码（6位以上）</strong>。<br><span class="text-danger">※初始密码为“123456”。<br>※测试账号“Leader”和“Member”可无密码登录。</span>`
+    },
+    "login_name_placeholder": { 
+        ja: "名前 (例: 田中)", 
+        en: "Name (e.g., John)", 
+        zh: "姓名 (例: 田中)" 
+    },
+    "login_pass_placeholder": { 
+        ja: "パスワード", 
+        en: "Password", 
+        zh: "密码" 
+    },
+    "login_button": { 
+        ja: "ログイン", 
+        en: "Login", 
+        zh: "登录" 
+    },
+    "login_authenticating": { 
+        ja: "認証中...", 
+        en: "Authenticating...", 
+        zh: "验证中..." 
+    },
+    "login_error": { 
+        ja: "名前またはパスワードが間違っています", 
+        en: "Invalid name or password.", 
+        zh: "姓名或密码错误。" 
+    }
+};
+let currentLang = localStorage.getItem('app_lang') || 'ja'; // 保存された言語（初期は日本語）
+// 👆 ここまで追加
+
 const App = {
     async init() {
         try {
             const settingsRes = await fetch('config/settings.json?v=' + new Date().getTime());
             CONFIG_SETTINGS = await settingsRes.json();
 
-            // 👇 ここから追加：アプリを開いた時に証明書を自動作成する
             onAuthStateChanged(auth, async (user) => {
                 if (user && CURRENT_USER) {
                     await DB.createAuthBridge(user.uid, CURRENT_USER.id, CURRENT_USER.group);
                 }
             });
-            // 👆 ここまで追加            
             
+            // 👇 追加：言語設定の初期化をログイン画面のセットアップ前に呼び出す
+            this.setupLanguage();
+
             this.setupLogin();
             this.setupTabs();
             this.setupImageInputs();
@@ -40,6 +81,48 @@ const App = {
 
         } catch (e) { console.error("Init Error", e); }
     },
+
+    // 👇 追加：多言語化機能（イベント設定と反映処理）
+    setupLanguage() {
+        const langSelect = document.getElementById('lang-select');
+        if (langSelect) {
+            langSelect.value = currentLang;
+            langSelect.addEventListener('change', (e) => {
+                this.applyTranslations(e.target.value);
+            });
+        }
+        this.applyTranslations(currentLang); // 初期表示時に翻訳を実行
+    },
+
+    applyTranslations(lang) {
+        currentLang = lang;
+        localStorage.setItem('app_lang', lang); // 選択した言語をスマホに記憶させる
+        
+        // 1. 通常のテキストを翻訳 (textContent)
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if(TRANSLATIONS[key] && TRANSLATIONS[key][lang]) {
+                el.textContent = TRANSLATIONS[key][lang];
+            }
+        });
+
+        // 2. HTML構造が含まれるテキストを翻訳 (innerHTML)
+        document.querySelectorAll('[data-i18n-html]').forEach(el => {
+            const key = el.getAttribute('data-i18n-html');
+            if(TRANSLATIONS[key] && TRANSLATIONS[key][lang]) {
+                el.innerHTML = TRANSLATIONS[key][lang];
+            }
+        });
+        
+        // 3. プレースホルダー（入力欄の薄い文字）を翻訳
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.getAttribute('data-i18n-placeholder');
+            if(TRANSLATIONS[key] && TRANSLATIONS[key][lang]) {
+                el.setAttribute('placeholder', TRANSLATIONS[key][lang]);
+            }
+        });
+    },
+    // 👆 ここまで追加
 
     setupHistoryHandler() {
         window.addEventListener('popstate', () => {
@@ -84,12 +167,14 @@ const App = {
             }
 
             if (!inputName || !inputPass) {
+                // ※アラートは一旦日本語固定にしています
                 alert("名前とパスワードを入力してください");
                 return;
             }
 
             loginBtn.disabled = true;
-            loginBtn.textContent = "認証中...";
+            // 👇 変更：「認証中...」の文字を現在の言語に合わせて翻訳辞書から取得
+            loginBtn.textContent = TRANSLATIONS["login_authenticating"][currentLang];
             document.getElementById('login-error').classList.add('d-none');
 
             const dummyEmail = safeHexEncode(inputName) + "@dummy.keep-under-control.com";
@@ -113,11 +198,9 @@ const App = {
 
                 CURRENT_USER = userData;
 
-                // 👇【ここに追加】初回ログイン時にも、次の画面へ行く前に確実に証明書を発行する
                 if (auth.currentUser) {
                     await DB.createAuthBridge(auth.currentUser.uid, CURRENT_USER.id, CURRENT_USER.group);
                 }
-                // 👆ここまで
                 
                 if (inputPass === INITIAL_PASS) {
                     
@@ -169,7 +252,8 @@ const App = {
                 console.error(error);
                 document.getElementById('login-error').classList.remove('d-none');
                 loginBtn.disabled = false;
-                loginBtn.textContent = "ログイン";
+                // 👇 変更：エラーで戻った時の「ログイン」の文字を現在の言語に合わせて取得
+                loginBtn.textContent = TRANSLATIONS["login_button"][currentLang];
             }
         });
     },
@@ -273,12 +357,10 @@ const App = {
             }
         });
 
-        // 👇退会ボタンの処理を追加しています
         document.getElementById('btn-show-withdraw').addEventListener('click', async () => {
-            // 👇【ここを追加】テストアカウントの退会を強制ブロック！
             if (CURRENT_USER.name === "リーダー" || CURRENT_USER.name === "メンバー") {
                 alert("テスト用アカウントのため、退会処理は実行できません。");
-                return; // ここで強制終了
+                return; 
             }
             if(confirm("【警告】\n退会すると、あなたのアカウント情報はすべて削除され、復元することはできません。\n本当に退会してもよろしいですか？")) {
                 try {
@@ -316,7 +398,6 @@ const App = {
         
         const container = document.getElementById('chat-list');
         container.innerHTML = '';
-        // 👇 修正：グループの総人数が「3人以上」の場合のみ、全体チャットを表示する
         if (groupUsers.length >= 3) {
             const allDiv = document.createElement('div');
             allDiv.className = 'p-3 border-bottom d-flex align-items-center clickable';
@@ -331,7 +412,6 @@ const App = {
             allDiv.onclick = () => this.openChat(CURRENT_USER.group, CURRENT_USER.id, "ALL", "グループ全体チャット");
             container.appendChild(allDiv);
         }
-        // 👆 ここまで        
         targets.forEach(target => {
             const safeIcon = target.icon || "👤";
             const div = document.createElement('div');
@@ -375,7 +455,6 @@ const App = {
                 const reactionsCount = msg.reactions ? msg.reactions.length : 0;
                 const hasReacted = msg.reactions && msg.reactions.includes(CURRENT_USER.id);
                 
-                // 日時のフォーマット
                 let timeStr = "";
                 if (msg.createdAt) {
                     const date = msg.createdAt.toDate();
@@ -387,7 +466,6 @@ const App = {
                 }
                 const timeHtml = timeStr ? `<div style="font-size: 0.65rem; color: #888; margin: 0 4px; align-self: flex-end; padding-bottom: 2px; white-space: nowrap;">${timeStr}</div>` : '';
 
-                // リアクション
                 const reactionHtml = reactionsCount > 0 ? `<div class="reaction-badge"><i class="${hasReacted ? 'bi bi-heart-fill' : 'bi bi-heart'}"></i> ${reactionsCount}</div>` : '';
 
                 const div = document.createElement('div');
@@ -396,7 +474,6 @@ const App = {
                 const iconHtml = !isMe ? `<div class="flex-shrink-0 me-2 mt-1" style="font-size:28px; line-height:1;">${msg.senderIcon}</div>` : '';
                 const editedLabel = msg.isEdited ? `<span class="text-muted ms-1" style="font-size:9px;">(編集済)</span>` : '';
 
-                // 1. 本文ブロック（テキストがある場合は、この本文に時間と♡をピッタリくっつける）
                 let textBlock = '';
                 if(msg.text) {
                     textBlock = `
@@ -413,7 +490,6 @@ const App = {
                     textBlock = `<div class="w-100 ${isMe ? 'text-end' : 'text-start'} mb-1">${editedLabel}</div>`;
                 }
 
-                // 2. 画像ブロック（テキストが無く、画像「のみ」の場合は画像に時間と♡をくっつける）
                 let imagesBlock = '';
                 if(msg.images && msg.images.length > 0) {
                     let imgs = '';
@@ -435,7 +511,6 @@ const App = {
                             </div>
                         `;
                     } else {
-                        // テキストがある場合は、すでに本文側に時間があるので単に画像だけを表示する
                         imagesBlock = `
                             <div class="d-flex flex-wrap gap-1 ${isMe ? 'justify-content-end' : 'justify-content-start'}" style="max-width: 210px;" onclick="event.stopPropagation();">
                                 ${imgs}
@@ -444,7 +519,6 @@ const App = {
                     }
                 }
 
-                // 3. 組み立て
                 div.innerHTML = `
                     ${iconHtml}
                     <div style="max-width: 75%;">
@@ -455,7 +529,6 @@ const App = {
                     </div>
                 `;
 
-                // リアクションを付けるイベント
                 if (!isMe) {
                     let pressTimer;
                     const bubbles = div.querySelectorAll('.chat-bubble-content');
@@ -467,7 +540,6 @@ const App = {
                     });
                 }
 
-                // メッセージ編集のイベント
                 if (isMe && msg.text) {
                     const bubble = div.querySelector('.chat-bubble-content .p-2');
                     if (bubble) {
@@ -666,7 +738,7 @@ const App = {
                                 try {
                                     const uploadedUrls = await DB.submitCompletionReport(app.id, CURRENT_USER.id, comment, completionImagesBase64);
                                     
-                                    const autoMsg = `✅ 命令「${app.title}」を完了しました！${comment ? '\n\n' + comment : ''}`;
+                                    const autoMsg = `✅ 「${app.title}」を完了しました！${comment ? '\n\n' + comment : ''}`;
                                     await DB.sendMessage(CURRENT_USER.group, CURRENT_USER.id, app.userId, CURRENT_USER, autoMsg, uploadedUrls);
 
                                     modal.hide();
