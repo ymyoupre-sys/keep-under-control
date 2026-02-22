@@ -634,6 +634,7 @@ const App = {
         document.getElementById('chat-detail-container').classList.remove('d-none');
         document.getElementById('chat-target-name').textContent = targetName;
         document.getElementById('chat-input-area').classList.remove('d-none');
+        document.querySelector('.bottom-nav').classList.add('d-none');
 
         if(unsubscribeChat) unsubscribeChat();
 
@@ -1254,6 +1255,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
