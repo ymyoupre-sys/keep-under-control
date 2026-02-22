@@ -19,7 +19,7 @@ let completionImagesBase64 = [];
 
 const TEST_ACCOUNT_NAMES = ["リーダー", "メンバー", "领导者", "成员", "leader", "member"];
 
-// 👇 【新規追加】悪意のあるプログラム（タグ）を無害な文字に変換（消毒）するセキュリティ機能
+// 👇 悪意のあるプログラム（タグ）を無害な文字に変換（消毒）するセキュリティ機能
 const escapeHTML = (str) => {
     if (typeof str !== 'string') return str;
     return str.replace(/[&<>'"]/g, 
@@ -65,7 +65,7 @@ const TRANSLATIONS = {
     "form_content": { ja: "内容", en: "Content", zh: "内容" },
     "form_optional": { ja: "(任意)", en: "(Optional)", zh: "(选填)" },
     "form_image": { ja: "画像添付", en: "Attach Images", zh: "附加图片" },
-    "form_image_limit": { ja: "(最大4枚)", en: "(Max 4)", zh: "(最多4张)" },
+    "form_image_limit": { ja: "(最大4枚)", en: " (Max 4)", zh: " (最多4张)" },
     "form_submit": { ja: "送信", en: "Submit", zh: "发送" },
     "chat_placeholder": { ja: "メッセージ...", en: "Message...", zh: "输入消息..." },
     "chat_edited": { ja: "(編集済)", en: "(Edited)", zh: "(已编辑)" },
@@ -117,8 +117,14 @@ const TRANSLATIONS = {
     "msg_max_images": { ja: "画像は最大4枚までです", en: "Maximum of 4 images allowed.", zh: "最多只能上传4张图片。" },
     "msg_completion_error": { ja: "【エラー】コメントまたは証拠画像のどちらかを必ず入力・添付してください！", en: "[Error] A comment or evidence image is required!", zh: "【错误】必须填写留言或上传证明图片！" },
     "msg_report_fail": { ja: "報告に失敗しました", en: "Failed to report.", zh: "汇报失败。" },
-    "msg_confirm_mark_read": { ja: "この申請結果を確認済みとしますか？\n（※自分用のメモ機能のため、リーダーに通知は飛びません）", en: "Mark this result as confirmed?\n(*Memo only, leader will not be notified)", zh: "是否确认此结果？\n(※此为备忘功能，不会通知负责人)" },
+    "msg_confirm_mark_read": { ja: "この申請結果を確認済みとしますか？\n（※自分用のメモ機能のため、主人に通知は飛びません）", en: "Mark this result as confirmed?\n(*Memo only, master will not be notified)", zh: "是否确认此结果？\n(※此为备忘功能，不会通知主人)" },
     
+    // 👇 通知許可用のメッセージを追加
+    "msg_notif_unsupported": { ja: "お使いのブラウザは通知機能に対応していません。", en: "Your browser does not support notifications.", zh: "您的浏览器不支持通知功能。" },
+    "msg_notif_denied": { ja: "通知がブロックされています。端末の設定アプリから、このWebサイトの通知を「許可」に変更してください。", en: "Notifications are blocked. Please allow notifications for this site in your device settings.", zh: "通知被屏蔽。请在设备设置中允许此网站的通知。" },
+    "msg_notif_enabled": { ja: "通知をオンにしました！", en: "Notifications turned on!", zh: "通知已开启！" },
+    "msg_notif_error": { ja: "通知の設定中にエラーが発生しました。", en: "An error occurred while setting up notifications.", zh: "设置通知时发生错误。" },
+
     "badge_instruction": { ja: "命令", en: "Instruction", zh: "指令" },
     "badge_instruction_wait": { ja: "命令（完了報告待ち）", en: "Instruction (Pending Report)", zh: "指令 (待汇报)" },
     "badge_request": { ja: "申請", en: "Request", zh: "申请" }
@@ -366,6 +372,7 @@ const App = {
         this.startInboxListener();
         this.renderChatList();
         this.setupNotifications();
+        this.updateNotificationButtonState(); // 👇 🔔ボタンの見た目を更新
         Calendar.init(CURRENT_USER);
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -381,6 +388,61 @@ const App = {
 
         const targetNav = document.querySelector(`.bottom-nav-item[href="${targetTabId}"]`);
         if (targetNav) targetNav.click();
+    },
+
+    // 👇 🔔ボタンの見た目を「許可状態」に合わせて変更する機能
+    updateNotificationButtonState() {
+        const btn = document.getElementById('notification-btn');
+        if (!btn) return;
+        const icon = btn.querySelector('i');
+        
+        if (!('Notification' in window)) {
+            btn.classList.add('d-none');
+            return;
+        }
+
+        if (Notification.permission === 'granted') {
+            btn.classList.remove('btn-outline-secondary');
+            btn.classList.add('btn-outline-warning', 'border-warning');
+            icon.className = 'bi bi-bell-fill text-warning';
+        } else {
+            btn.classList.add('btn-outline-secondary');
+            btn.classList.remove('btn-outline-warning', 'border-warning');
+            icon.className = 'bi bi-bell-slash text-secondary';
+        }
+    },
+
+    // 👇 🔔ボタンを押したときに発動する「手動の」通知許可リクエスト
+    async requestNotificationManual() {
+        if (!('Notification' in window)) {
+            alert(TRANSLATIONS["msg_notif_unsupported"][currentLang]);
+            return;
+        }
+
+        if (Notification.permission === 'denied') {
+            alert(TRANSLATIONS["msg_notif_denied"][currentLang]);
+            return;
+        }
+
+        try {
+            const permission = await Notification.requestPermission();
+            this.updateNotificationButtonState();
+            
+            if (permission === 'granted') {
+                const registration = await navigator.serviceWorker.register('sw.js');
+                const token = await getToken(messaging, { 
+                    vapidKey: "BMdNlbLwC3bEwAIp-ZG9Uwp-5n4HdyXvlsqJbt6Q5YRdCA7gUexx0G9MpjB3AdLk6iNJodLTobC3-bGG6YskB0s",
+                    serviceWorkerRegistration: registration
+                });
+                if (token) {
+                    await DB.saveUserToken(CURRENT_USER, token);
+                    alert(TRANSLATIONS["msg_notif_enabled"][currentLang]);
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            alert(TRANSLATIONS["msg_notif_error"][currentLang]);
+        }
     },
 
     async setupFormTargets() {
@@ -468,6 +530,11 @@ const App = {
             });
         });
 
+        // 👇 🔔ボタンがクリックされた時の処理を紐付け
+        document.getElementById('notification-btn').addEventListener('click', () => {
+            this.requestNotificationManual();
+        });
+
         document.getElementById('logout-btn').addEventListener('click', async () => {
             if(confirm(TRANSLATIONS["msg_confirm_logout"][currentLang])) { 
                 try { await signOut(auth); } catch(e){}
@@ -535,7 +602,7 @@ const App = {
             const safeIcon = target.icon || "👤";
             const div = document.createElement('div');
             div.className = 'p-3 border-bottom d-flex align-items-center bg-white clickable';
-            // 👇 【サニタイズ適用】名前を escapeHTML で安全に表示
+            // 山根さんオリジナルの master / slave 表現を維持！
             div.innerHTML = `
                 <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-3" style="width:40px; height:40px; font-size:20px;">${safeIcon}</div>
                 <div>
@@ -588,7 +655,6 @@ const App = {
 
                 const reactionHtml = reactionsCount > 0 ? `<div class="reaction-badge"><i class="${hasReacted ? 'bi bi-heart-fill' : 'bi bi-heart'}"></i> ${reactionsCount}</div>` : '';
 
-                // 👇 【サニタイズ適用】送信者の名前を安全に表示
                 const iconHtml = !isMe ? `
                     <div class="flex-shrink-0 me-2 mt-1 d-flex flex-column align-items-center" style="width: 45px;">
                         <div style="font-size:28px; line-height:1;">${msg.senderIcon}</div>
@@ -600,7 +666,6 @@ const App = {
 
                 let textBlock = '';
                 if(msg.text) {
-                    // 👇 【サニタイズ適用】チャットの本文を安全に表示
                     textBlock = `
                         <div class="d-flex align-items-end mb-1">
                             ${isMe ? timeHtml : ''}
@@ -803,7 +868,6 @@ const App = {
 
                 const canDelete = CURRENT_USER.role === 'leader' || (CURRENT_USER.role === 'member' && app.userId === CURRENT_USER.id && !isInstruction);
 
-                // 👇 【サニタイズ適用】送信者と宛先の表示を安全にする
                 let senderReceiverText = escapeHTML(app.userName);
                 if (app.targetUserName) {
                     senderReceiverText += ` <i class="bi bi-caret-right-fill text-muted"></i> ${escapeHTML(app.targetUserName)}`;
