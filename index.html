@@ -29,31 +29,42 @@
     <div id="login-screen" class="d-flex flex-column align-items-center bg-light" style="position:fixed; top:0; left:0; width:100%; height:100dvh; z-index:1000; overflow-y:auto; padding-top:8vh; padding-bottom:40px; -webkit-overflow-scrolling:touch;">
         <div class="card shadow border-0 p-4" style="width: 100%; max-width: 350px;">
             
-            <div class="text-end mb-2">
-                <select id="lang-select" class="form-select form-select-sm d-inline-block w-auto shadow-none border-secondary">
-                    <option value="ja">日本語</option>
-                    <option value="en">English</option>
-                    <option value="zh">简体中文</option>
-                </select>
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="d-flex flex-column gap-2 text-start">
+                    <div class="dropdown">
+                        <a href="#" class="text-decoration-none fw-bold small dropdown-toggle" data-bs-toggle="dropdown">📖How to use</a>
+                        <ul class="dropdown-menu shadow-sm" style="font-size: 0.85rem;">
+                            <li><a class="dropdown-item clickable" onclick="window.openFullscreenImage('images/manual_ja.png')">サービス説明資料.png</a></li>
+                            <li><a class="dropdown-item clickable" onclick="window.openFullscreenImage('images/manual_en.png')">Service Description Materials.png</a></li>
+                            <li><a class="dropdown-item clickable" onclick="window.openFullscreenImage('images/manual_zh.png')">服务说明材料.png</a></li>
+                        </ul>
+                    </div>
+                    <div class="dropdown">
+                        <a href="#" class="text-decoration-none fw-bold small dropdown-toggle" data-bs-toggle="dropdown">📖Notification</a>
+                        <ul class="dropdown-menu shadow-sm" style="font-size: 0.85rem;">
+                            <li><a class="dropdown-item clickable" onclick="window.openFullscreenImage('images/notif_ja.png')">通知設定方法.png</a></li>
+                            <li><a class="dropdown-item clickable" onclick="window.openFullscreenImage('images/notif_en.png')">Notification settings.png</a></li>
+                            <li><a class="dropdown-item clickable" onclick="window.openFullscreenImage('images/notif_zh.png')">如何设置通知.png</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <select id="lang-select" class="form-select form-select-sm shadow-none border-secondary">
+                        <option value="ja">日本語</option>
+                        <option value="en">English</option>
+                        <option value="zh">简体中文</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="text-center mb-3">
+            <div class="text-center mb-3 mt-2">
                 <h4 class="fw-bold text-success" data-i18n="login_title">利用開始</h4>
             </div>
             
             <div class="alert alert-info small p-2 mb-3" role="alert" style="font-size: 0.85rem;" data-i18n-html="login_notice">
-                <strong>【重要なお知らせ】</strong><br>
-                システムの大規模なセキュリティ改修を行いました。<br>
-                お手数ですが、初回ログイン時に<strong>自分専用のパスワード（6文字以上）</strong>の設定をお願いいたします。<br>
-                <span class="text-danger">
-                    ※初期パスワードは「123456」です。<br>
-                    ※テストアカウント「リーダー」「メンバー」はPWなしでログイン可能です。
-                </span>
             </div>
             
             <div class="alert alert-secondary small p-2 mb-3" role="alert" style="font-size: 0.85rem;" data-i18n-html="login_account_creation">
-                <strong>【個人用アカウント作成について】</strong><br>
-                個人用アカウントの作成を希望される方は、<a href="https://x.com/FvFA4yNQfW15814" target="_blank" rel="noopener noreferrer" class="text-decoration-none fw-bold">@FvFA4yNQfW15814</a> までDMにてお問い合わせください。
             </div>
  
             <input type="text" id="login-name" class="form-control form-control-lg mb-3" placeholder="名前 (例: 田中)" data-i18n-placeholder="login_name_placeholder">
@@ -73,6 +84,7 @@
                 <div class="d-flex align-items-center gap-2">
                     <span id="user-name-display" class="fw-bold text-dark" style="font-size: 1.05rem;"></span>
                     <button id="logout-btn" class="btn btn-sm btn-outline-secondary"><i class="bi bi-box-arrow-right"></i></button>
+                    <button id="notification-btn" class="btn btn-sm btn-outline-secondary" style="transition: all 0.3s;"><i class="bi bi-bell-slash text-secondary"></i></button>
                     <button id="settings-btn" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#settingsModal"><i class="bi bi-gear"></i></button>
                 </div>
             </header>
@@ -350,9 +362,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="js/app.js?v=10"></script>
+    <script type="module" src="js/app.js?v=11"></script>
 </body>
 </html>
-
-
-
