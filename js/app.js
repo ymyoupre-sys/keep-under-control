@@ -613,7 +613,6 @@ const App = {
             const safeIcon = target.icon || "👤";
             const div = document.createElement('div');
             div.className = 'p-3 border-bottom d-flex align-items-center bg-white clickable';
-            // 山根さんオリジナルの master / slave 表現を維持！
             div.innerHTML = `
                 <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-3" style="width:40px; height:40px; font-size:20px;">${safeIcon}</div>
                 <div>
@@ -1255,5 +1254,6 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
