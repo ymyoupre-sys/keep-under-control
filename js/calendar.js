@@ -123,8 +123,10 @@ export const Calendar = {
                     const eventContainer = document.createElement('div');
                     eventContainer.className = 'mt-1 w-100 position-relative';
                     
+                    // 👇 変更：4件目以降がある場合は、「+X more」を置くための専用の余白(16px)を追加で確保する
                     const displayCount = Math.min(dayEvents.length, 3);
-                    eventContainer.style.height = `${displayCount * 20}px`; 
+                    const moreLabelSpace = dayEvents.length > 3 ? 16 : 0;
+                    eventContainer.style.height = `${(displayCount * 20) + moreLabelSpace}px`; 
 
                     dayEvents.forEach((evt, idx) => {
                         if (idx >= 3) return;
@@ -197,4 +199,5 @@ export const Calendar = {
         try { await DB.deleteEvent(id); } catch (e) { console.error("Delete Error", e); }
     }
 };
+
 
