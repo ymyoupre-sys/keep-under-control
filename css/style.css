@@ -110,20 +110,22 @@ html, body {
 /* カスタム×ボタン（フルスクリーン用） */
 .custom-close-fullscreen {
     position: absolute;
-    top: -15px;
-    right: -15px;
-    width: 36px;
-    height: 36px;
-    background-color: rgba(0, 0, 0, 0.5); /* 透過の黒 */
+    /* 👇 変更：画像枠ではなく、画面全体の右上（ノッチを避けた安全圏）に固定する */
+    top: max(20px, env(safe-area-inset-top)); 
+    right: max(20px, env(safe-area-inset-right));
+    width: 40px;
+    height: 40px;
+    background-color: rgba(0, 0, 0, 0.6);
     border: 2px solid white;
     border-radius: 50%;
     color: white;
-    font-size: 20px;
+    font-size: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
     z-index: 2050;
+    cursor: pointer;
 }
 
 /* --- カレンダー --- */
@@ -169,4 +171,5 @@ header {
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
+
 
