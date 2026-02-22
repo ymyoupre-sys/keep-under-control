@@ -19,6 +19,20 @@ let completionImagesBase64 = [];
 
 const TEST_ACCOUNT_NAMES = ["リーダー", "メンバー", "领导者", "成员", "leader", "member"];
 
+// 👇 【新規追加】悪意のあるプログラム（タグ）を無害な文字に変換（消毒）するセキュリティ機能
+const escapeHTML = (str) => {
+    if (typeof str !== 'string') return str;
+    return str.replace(/[&<>'"]/g, 
+        tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+        }[tag] || tag)
+    );
+};
+
 const TRANSLATIONS = {
     "login_title": { ja: "利用開始", en: "Start Using", zh: "开始使用" },
     "login_notice": {
@@ -101,9 +115,9 @@ const TRANSLATIONS = {
     "msg_submit_success": { ja: "送信しました", en: "Submitted successfully.", zh: "发送成功。" },
     "msg_submit_fail": { ja: "送信に失敗しました", en: "Failed to submit.", zh: "发送失败。" },
     "msg_max_images": { ja: "画像は最大4枚までです", en: "Maximum of 4 images allowed.", zh: "最多只能上传4张图片。" },
-    "msg_completion_error": { ja: "【エラー】コメントまたは証拠画像のどちらかを必ず入力・添付してください", en: "[Error] A comment or evidence image is required", zh: "【错误】必须填写留言或上传证明图片" },
+    "msg_completion_error": { ja: "【エラー】コメントまたは証拠画像のどちらかを必ず入力・添付してください！", en: "[Error] A comment or evidence image is required!", zh: "【错误】必须填写留言或上传证明图片！" },
     "msg_report_fail": { ja: "報告に失敗しました", en: "Failed to report.", zh: "汇报失败。" },
-    "msg_confirm_mark_read": { ja: "この申請結果を確認済みとしますか？\n（※自分用のメモ機能のため、主人に通知は飛びません）", en: "Mark this result as confirmed?\n(*Memo only, master will not be notified)", zh: "是否确认此结果？\n(※此为备忘功能，不会通知主人)" },
+    "msg_confirm_mark_read": { ja: "この申請結果を確認済みとしますか？\n（※自分用のメモ機能のため、リーダーに通知は飛びません）", en: "Mark this result as confirmed?\n(*Memo only, leader will not be notified)", zh: "是否确认此结果？\n(※此为备忘功能，不会通知负责人)" },
     
     "badge_instruction": { ja: "命令", en: "Instruction", zh: "指令" },
     "badge_instruction_wait": { ja: "命令（完了報告待ち）", en: "Instruction (Pending Report)", zh: "指令 (待汇报)" },
@@ -183,7 +197,6 @@ const App = {
             
             if (targetTabId === '#tab-inbox') this.startInboxListener();
             
-            // 宛先ドロップダウンの言語も更新する
             this.setupFormTargets();
         }
     },
@@ -348,7 +361,6 @@ const App = {
             typeSelect.appendChild(opt);
         });
 
-        // 👇 宛先ドロップダウンの構築（3人以上の場合のみ）
         this.setupFormTargets();
 
         this.startInboxListener();
@@ -371,7 +383,6 @@ const App = {
         if (targetNav) targetNav.click();
     },
 
-    // 👇 追加：宛先ドロップダウンを構築する処理
     async setupFormTargets() {
         const groupUsers = await DB.getGroupUsers(CURRENT_USER.group);
         const targetContainer = document.getElementById('form-target-container');
@@ -379,23 +390,19 @@ const App = {
         
         if (!targetContainer || !targetSelect) return;
 
-        // グループが3人以上の場合のみ表示
         if (groupUsers.length >= 3) {
             targetContainer.classList.remove('d-none');
             
-            // 現在選択されている値を保持
             const currentValue = targetSelect.value;
             
             targetSelect.innerHTML = '';
             
-            // 選択肢1：「全員（指定なし）」
             const optAll = document.createElement('option');
             optAll.value = "all";
             optAll.textContent = TRANSLATIONS["target_all"][currentLang];
             optAll.setAttribute('data-i18n', 'target_all');
             targetSelect.appendChild(optAll);
             
-            // 選択肢2以降：自分がリーダーならメンバーを、メンバーならリーダーをリスト化
             const targetRole = CURRENT_USER.role === 'leader' ? 'member' : 'leader';
             const targets = groupUsers.filter(u => u.role === targetRole);
             
@@ -406,7 +413,6 @@ const App = {
                 targetSelect.appendChild(opt);
             });
             
-            // 以前の選択状態を復元（言語切り替え時用）
             if (currentValue) {
                 targetSelect.value = currentValue;
             }
@@ -529,10 +535,11 @@ const App = {
             const safeIcon = target.icon || "👤";
             const div = document.createElement('div');
             div.className = 'p-3 border-bottom d-flex align-items-center bg-white clickable';
+            // 👇 【サニタイズ適用】名前を escapeHTML で安全に表示
             div.innerHTML = `
                 <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-3" style="width:40px; height:40px; font-size:20px;">${safeIcon}</div>
                 <div>
-                    <div class="fw-bold">${target.name} <span class="badge bg-light text-dark ms-1">${target.role === 'leader' ? 'master' : 'slave'}</span></div>
+                    <div class="fw-bold">${escapeHTML(target.name)} <span class="badge bg-light text-dark ms-1">${target.role === 'leader' ? 'master' : 'slave'}</span></div>
                     <div class="small text-muted">タップして会話を開く</div>
                 </div>
             `;
@@ -581,13 +588,11 @@ const App = {
 
                 const reactionHtml = reactionsCount > 0 ? `<div class="reaction-badge"><i class="${hasReacted ? 'bi bi-heart-fill' : 'bi bi-heart'}"></i> ${reactionsCount}</div>` : '';
 
-                const div = document.createElement('div');
-                div.className = `d-flex align-items-start chat-row ${isMe ? 'justify-content-end' : 'justify-content-start'}`;
-                
+                // 👇 【サニタイズ適用】送信者の名前を安全に表示
                 const iconHtml = !isMe ? `
                     <div class="flex-shrink-0 me-2 mt-1 d-flex flex-column align-items-center" style="width: 45px;">
                         <div style="font-size:28px; line-height:1;">${msg.senderIcon}</div>
-                        <div style="font-size: 0.55rem; color: #666; margin-top: 2px; text-align: center; line-height: 1.1; word-break: break-all;">${msg.senderName}</div>
+                        <div style="font-size: 0.55rem; color: #666; margin-top: 2px; text-align: center; line-height: 1.1; word-break: break-all;">${escapeHTML(msg.senderName)}</div>
                     </div>
                 ` : '';
                 
@@ -595,11 +600,12 @@ const App = {
 
                 let textBlock = '';
                 if(msg.text) {
+                    // 👇 【サニタイズ適用】チャットの本文を安全に表示
                     textBlock = `
                         <div class="d-flex align-items-end mb-1">
                             ${isMe ? timeHtml : ''}
                             <div style="position: relative;" class="chat-bubble-content">
-                                <div class="p-2 rounded text-dark shadow-sm" style="background-color: ${isMe ? 'var(--chat-me-bg)' : 'var(--chat-other-bg)'}; display: inline-block; text-align: left; white-space: pre-wrap; word-wrap: break-word;">${msg.text}${editedLabel}</div>
+                                <div class="p-2 rounded text-dark shadow-sm" style="background-color: ${isMe ? 'var(--chat-me-bg)' : 'var(--chat-other-bg)'}; display: inline-block; text-align: left; white-space: pre-wrap; word-wrap: break-word;">${escapeHTML(msg.text)}${editedLabel}</div>
                                 ${reactionHtml}
                             </div>
                             ${!isMe ? timeHtml : ''}
@@ -638,6 +644,8 @@ const App = {
                     }
                 }
 
+                const div = document.createElement('div');
+                div.className = `d-flex align-items-start chat-row ${isMe ? 'justify-content-end' : 'justify-content-start'}`;
                 div.innerHTML = `
                     ${iconHtml}
                     <div style="max-width: 75%;">
@@ -748,11 +756,9 @@ const App = {
 
             apps.forEach(app => {
                 
-                // 👇 宛先が指定されている場合、自分に関係ないものは完全に非表示にする
                 if (app.targetUserId) {
                     if (CURRENT_USER.id !== app.userId && CURRENT_USER.id !== app.targetUserId) return;
                 } else {
-                    // 指定なし（旧データ含む）の場合はこれまで通り
                     if(CURRENT_USER.role === 'member' && app.userId !== CURRENT_USER.id && app.type !== 'instruction') return;
                 }
 
@@ -797,10 +803,10 @@ const App = {
 
                 const canDelete = CURRENT_USER.role === 'leader' || (CURRENT_USER.role === 'member' && app.userId === CURRENT_USER.id && !isInstruction);
 
-                // 👇 送信者と宛先の表示を作成
-                let senderReceiverText = app.userName;
+                // 👇 【サニタイズ適用】送信者と宛先の表示を安全にする
+                let senderReceiverText = escapeHTML(app.userName);
                 if (app.targetUserName) {
-                    senderReceiverText += ` <i class="bi bi-caret-right-fill text-muted"></i> ${app.targetUserName}`;
+                    senderReceiverText += ` <i class="bi bi-caret-right-fill text-muted"></i> ${escapeHTML(app.targetUserName)}`;
                 }
                 senderReceiverText += ` <span class="ms-1">- ${app.createdDateStr}</span>`;
 
@@ -812,7 +818,7 @@ const App = {
                         </div>
                         <div id="delete-btn-container-${app.id}" style="width: 24px; text-align: right;"></div>
                     </div>
-                    <strong class="d-block mb-2 pe-5" style="font-size: 1.05rem;">${app.title}</strong>
+                    <strong class="d-block mb-2 pe-5" style="font-size: 1.05rem;">${escapeHTML(app.title)}</strong>
                     <div class="d-flex align-items-center gap-2 small text-muted pe-5">
                         <span>${senderReceiverText}</span>
                         ${attachmentIconsHtml}
@@ -1073,7 +1079,6 @@ const App = {
         }, false);
     },
 
-    // 👇 宛先データを含めて送信するように改修
     async handleFormSubmit() {
         const title = document.getElementById('form-type-select').value;
         const content = document.getElementById('form-content').value;
@@ -1135,7 +1140,7 @@ const App = {
         const toast = document.createElement('div');
         toast.className = 'bg-dark text-white p-3 rounded shadow-lg mb-2 d-flex align-items-center';
         toast.style.pointerEvents = 'auto'; 
-        toast.innerHTML = `<i class="bi bi-bell-fill text-warning me-3 fs-4"></i><div><strong class="d-block">${title}</strong><span class="small">${body}</span></div>`;
+        toast.innerHTML = `<i class="bi bi-bell-fill text-warning me-3 fs-4"></i><div><strong class="d-block">${escapeHTML(title)}</strong><span class="small">${escapeHTML(body)}</span></div>`;
         
         toast.onclick = () => toast.remove();
         container.appendChild(toast);
