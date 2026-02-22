@@ -139,22 +139,24 @@ html, body {
     height: auto; 
     position: relative; 
 }
+
+/* 👇 限界まで無駄な余白を削り、バーをスリムにして60px内に収める */
+.calendar-day { 
+    min-height: 60px; 
+    height: auto; 
+    position: relative; 
+    padding: 2px !important; 
+}
 .calendar-day span.day-num {
-    display: block; text-align: center; font-size: 0.9rem; z-index: 2; position: relative;
-    /* marginを 4px → 2px に減らして、日付の上の無駄な余白を少し削りました */
-    width: 24px; height: 24px; line-height: 20px; margin: 2px auto 0; border: 2px solid transparent; border-radius: 50%; box-sizing: border-box; 
+    display: block; text-align: center; font-size: 0.8rem; z-index: 2; position: relative;
+    width: 20px; height: 20px; line-height: 16px; margin: 0 auto; border: 2px solid transparent; border-radius: 50%; box-sizing: border-box; 
 }
-.calendar-day.today span.day-num { border-color: var(--primary-color); color: var(--primary-color); font-weight: bold; }
-
 .event-bar {
-    position: absolute; height: 18px; line-height: 18px; font-size: 10px; color: white; background-color: var(--primary-color);
-    z-index: 5; border-radius: 0; padding: 0 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    position: absolute; height: 14px; line-height: 14px; font-size: 9px; color: white; background-color: var(--primary-color);
+    z-index: 5; border-radius: 0; padding: 0 2px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
 }
-.event-bar.leader-event { background-color: #ff9800; }
-.event-bar.start-day { border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
-.event-bar.end-day { border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
+.event-more { position: absolute; bottom: 0px; right: 1px; font-size: 9px; color: #666; background: rgba(255,255,255,0.9); padding: 0 2px; border-radius: 4px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.1); z-index: 10; }
 
-.event-more { position: absolute; bottom: 2px; right: 2px; font-size: 10px; color: #666; background: rgba(255,255,255,0.9); padding: 0 4px; border-radius: 4px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.1); z-index: 10; }
 
 /* =========================================
    端末ごとの視差・セーフエリア（ノッチ/ホームバー）対策
@@ -177,6 +179,7 @@ header {
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
+
 
 
 
