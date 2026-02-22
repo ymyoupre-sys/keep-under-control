@@ -133,15 +133,16 @@ html, body {
 .cal-sat { color: #007aff !important; }
 .cal-holiday { color: #ff9500 !important; font-weight: bold; }
 
-/* 👇 変更：基本を正方形(1/1)にし、予定が溢れた場合だけ自動で伸びる(auto)ようにする */
+/* 👇 変更：基本をスマホの正方形(60px)とし、予定が増えた時だけ自動で下に伸びるようにする */
 .calendar-day { 
-    aspect-ratio: 1 / 1; 
+    min-height: 60px; 
     height: auto; 
     position: relative; 
 }
 .calendar-day span.day-num {
     display: block; text-align: center; font-size: 0.9rem; z-index: 2; position: relative;
-    width: 24px; height: 24px; line-height: 20px; margin: 4px auto 0; border: 2px solid transparent; border-radius: 50%; box-sizing: border-box; 
+    /* marginを 4px → 2px に減らして、日付の上の無駄な余白を少し削りました */
+    width: 24px; height: 24px; line-height: 20px; margin: 2px auto 0; border: 2px solid transparent; border-radius: 50%; box-sizing: border-box; 
 }
 .calendar-day.today span.day-num { border-color: var(--primary-color); color: var(--primary-color); font-weight: bold; }
 
@@ -176,6 +177,7 @@ header {
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
+
 
 
 
