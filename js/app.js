@@ -123,6 +123,7 @@ const TRANSLATIONS = {
     "msg_notif_unsupported": { ja: "お使いのブラウザは通知機能に対応していません。", en: "Your browser does not support notifications.", zh: "您的浏览器不支持通知功能。" },
     "msg_notif_denied": { ja: "通知がブロックされています。端末の設定アプリから、このWebサイトの通知を「許可」に変更してください。", en: "Notifications are blocked. Please allow notifications for this site in your device settings.", zh: "通知被屏蔽。请在设备设置中允许此网站的通知。" },
     "msg_notif_enabled": { ja: "通知をオンにしました！", en: "Notifications turned on!", zh: "通知已开启！" },
+    "msg_notif_already_on": { ja: "すでに通知はオンになっています。", en: "Notifications are already on.", zh: "通知已处于开启状态。" },
     "msg_notif_error": { ja: "通知の設定中にエラーが発生しました。", en: "An error occurred while setting up notifications.", zh: "设置通知时发生错误。" },
 
     "badge_instruction": { ja: "命令", en: "Instruction", zh: "指令" },
@@ -402,12 +403,8 @@ const App = {
         }
 
         if (Notification.permission === 'granted') {
-            btn.classList.remove('btn-outline-secondary');
-            btn.classList.add('btn-outline-warning', 'border-warning');
             icon.className = 'bi bi-bell-fill text-warning';
         } else {
-            btn.classList.add('btn-outline-secondary');
-            btn.classList.remove('btn-outline-warning', 'border-warning');
             icon.className = 'bi bi-bell-slash text-secondary';
         }
     },
@@ -421,6 +418,11 @@ const App = {
 
         if (Notification.permission === 'denied') {
             alert(TRANSLATIONS["msg_notif_denied"][currentLang]);
+            return;
+        }
+
+        if (Notification.permission === 'granted') {
+            alert(TRANSLATIONS["msg_notif_already_on"][currentLang]);
             return;
         }
 
@@ -1241,3 +1243,4 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
