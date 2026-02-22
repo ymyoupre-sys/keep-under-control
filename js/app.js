@@ -311,11 +311,12 @@ const App = {
                         changeBtn.textContent = "更新中...";
 
                         try {
-                            await updatePassword(auth.currentUser, newPwd);
                             await DB.updatePassword(CURRENT_USER.id, newPwd);
-                            CURRENT_USER.password = newPwd; 
-                            
-                            localStorage.setItem('app_user_v3', JSON.stringify(CURRENT_USER));
+                            // 👇 変更：機密情報であるパスワードはローカルストレージに保存しない！
+                            const userToSave = { ...CURRENT_USER };
+                            delete userToSave.password; 
+                            localStorage.setItem('app_user_v3', JSON.stringify(userToSave));
+
                             pwdModal.hide();
                             this.showMainScreen();
                         } catch (e) {
@@ -522,12 +523,20 @@ const App = {
                 document.getElementById('header-title').textContent = titleMap[targetId];
 
                 const chatInput = document.getElementById('chat-input-area');
+                const bottomNav = document.querySelector('.bottom-nav'); // 👇 追加
+                
                 if (targetId === '#tab-chat') {
                     const chatDetail = document.getElementById('chat-detail-container');
-                    if (chatDetail && !chatDetail.classList.contains('d-none')) chatInput.classList.remove('d-none');
-                    else chatInput.classList.add('d-none');
+                    if (chatDetail && !chatDetail.classList.contains('d-none')) {
+                        chatInput.classList.remove('d-none');
+                        bottomNav.classList.add('d-none'); // 👇 チャット詳細中はナビを隠す！
+                    } else {
+                        chatInput.classList.add('d-none');
+                        bottomNav.classList.remove('d-none'); // 👇 チャット一覧ではナビを出す！
+                    }
                 } else {
                     chatInput.classList.add('d-none');
+                    bottomNav.classList.remove('d-none'); // 👇 他のタブでもナビを出す！
                 }
             });
         });
@@ -798,7 +807,10 @@ const App = {
             prevMessageCount = currentMessageCount;
         });
         
-        document.getElementById('back-to-chat-list').onclick = () => history.back(); 
+        document.getElementById('back-to-chat-list').onclick = () => {
+            document.querySelector('.bottom-nav').classList.remove('d-none'); // 👇 戻る時にナビを復活
+            history.back();
+        };
         
         document.getElementById('chat-send-btn').onclick = async () => {
             const input = document.getElementById('chat-message-input');
@@ -1243,4 +1255,5 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
