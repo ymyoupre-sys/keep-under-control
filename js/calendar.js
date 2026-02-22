@@ -122,10 +122,12 @@ export const Calendar = {
 
                     const eventContainer = document.createElement('div');
                     eventContainer.className = 'mt-1 w-100 position-relative';
-                    eventContainer.style.height = '60px'; 
+                    
+                    const displayCount = Math.min(dayEvents.length, 3);
+                    eventContainer.style.height = `${displayCount * 20}px`; 
 
                     dayEvents.forEach((evt, idx) => {
-                        if (idx >= 3) return; 
+                        if (idx >= 3) return;
 
                         const isStart = new Date(evt.startDate).getDate() === date;
                         const isEnd = new Date(evt.endDate).getDate() === date;
@@ -195,3 +197,4 @@ export const Calendar = {
         try { await DB.deleteEvent(id); } catch (e) { console.error("Delete Error", e); }
     }
 };
+
