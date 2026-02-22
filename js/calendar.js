@@ -28,7 +28,16 @@ export const Calendar = {
     startListener() {
         if(!this.currentUser || !this.currentUser.group) return;
         DB.subscribeEvents(this.currentUser.group, (allEvents) => {
-            this.events = allEvents.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+            this.events = allEvents.sort((a, b) => {
+                // ① まずは開始日の順番に並べる
+                const diff = new Date(a.startDate) - new Date(b.startDate);
+                if (diff !== 0) return diff;
+                
+                // ② 開始日が同じ場合は、作成された順番（古い順）に並べる
+                const timeA = a.createdAt?.seconds || 0;
+                const timeB = b.createdAt?.seconds || 0;
+                return timeA - timeB;
+            });
             this.render(); 
         });
     },
@@ -199,5 +208,6 @@ export const Calendar = {
         try { await DB.deleteEvent(id); } catch (e) { console.error("Delete Error", e); }
     }
 };
+
 
 
