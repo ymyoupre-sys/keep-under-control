@@ -59,7 +59,7 @@ export const Calendar = {
         this.buildGrid('calendar-grid', y1, m1);
 
         const nextGrid = document.getElementById('calendar-grid-next');
-        if (this.currentUser.role === 'leader' && nextGrid) {
+        if (nextGrid) {
             nextGrid.classList.remove('d-none');
             const nextDate = new Date(y1, m1 + 1, 1);
             // 👇 変更：翌月カレンダーのヘッダーも「YYYY / MM」フォーマットに変更
@@ -209,6 +209,7 @@ export const Calendar = {
         try { await DB.deleteEvent(id); } catch (e) { console.error("Delete Error", e); }
     }
 };
+
 
 
 
