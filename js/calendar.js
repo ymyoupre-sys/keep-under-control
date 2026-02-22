@@ -98,7 +98,7 @@ export const Calendar = {
             
             for (let j = 0; j < 7; j++) {
                 const cell = document.createElement('div');
-                cell.className = 'border-end p-1 calendar-day d-flex flex-column';
+                cell.className = 'border-end calendar-day d-flex flex-column'; // 👈 p-1 を削除
                 cell.style.flex = '1';
                 cell.style.width = '14.28%';
 
@@ -130,24 +130,25 @@ export const Calendar = {
                     });
 
                     const eventContainer = document.createElement('div');
-                    eventContainer.className = 'mt-1 w-100 position-relative';
+                    eventContainer.className = 'w-100 position-relative';
+                    eventContainer.style.marginTop = '2px'; // 👈 mt-1の代わりに極小の余白を設定
                     
-                    // 👇 変更：4件目以降がある場合は、「+X more」を置くための専用の余白(16px)を追加で確保する
+                    // 👇 変更：バーの間隔を 20px から 15px に詰める
                     const displayCount = Math.min(dayEvents.length, 3);
-                    const moreLabelSpace = dayEvents.length > 3 ? 16 : 0;
-                    eventContainer.style.height = `${(displayCount * 20) + moreLabelSpace}px`; 
+                    const moreLabelSpace = dayEvents.length > 3 ? 14 : 0;
+                    eventContainer.style.height = `${(displayCount * 15) + moreLabelSpace}px`; 
 
                     dayEvents.forEach((evt, idx) => {
-                        if (idx >= 3) return;
+                        if (idx >= 3) return; 
 
                         const isStart = new Date(evt.startDate).getDate() === date;
                         const isEnd = new Date(evt.endDate).getDate() === date;
 
                         const bar = document.createElement('div');
                         bar.className = `event-bar ${evt.userRole === 'leader' ? 'leader-event' : ''} ${isStart ? 'start-day' : ''} ${isEnd ? 'end-day' : ''}`;
-                        bar.style.top = `${idx * 20}px`;
-                        bar.style.left = isStart ? '2px' : '-5px';
-                        bar.style.right = isEnd ? '2px' : '-5px';
+                        bar.style.top = `${idx * 15}px`; // 👈 15px間隔で配置
+                        bar.style.left = isStart ? '1px' : '-3px';
+                        bar.style.right = isEnd ? '1px' : '-3px';
                         bar.textContent = evt.title;
                         
                         bar.onclick = (e) => {
@@ -208,6 +209,7 @@ export const Calendar = {
         try { await DB.deleteEvent(id); } catch (e) { console.error("Delete Error", e); }
     }
 };
+
 
 
 
