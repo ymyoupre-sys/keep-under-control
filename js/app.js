@@ -969,7 +969,7 @@ const App = {
                                 newSubmitBtn.textContent = "送信中...";
                                 
                                 try {
-                                    const uploadedUrls = await DB.submitCompletionReport(app.id, CURRENT_USER.id, comment, completionImagesBase64);
+                                    const uploadedUrls = await DB.submitCompletionReport(app.id, CURRENT_USER.group, CURRENT_USER.id, comment, completionImagesBase64);
                                     
                                     const autoMsg = `✅ 「${app.title}」を完了しました！${comment ? '\n\n' + comment : ''}`;
                                     await DB.sendMessage(CURRENT_USER.group, CURRENT_USER.id, app.userId, CURRENT_USER, autoMsg, uploadedUrls);
@@ -1275,6 +1275,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
