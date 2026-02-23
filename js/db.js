@@ -190,13 +190,20 @@ export const DB = {
         return imageUrls;
     },
 
+    // 🚨 変更：検索（query/where）をやめ、16進数化したIDで直接取得する（List操作の撲滅）
     async getUserByName(name) {
-        const q = query(collection(db, "users"), where("name", "==", name), limit(1));
-        const snap = await getDocs(q);
-        if (!snap.empty) {
-            const data = snap.docs[0].data();
+        // 名前を16進数化（app.jsと同じロジック）
+        const safeHexEncode = (str) => {
+            return Array.from(new TextEncoder().encode(str))
+                .map(b => b.toString(16).padStart(2, '0')).join('');
+        };
+        const docId = safeHexEncode(name);
+
+        const snap = await getDoc(doc(db, "users", docId));
+        if (snap.exists()) {
+            const data = snap.data();
             data.group = data.group || data.groupId || "未設定";
-            return { id: snap.docs[0].id, ...data };
+            return { id: snap.id, ...data };
         }
         return null;
     },
@@ -226,3 +233,4 @@ export const DB = {
         return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 };
+
