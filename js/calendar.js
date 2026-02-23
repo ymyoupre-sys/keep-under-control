@@ -191,17 +191,20 @@ export const Calendar = {
             await DB.addEvent({
                 groupId: this.currentUser.group,
                 userId: this.currentUser.id,
-                userName: this.currentUser.name || "名称未設定",
+                userName: this.currentUser.name || "名称未設定", // 👈 追加：名前欠落エラー防止
                 userRole: this.currentUser.role,
-                startDate: startDate.replace(/-/g, '/'),
-                endDate: endDate.replace(/-/g, '/'),
+                startDate: (startDate || "").replace(/-/g, '/'), // 👈 追加：クラッシュ防止
+                endDate: (endDate || "").replace(/-/g, '/'),     // 👈 追加：クラッシュ防止
                 title: title
             });
             
             bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
             document.getElementById('event-title-input').value = '';
-        } catch (e) { alert('Failed to save.'); } // 👈 英語に統一
-    },
+        } catch (e) {
+            console.error("カレンダー保存エラー:", e); 
+            alert('Failed to save.'); 
+        } 
+    }, 
 
     async deleteEvent(id, title) {
         // 👇 変更：削除確認のアラート文言を英語に統一
@@ -209,6 +212,7 @@ export const Calendar = {
         try { await DB.deleteEvent(id); } catch (e) { console.error("Delete Error", e); }
     }
 };
+
 
 
 
