@@ -22,17 +22,20 @@ export const DB = {
     async createAuthBridge(authUid, userId, group) {
         if (!authUid || !userId) return;
         try {
+            // 🚨【重要：順番変更】
+            // 1. 先に名簿（users）側に自分のUIDを刻印し、アカウントをロックする！
+            await updateDoc(doc(db, "users", userId), {
+                authUid: authUid,
+                updatedAt: serverTimestamp()
+            });
+
+            // 2. ロックが完了した後に、自分の証明書（auth_bridge）を作成する！
             await setDoc(doc(db, "auth_bridge", authUid), {
                 userId: userId,
                 group: group || "未設定",
                 updatedAt: serverTimestamp()
             }, { merge: true });
 
-            // 🚨【重要】名簿（users）側に自分のUIDを刻印し、他人の乗っ取りをロックする！
-            await updateDoc(doc(db, "users", userId), {
-                authUid: authUid,
-                updatedAt: serverTimestamp()
-            });
         } catch (e) {
             console.error("Bridge Error:", e);
         }
@@ -218,3 +221,4 @@ export const DB = {
         return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 };
+
