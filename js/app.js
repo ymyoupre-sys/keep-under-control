@@ -1205,7 +1205,7 @@ const App = {
             title: title,
             content: content,
             userId: CURRENT_USER.id,
-            userName: CURRENT_USER.name,
+            userName: CURRENT_USER.name || "名称未設定",
             groupId: CURRENT_USER.group,
             type: CURRENT_USER.role === 'leader' ? 'instruction' : 'request',
             images: formImagesBase64,
@@ -1289,6 +1289,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
