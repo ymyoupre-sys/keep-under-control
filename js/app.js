@@ -242,7 +242,7 @@ const App = {
                 .map(b => b.toString(16).padStart(2, '0')).join('');
         };
 
-loginBtn.addEventListener('click', async () => {
+    loginBtn.addEventListener('click', async () => {
             const inputName = nameInput.value.trim();
             let inputPass = passInput.value.trim(); 
 
@@ -1288,6 +1288,7 @@ loginBtn.addEventListener('click', async () => {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
