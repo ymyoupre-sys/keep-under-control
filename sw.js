@@ -1,6 +1,11 @@
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
 
+// ==========================================
+// 🌟 1. キャッシュのバージョン管理（アップデート時はここを変更！）
+// ==========================================
+const CACHE_VERSION = 'app-v1.0.0'; // 👈 今後アップデートする際はこの文字を適当に変えるだけでOKです（例: v1.0.1）
+
 const firebaseConfig = {
   apiKey: "AIzaSyCWy_BjB9tr02viCSfAx93qeJyX4G0e2iw",
   authDomain: "keep-under-control.firebaseapp.com",
@@ -14,6 +19,36 @@ firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
 let badgeCount = 0; // アプリアイコンの数字バッジ用
+
+// ==========================================
+// 🌟 2. サービスワーカーの即時更新＆お掃除機能（追加部分）
+// ==========================================
+
+// インストール時：新しいバージョンが見つかったら、即座に待機状態をスキップする
+self.addEventListener('install', (event) => {
+    self.skipWaiting();
+});
+
+// アクティブ時：古いバージョンのキャッシュが残っていればすべて削除し、即座にコントロールを奪う
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cacheName) => {
+                    // 現在のバージョン名と違うキャッシュはすべて破棄
+                    if (cacheName !== CACHE_VERSION) {
+                        console.log('古いキャッシュを削除しました:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        }).then(() => self.clients.claim()) // すぐに新しいサービスワーカーを適用
+    );
+});
+
+// ==========================================
+// 3. プッシュ通知の処理（既存のまま）
+// ==========================================
 
 messaging.onBackgroundMessage((payload) => {
   console.log('バックグラウンド通知を受信:', payload);
