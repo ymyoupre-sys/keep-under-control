@@ -242,11 +242,11 @@ const App = {
                 .map(b => b.toString(16).padStart(2, '0')).join('');
         };
 
-        loginBtn.addEventListener('click', async () => {
+loginBtn.addEventListener('click', async () => {
             const inputName = nameInput.value.trim();
             let inputPass = passInput.value.trim(); 
 
-            // 👇 【復活】テストアカウントの場合は、裏側でパスワードを強制セットして顔パスにする！
+            // テストアカウントの場合は、裏側でパスワードを強制セットして顔パスにする
             if (TEST_ACCOUNT_NAMES.includes(inputName)) {
                 inputPass = INITIAL_PASS; 
             }
@@ -263,22 +263,38 @@ const App = {
             const dummyEmail = safeHexEncode(inputName) + "@dummy.keep-under-control.com";
 
             try {
-                let userData = null;
+                let isFirstLogin = false;
 
+                // 🚨【修正1】認証（ログイン）だけの処理を完全に独立させる
                 try {
-                    // 1. 既存ユーザーとしてログイン試行
                     await signInWithEmailAndPassword(auth, dummyEmail, inputPass);
-                    // 🚨【重要】既存ユーザーは「AuthUID」で検索し、他人のデータの覗き見を防ぐ
-                    userData = await DB.getUserByAuthUid(auth.currentUser.uid);
-                } catch (err) {
+                } catch (authErr) {
                     if (inputPass === INITIAL_PASS) {
-                        // 2. 初回ログイン（新規登録）
                         await createUserWithEmailAndPassword(auth, dummyEmail, inputPass);
-                        // 初回だけはまだUIDが結びついていないので名前で検索
+                        isFirstLogin = true;
+                    } else {
+                        console.error("Authentication Error:", authErr);
+                        throw new Error("wrong-password"); // ここは本当にパスワードが違う時だけ
+                    }
+                }
+
+                // 🚨【修正2】名簿の取得処理（データベースのエラーと分離）
+                let userData = null;
+                try {
+                    if (isFirstLogin) {
                         userData = await DB.getUserByName(inputName);
                     } else {
-                        throw new Error("wrong-password");
+                        // 既存ユーザーはUIDで探す
+                        userData = await DB.getUserByAuthUid(auth.currentUser.uid);
+                        
+                        // 🌟【超重要】過去にパスワード設定済みだが、名簿側のロック(authUid)が空の場合の救済措置
+                        if (!userData) {
+                            userData = await DB.getUserByName(inputName);
+                        }
                     }
+                } catch (dbErr) {
+                    console.error("Firestore Rules Error:", dbErr);
+                    throw new Error("db-error");
                 }
 
                 if (!userData) {
@@ -289,13 +305,13 @@ const App = {
                 CURRENT_USER = userData;
 
                 if (auth.currentUser) {
-                    // 🚨 【重要】第4引数に CURRENT_USER.role を追加し、役職を証明書に刻む
+                    // 第4引数に CURRENT_USER.role を追加し、役職を証明書に刻む
                     await DB.createAuthBridge(auth.currentUser.uid, CURRENT_USER.id, CURRENT_USER.group, CURRENT_USER.role);
                 }
                 
                 if (inputPass === INITIAL_PASS) {
                     
-                    // 👇 テストユーザーなら、パスワード変更を強制せずに「隔離部屋」へ直行させる
+                    // テストユーザーなら、隔離部屋へ直行
                     if (TEST_ACCOUNT_NAMES.includes(inputName)) {
                         const userToSave = { ...CURRENT_USER };
                         delete userToSave.password; 
@@ -304,7 +320,7 @@ const App = {
                         return; 
                     }
 
-                    // 本番ユーザー（初回ログイン）の場合はパスワード変更を強制する
+                    // 本番ユーザー（初回ログイン）の場合はパスワード変更
                     const pwdModal = new bootstrap.Modal(document.getElementById('passwordChangeModal'));
                     pwdModal.show();
 
@@ -324,9 +340,7 @@ const App = {
                         changeBtn.textContent = "更新中...";
 
                         try {
-                            // Firebase Auth側のパスワードを更新
                             await updatePassword(auth.currentUser, newPwd);
-                            
                             const userToSave = { ...CURRENT_USER };
                             delete userToSave.password; 
                             localStorage.setItem('app_user_v3', JSON.stringify(userToSave));
@@ -348,14 +362,13 @@ const App = {
                 }
 
             } catch (error) {
-                console.error(error);
+                console.error("General Login Error:", error);
                 document.getElementById('login-error').classList.remove('d-none');
                 loginBtn.disabled = false;
                 loginBtn.textContent = TRANSLATIONS["login_button"][currentLang];
             }
         });
-    },
-
+        
     showMainScreen() {
         document.getElementById('login-screen').classList.add('d-none');
         document.getElementById('main-screen').classList.remove('d-none');
@@ -1275,6 +1288,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
