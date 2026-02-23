@@ -83,7 +83,7 @@ export const DB = {
         }
 
         await addDoc(collection(db, "chats", chatRoomId, "messages"), {
-            text: text, senderId: sender.id, senderName: sender.name, senderIcon: sender.icon || "👤",
+            text: text, senderId: sender.id, senderName: sender.name || "名称未設定", senderIcon: sender.icon || "👤", // 👈 senderNameに追記
             images: imageUrls, reactions: [], isEdited: false, createdAt: serverTimestamp()
         });
         const lastMsgText = text || (imageUrls.length > 0 ? '画像が送信されました' : '');
@@ -235,5 +235,6 @@ export const DB = {
         return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 };
+
 
 
