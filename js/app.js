@@ -1198,7 +1198,11 @@ const App = {
         
         if (targetContainer && !targetContainer.classList.contains('d-none') && targetSelect && targetSelect.value && targetSelect.value !== 'all') {
             targetUserId = targetSelect.value;
-            targetUserName = targetSelect.options[targetSelect.selectedIndex].text;
+            if (targetSelect.selectedIndex >= 0) {
+                targetUserName = targetSelect.options[targetSelect.selectedIndex].text;
+            } else {
+                targetUserName = "宛先不明"; // 安全のための予備テキスト
+            }
         }
         
         const data = {
@@ -1289,6 +1293,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
