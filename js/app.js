@@ -354,7 +354,7 @@ const App = {
                 loginBtn.textContent = TRANSLATIONS["login_button"][currentLang];
             }
         });
-    }
+    },
 
     showMainScreen() {
         document.getElementById('login-screen').classList.add('d-none');
@@ -1275,6 +1275,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
