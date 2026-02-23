@@ -222,7 +222,7 @@ const App = {
         });
     },
 
-    setupLogin() {
+setupLogin() {
         const storedUser = localStorage.getItem('app_user_v3');
         if (storedUser) {
             CURRENT_USER = JSON.parse(storedUser);
@@ -239,14 +239,14 @@ const App = {
 
         const safeHexEncode = (str) => {
             return Array.from(new TextEncoder().encode(str))
-                .map(b => b.toString(16).padStart(2, '0'))
-                .join('');
+                .map(b => b.toString(16).padStart(2, '0')).join('');
         };
 
         loginBtn.addEventListener('click', async () => {
             const inputName = nameInput.value.trim();
             let inputPass = passInput.value.trim(); 
 
+            // 👇 【復活】テストアカウントの場合は、裏側でパスワードを強制セットして顔パスにする！
             if (TEST_ACCOUNT_NAMES.includes(inputName)) {
                 inputPass = INITIAL_PASS; 
             }
@@ -287,12 +287,16 @@ const App = {
                 
                 if (inputPass === INITIAL_PASS) {
                     
+                    // 👇 【重要】テストユーザーなら、パスワード変更を強制せずに「隔離部屋（サンドボックス）」へ直行させる！
                     if (TEST_ACCOUNT_NAMES.includes(inputName)) {
-                        localStorage.setItem('app_user_v3', JSON.stringify(CURRENT_USER));
+                        const userToSave = { ...CURRENT_USER };
+                        delete userToSave.password; // 念のためメモリから消去
+                        localStorage.setItem('app_user_v3', JSON.stringify(userToSave));
                         this.showMainScreen();
                         return; 
                     }
 
+                    // 本番ユーザー（初回ログイン）の場合はパスワード変更を強制する
                     const pwdModal = new bootstrap.Modal(document.getElementById('passwordChangeModal'));
                     pwdModal.show();
 
@@ -312,8 +316,9 @@ const App = {
                         changeBtn.textContent = "更新中...";
 
                         try {
-                            await DB.updatePassword(CURRENT_USER.id, newPwd);
-                            // 👇 変更：機密情報であるパスワードはローカルストレージに保存しない！
+                            // Firebase Auth側のパスワードを更新
+                            await updatePassword(auth.currentUser, newPwd);
+                            
                             const userToSave = { ...CURRENT_USER };
                             delete userToSave.password; 
                             localStorage.setItem('app_user_v3', JSON.stringify(userToSave));
@@ -328,7 +333,9 @@ const App = {
                         }
                     };
                 } else {
-                    localStorage.setItem('app_user_v3', JSON.stringify(CURRENT_USER));
+                    const userToSave = { ...CURRENT_USER };
+                    delete userToSave.password; 
+                    localStorage.setItem('app_user_v3', JSON.stringify(userToSave));
                     this.showMainScreen();
                 }
 
@@ -1256,6 +1263,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
