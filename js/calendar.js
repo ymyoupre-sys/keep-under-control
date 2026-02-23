@@ -191,7 +191,7 @@ export const Calendar = {
             await DB.addEvent({
                 groupId: this.currentUser.group,
                 userId: this.currentUser.id,
-                userName: this.currentUser.name,
+                userName: this.currentUser.name || "名称未設定",
                 userRole: this.currentUser.role,
                 startDate: startDate.replace(/-/g, '/'),
                 endDate: endDate.replace(/-/g, '/'),
@@ -209,6 +209,7 @@ export const Calendar = {
         try { await DB.deleteEvent(id); } catch (e) { console.error("Delete Error", e); }
     }
 };
+
 
 
 
