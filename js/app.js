@@ -222,7 +222,7 @@ const App = {
         });
     },
 
-setupLogin() {
+    setupLogin() {
         const storedUser = localStorage.getItem('app_user_v3');
         if (storedUser) {
             CURRENT_USER = JSON.parse(storedUser);
@@ -263,17 +263,24 @@ setupLogin() {
             const dummyEmail = safeHexEncode(inputName) + "@dummy.keep-under-control.com";
 
             try {
+                let userData = null;
+
                 try {
+                    // 1. 既存ユーザーとしてログイン試行
                     await signInWithEmailAndPassword(auth, dummyEmail, inputPass);
+                    // 🚨【重要】既存ユーザーは「AuthUID」で検索し、他人のデータの覗き見を防ぐ
+                    userData = await DB.getUserByAuthUid(auth.currentUser.uid);
                 } catch (err) {
                     if (inputPass === INITIAL_PASS) {
+                        // 2. 初回ログイン（新規登録）
                         await createUserWithEmailAndPassword(auth, dummyEmail, inputPass);
+                        // 初回だけはまだUIDが結びついていないので名前で検索
+                        userData = await DB.getUserByName(inputName);
                     } else {
                         throw new Error("wrong-password");
                     }
                 }
 
-                const userData = await DB.getUserByName(inputName);
                 if (!userData) {
                     await signOut(auth);
                     throw new Error("not-found-in-db");
@@ -282,15 +289,16 @@ setupLogin() {
                 CURRENT_USER = userData;
 
                 if (auth.currentUser) {
-                    await DB.createAuthBridge(auth.currentUser.uid, CURRENT_USER.id, CURRENT_USER.group);
+                    // 🚨 【重要】第4引数に CURRENT_USER.role を追加し、役職を証明書に刻む
+                    await DB.createAuthBridge(auth.currentUser.uid, CURRENT_USER.id, CURRENT_USER.group, CURRENT_USER.role);
                 }
                 
                 if (inputPass === INITIAL_PASS) {
                     
-                    // 👇 【重要】テストユーザーなら、パスワード変更を強制せずに「隔離部屋（サンドボックス）」へ直行させる！
+                    // 👇 テストユーザーなら、パスワード変更を強制せずに「隔離部屋」へ直行させる
                     if (TEST_ACCOUNT_NAMES.includes(inputName)) {
                         const userToSave = { ...CURRENT_USER };
-                        delete userToSave.password; // 念のためメモリから消去
+                        delete userToSave.password; 
                         localStorage.setItem('app_user_v3', JSON.stringify(userToSave));
                         this.showMainScreen();
                         return; 
@@ -346,7 +354,7 @@ setupLogin() {
                 loginBtn.textContent = TRANSLATIONS["login_button"][currentLang];
             }
         });
-    },
+    }
 
     showMainScreen() {
         document.getElementById('login-screen').classList.add('d-none');
@@ -1267,6 +1275,7 @@ setupLogin() {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
