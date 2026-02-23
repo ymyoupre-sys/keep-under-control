@@ -39,7 +39,7 @@ export const DB = {
         if (!user || !user.id) return;
         const userRef = doc(db, "users", user.id);
         const updateData = {
-            name: user.name,
+            name: user.name || "名称未設定",
             role: user.role,
             group: user.group, 
             icon: user.icon || "👤",
@@ -235,6 +235,7 @@ export const DB = {
         return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 };
+
 
 
 
