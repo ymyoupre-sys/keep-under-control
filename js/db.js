@@ -5,37 +5,31 @@ import {
 import { ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 const getRoomId = (groupId, id1, id2) => {
-    // 👇 追加：対象が「ALL」の場合は、全体チャット専用の部屋を作る
     if (id1 === "ALL" || id2 === "ALL") return `${groupId}_ALL`;
-
     const sortedIds = [id1, id2].sort();
     return `${groupId}_${sortedIds[0]}_${sortedIds[1]}`;
 };
 
 export const DB = {
-    // ユーザー名簿を削除する機能
     async deleteUserAccount(userId) {
         await deleteDoc(doc(db, "users", userId));
     },
 
-    // 👇 追加：AuthのIDと、名簿のIDを結びつける証明書を作成する
-    async createAuthBridge(authUid, userId, group) {
+    // 🚨 変更：第4引数に役職(role)を追加し、証明書に保存
+    async createAuthBridge(authUid, userId, group, role) {
         if (!authUid || !userId) return;
         try {
-            // 🚨【重要：順番変更】
-            // 1. 先に名簿（users）側に自分のUIDを刻印し、アカウントをロックする！
             await updateDoc(doc(db, "users", userId), {
                 authUid: authUid,
                 updatedAt: serverTimestamp()
             });
 
-            // 2. ロックが完了した後に、自分の証明書（auth_bridge）を作成する！
             await setDoc(doc(db, "auth_bridge", authUid), {
                 userId: userId,
                 group: group || "未設定",
+                role: role || "member", // 役職を刻印
                 updatedAt: serverTimestamp()
             }, { merge: true });
-
         } catch (e) {
             console.error("Bridge Error:", e);
         }
@@ -83,7 +77,8 @@ export const DB = {
         
         const imageUrls = [];
         for (const imgBase64 of images) {
-            const url = await this.uploadImage(imgBase64, `chats/${chatRoomId}`);
+            // 🚨 変更：他グループからの覗き見防止のため、パスにグループ名(safeGroup)を入れる
+            const url = await this.uploadImage(imgBase64, `chats/${safeGroup}/${chatRoomId}`);
             if (url) imageUrls.push(url);
         }
 
@@ -141,7 +136,7 @@ export const DB = {
             status: 'pending', 
             createdAt: serverTimestamp(), 
             updatedAt: serverTimestamp(), 
-            createdDateStr: formattedDate // 👈 変更：時間入りの文字列を保存する
+            createdDateStr: formattedDate 
         });
     },
     
@@ -174,10 +169,11 @@ export const DB = {
 
     async deleteEvent(id) { await deleteDoc(doc(db, "events", id)); },
 
-    async submitCompletionReport(docId, userId, comment, images = []) {
+    // 🚨 変更：第2引数に groupId を追加し、保存パスを隔離
+    async submitCompletionReport(docId, groupId, userId, comment, images = []) {
         const imageUrls = [];
         for (const imgBase64 of images) {
-            const url = await this.uploadImage(imgBase64, `completions/${docId}`);
+            const url = await this.uploadImage(imgBase64, `completions/${groupId}/${docId}`);
             if (url) imageUrls.push(url);
         }
 
@@ -195,7 +191,6 @@ export const DB = {
     },
 
     async getUserByName(name) {
-        // 🚨 limit(1) を追加して、F12からの全件ダウンロード攻撃を防ぐ
         const q = query(collection(db, "users"), where("name", "==", name), limit(1));
         const snap = await getDocs(q);
         if (!snap.empty) {
@@ -206,7 +201,17 @@ export const DB = {
         return null;
     },
 
-    // 🚨 危険な updatePassword 機能は完全に削除しました
+    // 🚨 追加：安全なログインのための、UIDによる検索機能
+    async getUserByAuthUid(authUid) {
+        const q = query(collection(db, "users"), where("authUid", "==", authUid), limit(1));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+            const data = snap.docs[0].data();
+            data.group = data.group || data.groupId || "未設定";
+            return { id: snap.docs[0].id, ...data };
+        }
+        return null;
+    },
 
     async getGroupUsers(groupId) {
         const safeGroup = groupId || "NONE";
@@ -221,4 +226,3 @@ export const DB = {
         return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 };
-
