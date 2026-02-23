@@ -1,6 +1,6 @@
 import { db, storage } from "./firebase-config.js";
 import { 
-    collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, setDoc, deleteDoc, getDoc, arrayUnion, arrayRemove, getDocs
+    collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, setDoc, deleteDoc, getDoc, arrayUnion, arrayRemove, getDocs, limit
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
@@ -27,11 +27,16 @@ export const DB = {
                 group: group || "未設定",
                 updatedAt: serverTimestamp()
             }, { merge: true });
+
+            // 🚨【重要】名簿（users）側に自分のUIDを刻印し、他人の乗っ取りをロックする！
+            await updateDoc(doc(db, "users", userId), {
+                authUid: authUid,
+                updatedAt: serverTimestamp()
+            });
         } catch (e) {
             console.error("Bridge Error:", e);
         }
     },
-    // 👆 ここまで追加
 
     async saveUserToken(user, token) {
         if (!user || !user.id) return;
@@ -187,7 +192,8 @@ export const DB = {
     },
 
     async getUserByName(name) {
-        const q = query(collection(db, "users"), where("name", "==", name));
+        // 🚨 limit(1) を追加して、F12からの全件ダウンロード攻撃を防ぐ
+        const q = query(collection(db, "users"), where("name", "==", name), limit(1));
         const snap = await getDocs(q);
         if (!snap.empty) {
             const data = snap.docs[0].data();
@@ -197,9 +203,7 @@ export const DB = {
         return null;
     },
 
-    async updatePassword(userId, newPassword) {
-        await updateDoc(doc(db, "users", userId), { password: newPassword });
-    },
+    // 🚨 危険な updatePassword 機能は完全に削除しました
 
     async getGroupUsers(groupId) {
         const safeGroup = groupId || "NONE";
@@ -214,4 +218,3 @@ export const DB = {
         return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 };
-
