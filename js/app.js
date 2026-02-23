@@ -133,21 +133,7 @@ const TRANSLATIONS = {
 let currentLang = localStorage.getItem('app_lang') || 'ja'; 
 
 const App = {
-    async init() {
-        // ========== 👇 一時的にここに追加 👇 ==========
-        const { collection, getDocs, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-        const snap = await getDocs(collection(db, "users"));
-        const safeHexEncode = (str) => Array.from(new TextEncoder().encode(str)).map(b => b.toString(16).padStart(2, '0')).join('');
-        let count = 0;
-        for (const d of snap.docs) {
-            if (!d.data().loginId && d.data().name) {
-                await updateDoc(doc(db, "users", d.id), { loginId: safeHexEncode(d.data().name) });
-                count++;
-            }
-        }
-        if (count > 0) alert(`${count}件のユーザーに loginId を追加しました！`);
-        // ========== 👆 ここまで 👆 ==========
-        
+    async init() {    
         try {
             const settingsRes = await fetch('config/settings.json?v=' + new Date().getTime());
             CONFIG_SETTINGS = await settingsRes.json();
@@ -1303,5 +1289,6 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
