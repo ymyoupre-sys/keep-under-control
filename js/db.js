@@ -11,19 +11,95 @@ const getRoomId = (groupId, id1, id2) => {
 };
 
 export const DB = {
-    async deleteUserAccount(userId) {
+    // 🌟 パターンB：画像実体を削除しつつ、テキストの言質を残して退会
+    async deleteUserAccount(user) {
+        if (!user || !user.id) return;
+        const groupId = user.group || "NONE";
+        const userId = user.id;
+        const authUid = user.authUid;
+
+        // 1. チャットの画像をStorageから削除し、テキストに注記を残す
+        try {
+            const groupUsers = await this.getGroupUsers(groupId);
+            const roomIds = [`${groupId}_ALL`];
+            groupUsers.forEach(u => {
+                if (u.id !== userId) roomIds.push(this.getChatRoomId(groupId, userId, u.id));
+            });
+
+            for (const roomId of roomIds) {
+                const q = query(collection(db, "chats", roomId, "messages"), where("senderId", "==", userId));
+                const snap = await getDocs(q);
+                for (const docSnap of snap.docs) {
+                    const data = docSnap.data();
+                    if (data.images && data.images.length > 0) {
+                        // Storageから実体ファイル（画像）を消去
+                        for (const url of data.images) {
+                            try {
+                                const imgRef = ref(storage, url);
+                                await deleteObject(imgRef);
+                            } catch (e) { console.warn("Image delete failed (Storage):", e); }
+                        }
+                        // Firestoreのテキストは残し、「証拠」を維持する
+                        await updateDoc(docSnap.ref, {
+                            images: [],
+                            text: (data.text || "") + "\n※退会したユーザーにより画像が削除されました",
+                            updatedAt: serverTimestamp()
+                        });
+                    }
+                }
+            }
+        } catch (err) { console.error("Chat Cleanup Error:", err); }
+
+        // 2. 申請・完了報告の画像もStorageから削除する
+        try {
+            const appQ = query(collection(db, "applications"), where("groupId", "==", groupId));
+            const appSnap = await getDocs(appQ);
+            for (const docSnap of appSnap.docs) {
+                const data = docSnap.data();
+                let needsUpdate = false;
+                let updateData = {};
+
+                // 自分が送った申請の画像掃除
+                if (data.userId === userId && data.images && data.images.length > 0) {
+                    for (const url of data.images) {
+                        try { await deleteObject(ref(storage, url)); } catch (e) {}
+                    }
+                    updateData.images = [];
+                    updateData.content = (data.content || "") + "\n※退会により画像削除";
+                    needsUpdate = true;
+                }
+                // 自分が送った完了報告の画像掃除
+                if (data.completedBy === userId && data.completionImages && data.completionImages.length > 0) {
+                    for (const url of data.completionImages) {
+                        try { await deleteObject(ref(storage, url)); } catch (e) {}
+                    }
+                    updateData.completionImages = [];
+                    updateData.completionComment = (data.completionComment || "") + "\n※退会により画像削除";
+                    needsUpdate = true;
+                }
+
+                if (needsUpdate) {
+                    await updateDoc(docSnap.ref, updateData);
+                }
+            }
+        } catch (err) { console.error("App Cleanup Error:", err); }
+
+        // 3. 最後に自分自身の名簿と証明書を削除
+        if (authUid) {
+            await deleteDoc(doc(db, "auth_bridge", authUid));
+        }
         await deleteDoc(doc(db, "users", userId));
     },
-    // 👇 追加：利用規約の同意フラグを保存する
+
+    // 利用規約の同意フラグを保存する
     async agreeToTerms(userId) {
         await updateDoc(doc(db, "users", userId), { 
             agreedToTerms: true,
-            agreedTermsVersion: 4, // 🌟 👈これを追加（今後規約を変えたら3, 4と増やせばOKです）
+            agreedTermsVersion: 4, 
             updatedAt: serverTimestamp()
         });
     },
 
-    // 🚨 変更：第4引数に役職(role)を追加し、証明書に保存
     async createAuthBridge(authUid, userId, group, role) {
         if (!authUid || !userId) return;
         try {
@@ -35,7 +111,7 @@ export const DB = {
             await setDoc(doc(db, "auth_bridge", authUid), {
                 userId: userId,
                 group: group || "未設定",
-                role: role || "member", // 役職を刻印
+                role: role || "member",
                 updatedAt: serverTimestamp()
             }, { merge: true });
         } catch (e) {
@@ -85,13 +161,12 @@ export const DB = {
         
         const imageUrls = [];
         for (const imgBase64 of images) {
-            // 🚨 変更：他グループからの覗き見防止のため、パスにグループ名(safeGroup)を入れる
             const url = await this.uploadImage(imgBase64, `chats/${safeGroup}/${chatRoomId}`);
             if (url) imageUrls.push(url);
         }
 
         await addDoc(collection(db, "chats", chatRoomId, "messages"), {
-            text: text, senderId: sender.id, senderName: sender.name || "名称未設定", senderIcon: sender.icon || "👤", // 👈 senderNameに追記
+            text: text, senderId: sender.id, senderName: sender.name || "名称未設定", senderIcon: sender.icon || "👤",
             images: imageUrls, reactions: [], isEdited: false, createdAt: serverTimestamp()
         });
         const lastMsgText = text || (imageUrls.length > 0 ? '画像が送信されました' : '');
@@ -177,7 +252,6 @@ export const DB = {
 
     async deleteEvent(id) { await deleteDoc(doc(db, "events", id)); },
 
-    // 🚨 変更：第2引数に groupId を追加し、保存パスを隔離
     async submitCompletionReport(docId, groupId, userId, comment, images = []) {
         const imageUrls = [];
         for (const imgBase64 of images) {
@@ -198,16 +272,13 @@ export const DB = {
         return imageUrls;
     },
 
-    // 🚨 変更：検索（query/where）をやめ、16進数化したIDで直接取得する（List操作の撲滅）
     async getUserByName(name) {
-        // 名前を16進数化
         const safeHexEncode = (str) => {
             return Array.from(new TextEncoder().encode(str))
                 .map(b => b.toString(16).padStart(2, '0')).join('');
         };
         const loginId = safeHexEncode(name);
 
-        // 🚨 変更：nameではなく、loginIdで検索する
         const q = query(collection(db, "users"), where("loginId", "==", loginId), limit(1));
         const snap = await getDocs(q);
         if (!snap.empty) {
@@ -218,7 +289,6 @@ export const DB = {
         return null;
     },
 
-    // 🚨 追加：安全なログインのための、UIDによる検索機能
     async getUserByAuthUid(authUid) {
         const q = query(collection(db, "users"), where("authUid", "==", authUid), limit(1));
         const snap = await getDocs(q);
@@ -243,12 +313,3 @@ export const DB = {
         return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 };
-
-
-
-
-
-
-
-
-
