@@ -18,6 +18,7 @@ export const DB = {
     async agreeToTerms(userId) {
         await updateDoc(doc(db, "users", userId), { 
             agreedToTerms: true,
+            agreedTermsVersion: 2, // 🌟 👈これを追加（今後規約を変えたら3, 4と増やせばOKです）
             updatedAt: serverTimestamp()
         });
     },
@@ -242,6 +243,7 @@ export const DB = {
         return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 };
+
 
 
 
