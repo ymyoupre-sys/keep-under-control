@@ -36,9 +36,9 @@ const escapeHTML = (str) => {
 const TRANSLATIONS = {
     "login_title": { ja: "利用開始", en: "Start Using", zh: "开始使用" },
     "login_notice": {
-        ja: `<strong>【重要なお知らせ】</strong><br>システムの大規模なセキュリティ改修を行いました。<br>お手数ですが、初回ログイン時に<strong>自分専用のパスワード（6文字以上）</strong>の設定をお願いいたします。<br><span class="text-danger">※初期パスワードは「123456」です。<br>※テストアカウント「リーダー」「メンバー」等はPWなしでログイン可能です。</span>`,
-        en: `<strong>[Important Notice]</strong><br>We have implemented major security upgrades.<br>Please set your <strong>personal password (6+ characters)</strong> upon your first login.<br><span class="text-danger">* Default password is '123456'.<br>* Test accounts "leader" "member" can login without a password.</span>`,
-        zh: `<strong>【重要通知】</strong><br>系统进行了大规模的安全升级。<br>首次登录时，请设置<strong>专属密码（6位以上）</strong>。<br><span class="text-danger">※初始密码为“123456”。<br>※“领导者”和“成员”等测试账号无需密码即可登录。</span>`
+        ja: `<strong>【重要なお知らせ】</strong><br>システムの大規模なセキュリティ改修を行いました。<br>お手数ですが、初回ログイン時に<strong>自分専用のパスワード（6文字以上）</strong>の設定をお願いいたします。<br><span class="text-danger">※初期パスワードは「123456」です。</span>`,
+        en: `<strong>[Important Notice]</strong><br>We have implemented major security upgrades.<br>Please set your <strong>personal password (6+ characters)</strong> upon your first login.<br><span class="text-danger">* Default password is '123456'.</span>`,
+        zh: `<strong>【重要通知】</strong><br>系统进行了大规模的安全升级。<br>首次登录时，请设置<strong>专属密码（6位以上）</strong>。<br><span class="text-danger">※初始密码为“123456”。</span>`
     },
     "login_account_creation": {
         ja: `<strong>【個人用アカウント作成について】</strong><br>個人用アカウントの作成を希望される方は、<a href="https://x.com/FvFA4yNQfW15814" target="_blank" rel="noopener noreferrer" class="text-decoration-none fw-bold">@FvFA4yNQfW15814</a> までDMにてお問い合わせください。`,
@@ -1274,6 +1274,7 @@ setupLogin() {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
