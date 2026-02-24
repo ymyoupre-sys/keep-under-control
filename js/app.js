@@ -164,7 +164,7 @@ const App = {
 
             onAuthStateChanged(auth, async (user) => {
                 if (user && CURRENT_USER) {
-                    await DB.createAuthBridge(user.uid, CURRENT_USER.id, CURRENT_USER.group);
+                    await DB.createAuthBridge(user.uid, CURRENT_USER.id, CURRENT_USER.group, CURRENT_USER.role);
                 }
             });
             
@@ -1381,6 +1381,7 @@ setupLogin() {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
