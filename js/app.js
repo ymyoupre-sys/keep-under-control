@@ -352,9 +352,9 @@ setupLogin() {
     }, // 
         
     showMainScreen() {
-        // ===== 🚨【重要追加】利用規約の同意チェック =====
-        // agreedToTerms が true じゃない場合（未設定＝過去のユーザーも含む）はここでブロック
-        if (CURRENT_USER.agreedToTerms !== true) {
+        // ===== 🚨【重要変更】利用規約の同意チェック（バージョン管理） =====
+        // agreedTermsVersion が 2 じゃない場合（前回同意した人も含めて全員）ブロックする
+        if (CURRENT_USER.agreedTermsVersion !== 2) {
             const termsModal = new bootstrap.Modal(document.getElementById('termsModal'));
             termsModal.show();
 
@@ -365,16 +365,17 @@ setupLogin() {
                 btn.textContent = "処理中..."; 
                 
                 try {
-                    // db.jsに作った関数を呼び出してFirestoreを更新
+                    // db.jsに作った関数を呼び出してFirestoreを更新（バージョン2の記録をつける）
                     await DB.agreeToTerms(CURRENT_USER.id); 
                     
-                    // ローカルの記憶も「同意済み」に書き換える
+                    // ローカルの記憶も「バージョン2に同意済み」に書き換える
                     CURRENT_USER.agreedToTerms = true;
+                    CURRENT_USER.agreedTermsVersion = 2; // 🌟 👈ここを追加
                     localStorage.setItem('app_user_v3', JSON.stringify(CURRENT_USER)); 
                     
                     termsModal.hide();
                     
-                    // 同意が完了したら、改めてこの画面起動関数をはじめからやり直す（関所を通過する）
+                    // 同意が完了したら、改めてこの画面起動関数をはじめからやり直す
                     this.showMainScreen(); 
                 } catch (e) {
                     console.error("同意処理エラー:", e);
@@ -391,11 +392,9 @@ setupLogin() {
                 location.reload();
             };
 
-            // 🚨 ここで return することで処理を強制終了し、この下にある「チャットの読み込み」や「画面の切り替え」を完全にストップさせます！
             return; 
         }
         // ==========================================
-
 
         // （👇 ここから下は元々の処理がそのまま続きます）
         document.getElementById('login-screen').classList.add('d-none');
@@ -1320,6 +1319,7 @@ setupLogin() {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
