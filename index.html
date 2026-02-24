@@ -49,9 +49,12 @@
                     <h6 class="fw-bold mt-3 text-danger border-bottom border-danger pb-1">5. 未成年者の利用について</h6>
                     <p class="text-danger fw-bold">本アプリは取り扱うコンテンツの性質上、18歳未満の方の利用を固く禁じます。本規約に同意して利用を開始した時点で、ユーザーは18歳以上であることを確約したものとみなします。年齢を偽って利用したことにより生じたトラブルや不利益について、管理者は一切の責任を負いません。</p>
                 </div>
-                <div class="modal-footer d-flex justify-content-between bg-light">
-                    <button type="button" class="btn btn-outline-secondary" id="btn-terms-logout">同意せずにログアウト</button>
-                    <button type="button" class="btn btn-danger fw-bold px-4" id="btn-terms-agree">規約に同意して利用を開始する</button>
+                <div class="modal-footer d-flex flex-wrap justify-content-between bg-light gap-2">
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary" id="btn-terms-logout">ログアウト</button>
+                        <button type="button" class="btn btn-outline-danger" id="btn-terms-withdraw"><i class="bi bi-person-x"></i> 退会する</button>
+                    </div>
+                    <button type="button" class="btn btn-danger fw-bold px-4" id="btn-terms-agree">同意して利用を開始</button>
                 </div>
             </div>
         </div>
@@ -399,6 +402,7 @@
     <script type="module" src="js/app.js?v=17"></script>
 </body>
 </html>
+
 
 
 
