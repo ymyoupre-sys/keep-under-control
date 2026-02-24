@@ -353,8 +353,8 @@ setupLogin() {
         
     showMainScreen() {
         // ===== 🚨【重要変更】利用規約の同意チェック（バージョン管理） =====
-        // agreedTermsVersion が 2 じゃない場合（前回同意した人も含めて全員）ブロックする
-        if (CURRENT_USER.agreedTermsVersion !== 2) {
+        // agreedTermsVersion が 4 じゃない場合（前回同意した人も含めて全員）ブロックする
+        if (CURRENT_USER.agreedTermsVersion !== 4) {
             const termsModal = new bootstrap.Modal(document.getElementById('termsModal'));
             termsModal.show();
 
@@ -365,32 +365,70 @@ setupLogin() {
                 btn.textContent = "処理中..."; 
                 
                 try {
-                    // db.jsに作った関数を呼び出してFirestoreを更新（バージョン2の記録をつける）
                     await DB.agreeToTerms(CURRENT_USER.id); 
                     
-                    // ローカルの記憶も「バージョン2に同意済み」に書き換える
                     CURRENT_USER.agreedToTerms = true;
-                    CURRENT_USER.agreedTermsVersion = 3; // 🌟 👈ここを追加
+                    CURRENT_USER.agreedTermsVersion = 4; 
                     localStorage.setItem('app_user_v3', JSON.stringify(CURRENT_USER)); 
                     
                     termsModal.hide();
-                    
-                    // 同意が完了したら、改めてこの画面起動関数をはじめからやり直す
                     this.showMainScreen(); 
                 } catch (e) {
                     console.error("同意処理エラー:", e);
                     alert("通信エラーが発生しました。もう一度お試しください。");
                     btn.disabled = false;
-                    btn.textContent = "規約に同意して利用を開始する";
+                    btn.textContent = "同意して利用を開始";
                 }
             };
 
-            // 「同意せずにログアウト」ボタンの処理
+            // 「ログアウト」ボタンの処理
             document.getElementById('btn-terms-logout').onclick = async () => {
                 try { await signOut(auth); } catch(e){}
                 localStorage.removeItem('app_user_v3');
                 location.reload();
             };
+
+            // 🌟👇【新規追加】「退会する」ボタンの処理
+            document.getElementById('btn-terms-withdraw').onclick = async () => {
+                // テストアカウントの誤爆防止
+                if (TEST_ACCOUNT_NAMES.includes(CURRENT_USER.name)) {
+                    alert(TRANSLATIONS["msg_test_acc_block"][currentLang]); 
+                    return; 
+                }
+
+                // 最終確認
+                if(confirm(TRANSLATIONS["msg_confirm_withdraw"][currentLang])) { 
+                    try {
+                        const btn = document.getElementById('btn-terms-withdraw');
+                        btn.disabled = true;
+                        btn.textContent = "処理中...";
+
+                        // データベースから名簿を削除
+                        await DB.deleteUserAccount(CURRENT_USER.id);
+                        
+                        // Authからユーザーを削除
+                        if (auth.currentUser) {
+                            await deleteUser(auth.currentUser);
+                        }
+                        
+                        // ローカルの記憶を消去してリロード
+                        localStorage.removeItem('app_user_v3');
+                        alert(TRANSLATIONS["msg_withdraw_success"][currentLang]); 
+                        location.reload();
+                        
+                    } catch (e) {
+                        console.error("退会エラー:", e);
+                        // セキュリティエラー（ログインから時間が経ちすぎている場合）の対応
+                        if (e.code === 'auth/requires-recent-login') {
+                            alert(TRANSLATIONS["msg_withdraw_relogin"][currentLang]); 
+                        } else {
+                            alert(TRANSLATIONS["msg_withdraw_fail"][currentLang]); 
+                        }
+                        document.getElementById('btn-terms-withdraw').disabled = false;
+                    }
+                }
+            };
+            // 🌟👆【新規追加】ここまで
 
             return; 
         }
@@ -1319,6 +1357,7 @@ setupLogin() {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
