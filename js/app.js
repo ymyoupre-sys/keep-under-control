@@ -107,7 +107,11 @@ const TRANSLATIONS = {
     "msg_pwd_update_fail": { ja: "パスワードの更新に失敗しました", en: "Failed to update password.", zh: "密码更新失败。" },
     "msg_confirm_logout": { ja: "ログアウトしますか？", en: "Are you sure you want to log out?", zh: "确定要退出登录吗？" },
     "msg_test_acc_block": { ja: "テスト用アカウントのため、退会処理は実行できません。", en: "Test accounts cannot be deleted.", zh: "测试账号无法注销。" },
-    "msg_confirm_withdraw": { ja: "【警告】\n退会すると、あなたのアカウント情報はすべて削除され、復元することはできません。\n本当に退会してもよろしいですか？", en: "[Warning]\nDeleting your account will erase all your data. This cannot be undone.\nAre you sure you want to proceed?", zh: "【警告】\n注销后，您的所有账户信息将被删除且无法恢复。\n确定要注销吗？" },
+    "msg_confirm_withdraw": { 
+        ja: "【警告】\n退会すると、あなたの送信した画像データとアカウント情報はすべて削除され、復元することはできません。\n本当に退会してもよろしいですか？", 
+        en: "[Warning]\nDeleting your account will erase all your uploaded images and account information. This cannot be undone.\nAre you sure you want to proceed?", 
+        zh: "【警告】\n注销后，您发送的图片数据和账户信息将被全部删除且无法恢复。\n确定要注销吗？" 
+    },    
     "msg_withdraw_success": { ja: "退会処理が完了しました。ご利用ありがとうございました！", en: "Account deleted successfully. Thank you!", zh: "注销成功。感谢您的使用！" },
     "msg_withdraw_fail": { ja: "退会処理に失敗しました。", en: "Failed to delete account.", zh: "注销失败。" },
     "msg_withdraw_relogin": { ja: "セキュリティのため、退会処理を行うには再度ログインが必要です。\n一度ログアウトし、もう一度ログインしてから再度お試しください。", en: "For security reasons, please log in again to delete your account.", zh: "出于安全考虑，请重新登录后再尝试注销。" },
@@ -1377,6 +1381,7 @@ setupLogin() {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
