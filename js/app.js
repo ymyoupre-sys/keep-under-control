@@ -222,7 +222,7 @@ const App = {
         });
     },
 
-    setupLogin() {
+setupLogin() {
         const storedUser = localStorage.getItem('app_user_v3');
         if (storedUser) {
             CURRENT_USER = JSON.parse(storedUser);
@@ -242,14 +242,9 @@ const App = {
                 .map(b => b.toString(16).padStart(2, '0')).join('');
         };
 
-    loginBtn.addEventListener('click', async () => {
+        loginBtn.addEventListener('click', async () => {
             const inputName = nameInput.value.trim();
-            let inputPass = passInput.value.trim(); 
-
-            // テストアカウントの場合は、裏側でパスワードを強制セットして顔パスにする
-            if (TEST_ACCOUNT_NAMES.includes(inputName)) {
-                inputPass = INITIAL_PASS; 
-            }
+            const inputPass = passInput.value.trim(); // 👈 let から const に戻しました（強制上書きしないため）
 
             if (!inputName || !inputPass) {
                 alert(TRANSLATIONS["msg_enter_name_pass"][currentLang]); 
@@ -265,7 +260,7 @@ const App = {
             try {
                 let isFirstLogin = false;
 
-                // 🚨【修正1】認証（ログイン）だけの処理を完全に独立させる
+                // 認証（ログイン）
                 try {
                     await signInWithEmailAndPassword(auth, dummyEmail, inputPass);
                 } catch (authErr) {
@@ -274,20 +269,17 @@ const App = {
                         isFirstLogin = true;
                     } else {
                         console.error("Authentication Error:", authErr);
-                        throw new Error("wrong-password"); // ここは本当にパスワードが違う時だけ
+                        throw new Error("wrong-password");
                     }
                 }
 
-                // 🚨【修正2】名簿の取得処理（データベースのエラーと分離）
+                // 名簿の取得処理
                 let userData = null;
                 try {
                     if (isFirstLogin) {
                         userData = await DB.getUserByName(inputName);
                     } else {
-                        // 既存ユーザーはUIDで探す
                         userData = await DB.getUserByAuthUid(auth.currentUser.uid);
-                        
-                        // 🌟【超重要】過去にパスワード設定済みだが、名簿側のロック(authUid)が空の場合の救済措置
                         if (!userData) {
                             userData = await DB.getUserByName(inputName);
                         }
@@ -305,22 +297,11 @@ const App = {
                 CURRENT_USER = userData;
 
                 if (auth.currentUser) {
-                    // 第4引数に CURRENT_USER.role を追加し、役職を証明書に刻む
                     await DB.createAuthBridge(auth.currentUser.uid, CURRENT_USER.id, CURRENT_USER.group, CURRENT_USER.role);
                 }
                 
                 if (inputPass === INITIAL_PASS) {
-                    
-                    // テストユーザーなら、隔離部屋へ直行
-                    if (TEST_ACCOUNT_NAMES.includes(inputName)) {
-                        const userToSave = { ...CURRENT_USER };
-                        delete userToSave.password; 
-                        localStorage.setItem('app_user_v3', JSON.stringify(userToSave));
-                        this.showMainScreen();
-                        return; 
-                    }
-
-                    // 本番ユーザー（初回ログイン）の場合はパスワード変更
+                    // 🚨 テストユーザーの特権スキップを削除！全員必ず「パスワード変更画面」へ行くようにしました
                     const pwdModal = new bootstrap.Modal(document.getElementById('passwordChangeModal'));
                     pwdModal.show();
 
@@ -368,7 +349,7 @@ const App = {
                 loginBtn.textContent = TRANSLATIONS["login_button"][currentLang];
             }
         });
-    },
+    }, // 
         
     showMainScreen() {
         document.getElementById('login-screen').classList.add('d-none');
@@ -1293,6 +1274,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
