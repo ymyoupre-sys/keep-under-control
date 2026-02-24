@@ -41,9 +41,9 @@ const TRANSLATIONS = {
         zh: `<strong>【重要通知】</strong><br>系统进行了大规模的安全升级。<br>首次登录时，请设置<strong>专属密码（6位以上）</strong>。<br><span class="text-danger">※初始密码为“123456”。</span>`
     },
     "login_account_creation": {
-        ja: `<strong>【個人用アカウント作成について】</strong><br>個人用アカウントの作成を希望される方は、<a href="https://x.com/FvFA4yNQfW15814" target="_blank" rel="noopener noreferrer" class="text-decoration-none fw-bold">@FvFA4yNQfW15814</a> までDMにてお問い合わせください。`,
-        en: `<strong>[Regarding Personal Account Creation]</strong><br>If you wish to create a personal account, please contact <a href="https://x.com/FvFA4yNQfW15814" target="_blank" rel="noopener noreferrer" class="text-decoration-none fw-bold">@FvFA4yNQfW15814</a> via DM.`,
-        zh: `<strong>【关于个人账户创建】</strong><br>如果希望创建个人账户，请通过私信联系 <a href="https://x.com/FvFA4yNQfW15814" target="_blank" rel="noopener noreferrer" class="text-decoration-none fw-bold">@FvFA4yNQfW15814</a>。`
+        ja: `<strong>【個人用アカウント作成について】</strong><br>不特定多数の募集は中止しました。個人用アカウントの作成を希望される方は、<a href="https://x.com/FvFA4yNQfW15814" target="_blank" rel="noopener noreferrer" class="text-decoration-none fw-bold">@FvFA4yNQfW15814</a> までDMにてお問い合わせください。`,
+        en: `<strong>[Regarding Personal Account Creation]</strong><br>I have discontinued recruitment for the general public. If you wish to create a personal account, please contact <a href="https://x.com/FvFA4yNQfW15814" target="_blank" rel="noopener noreferrer" class="text-decoration-none fw-bold">@FvFA4yNQfW15814</a> via DM.`,
+        zh: `<strong>【关于个人账户创建】</strong><br>已停止面向不特定多数的招募。如果希望创建个人账户，请通过私信联系 <a href="https://x.com/FvFA4yNQfW15814" target="_blank" rel="noopener noreferrer" class="text-decoration-none fw-bold">@FvFA4yNQfW15814</a>。`
     },
     "login_name_placeholder": { ja: "名前 (例: 田中)", en: "Name (e.g., John)", zh: "姓名 (例: 王)" },
     "login_pass_placeholder": { ja: "パスワード", en: "Password", zh: "密码" },
@@ -1274,6 +1274,7 @@ setupLogin() {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
