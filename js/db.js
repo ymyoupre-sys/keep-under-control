@@ -14,6 +14,13 @@ export const DB = {
     async deleteUserAccount(userId) {
         await deleteDoc(doc(db, "users", userId));
     },
+    // 👇 追加：利用規約の同意フラグを保存する
+    async agreeToTerms(userId) {
+        await updateDoc(doc(db, "users", userId), { 
+            agreedToTerms: true,
+            updatedAt: serverTimestamp()
+        });
+    },
 
     // 🚨 変更：第4引数に役職(role)を追加し、証明書に保存
     async createAuthBridge(authUid, userId, group, role) {
@@ -235,6 +242,7 @@ export const DB = {
         return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 };
+
 
 
 
