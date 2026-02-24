@@ -424,7 +424,7 @@ setupLogin() {
                         btn.textContent = "処理中...";
 
                         // データベースから名簿を削除
-                        await DB.deleteUserAccount(CURRENT_USER.id);
+                        await DB.deleteUserAccount(CURRENT_USER);
                         
                         // Authからユーザーを削除
                         if (auth.currentUser) {
@@ -675,7 +675,7 @@ setupLogin() {
             }
             if(confirm(TRANSLATIONS["msg_confirm_withdraw"][currentLang])) { 
                 try {
-                    await DB.deleteUserAccount(CURRENT_USER.id);
+                    await DB.deleteUserAccount(CURRENT_USER);
                     
                     if (auth.currentUser) {
                         await deleteUser(auth.currentUser);
@@ -1377,6 +1377,7 @@ setupLogin() {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
