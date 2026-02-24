@@ -370,7 +370,7 @@ setupLogin() {
                     
                     // ローカルの記憶も「バージョン2に同意済み」に書き換える
                     CURRENT_USER.agreedToTerms = true;
-                    CURRENT_USER.agreedTermsVersion = 2; // 🌟 👈ここを追加
+                    CURRENT_USER.agreedTermsVersion = 3; // 🌟 👈ここを追加
                     localStorage.setItem('app_user_v3', JSON.stringify(CURRENT_USER)); 
                     
                     termsModal.hide();
@@ -1319,6 +1319,7 @@ setupLogin() {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
