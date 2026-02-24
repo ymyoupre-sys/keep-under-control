@@ -128,8 +128,28 @@ const TRANSLATIONS = {
 
     "badge_instruction": { ja: "命令", en: "Instruction", zh: "指令" },
     "badge_instruction_wait": { ja: "命令（完了報告待ち）", en: "Instruction (Pending Report)", zh: "指令 (待汇报)" },
-    "badge_request": { ja: "申請", en: "Request", zh: "申请" }
+    "badge_request": { ja: "申請", en: "Request", zh: "申请" },
+
+    // 👇 ここから規約用の翻訳データを追加
+    "terms_title": { ja: "※重要：利用規約およびプライバシーポリシー", en: "*Important: Terms of Service and Privacy Policy", zh: "※重要：使用条款与隐私政策" },
+    "terms_intro": { ja: "本アプリのご利用にあたり、以下の規約およびプライバシーポリシーへの同意が必須となります。", en: "To use this app, you must agree to the following Terms of Service and Privacy Policy.", zh: "使用本应用前，必须同意以下使用条款与隐私政策。" },
+    "terms_h1": { ja: "1. 免責事項", en: "1. Disclaimer", zh: "1. 免责声明" },
+    "terms_p1": { ja: "本アプリの利用、通信障害、システムエラー、またはデータの消失により生じた直接的および間接的な損害について、管理者は一切の責任を負いません。", en: "The administrator assumes no responsibility for any direct or indirect damages caused by the use of this app, communication failures, system errors, or data loss.", zh: "对于因使用本应用、通信故障、系统错误或数据丢失而造成的任何直接或间接损失，管理员概不负责。" },
+    "terms_h2": { ja: "2. アカウントの管理と禁止事項（データアップロードについて）", en: "2. Account Management and Prohibited Acts", zh: "2. 账户管理与禁止事项" },
+    "terms_p2_1": { ja: "アカウントの第三者への貸与・譲渡・使い回しを固く禁じます。他ユーザーへのなりすましや不正アクセス等の禁止行為が発覚した場合、管理者は予告なくアカウントを停止・削除できるものとします。", en: "Lending, transferring, or sharing accounts with third parties is strictly prohibited. If prohibited acts such as impersonation or unauthorized access are discovered, the administrator may suspend or delete the account without notice.", zh: "严禁向第三方出借、转让或共享账户。如发现冒充他人或未经授权访问等禁止行为，管理员可随时中止或删除账户。" },
+    "terms_p2_2": { ja: "【重要】本アプリ内での違法な画像（無修正画像、児童ポルノ等）、極度な残虐・わいせつ画像、その他利用サーバー（Google・GitHub等）の規約に違反するデータのアップロードを固く禁じます。アップロードされたデータにより生じたトラブルや、システム提供元からのアカウント凍結等の問題について、管理者は一切の責任を負いません。これらはすべて、データをアップロードしたユーザー自身の責任において解決するものとします。", en: "[Important] Uploading illegal images (uncensored, CSAM, etc.), extreme gore/obscene images, or other data violating server terms is strictly prohibited. The administrator bears no responsibility for any trouble or account freezing caused by uploaded data. Users must resolve all such issues at their own responsibility.", zh: "【重要】严禁上传违法图片（无码图片、儿童色情等）、极度残忍/淫秽图片，或其他违反服务器条款的数据。对于因上传数据引发的纠纷或系统提供商冻结账户等问题，管理员概不负责。所有这些问题均由上传数据的用户自行承担责任解决。" },
+    "terms_h3": { ja: "3. データの閲覧権限", en: "3. Data Viewing Permissions", zh: "3. 数据查看权限" },
+    "terms_p3": { ja: "業務遂行およびセキュリティ管理の目的上、システム管理者（および所属グループの権限者）は、必要に応じてユーザーの送信内容（チャット・申請・予定・画像等）を閲覧および管理できるものとします。", en: "For operational and security management purposes, the system administrator (and group leaders) may view and manage users' transmitted content as necessary.", zh: "出于运营和安全管理目的，系统管理员（及所属群组的权限者）可视需要查看和管理用户发送的内容。" },
+    "terms_h4": { ja: "4. プライバシーポリシー", en: "4. Privacy Policy", zh: "4. 隐私政策" },
+    "terms_p4": { ja: "本システムはメールアドレス等の不要な個人情報を収集しません。登録された氏名、システムログ、Auth UID等は本アプリの運営目的のみに使用し、法令に基づく場合を除き、第三者へ提供することはありません。", en: "This system does not collect unnecessary personal information such as email addresses. Registered names, system logs, Auth UIDs, etc. are used solely for app operation and will not be provided to third parties unless required by law.", zh: "本系统不收集电子邮件地址等不必要的个人信息。注册的姓名、系统日志、Auth UID等仅用于本应用的运营目的，除法律要求外，不会向第三方提供。" },
+    "terms_h5": { ja: "5. 年齢制限について", en: "5. Age Restriction", zh: "5. 年龄限制" },
+    "terms_p5": { ja: "本アプリは取り扱うコンテンツの性質上、18歳未満の方の利用を固く禁じます。本規約に同意して利用を開始した時点で、ユーザーは18歳以上であることを確約したものとみなします。年齢を偽って利用したことにより生じたトラブルや不利益について、管理者は一切の責任を負いません。", en: "Due to the nature of the content, use by individuals under 18 is strictly prohibited. By agreeing to these terms, the user confirms they are 18 or older. The administrator assumes no responsibility for any trouble or disadvantages caused by falsifying age.", zh: "由于内容的性质，严禁18岁以下人员使用本应用。同意本条款即表示用户确认其已满18岁。对于因虚报年龄而引发的纠纷或不利后果，管理员概不负责。" },
+    "terms_btn_logout": { ja: "ログアウト", en: "Logout", zh: "退出登录" },
+    "terms_btn_withdraw": { ja: "退会する", en: "Delete Account", zh: "注销账户" },
+    "terms_btn_agree": { ja: "同意して利用を開始", en: "Agree & Start", zh: "同意并开始使用" }
+
 };
+
 let currentLang = localStorage.getItem('app_lang') || 'ja'; 
 
 const App = {
@@ -1357,6 +1377,7 @@ setupLogin() {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
