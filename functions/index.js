@@ -162,5 +162,11 @@ exports.sendStatusNotification = onDocumentUpdated("applications/{appId}", async
         console.log("Status Notification sent to:", applicantId);
     } catch (error) {
         console.error("Error sending status notification:", error);
+        // 🛡️ 無効なトークンを自動でDBから削除する
+        if (error.code === 'messaging/registration-token-not-registered' ||
+            error.code === 'messaging/invalid-registration-token') {
+            await db.collection("users").doc(applicantId).update({ fcmToken: "" });
+            console.log("Invalid token removed for:", applicantId);
+        }
     }
 });
