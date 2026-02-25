@@ -368,6 +368,11 @@ setupLogin() {
 
             } catch (error) {
                 console.error("General Login Error:", error);
+                
+                // 🌟 ここを追加・修正：Firebaseの生のエラーコードを画面に出す
+                const errorCode = error.code || error.message || "Unknown Error";
+                alert(`ログインできませんでした。\n以下のエラーコードを管理者に報告してください。\n\n【エラー詳細】\n${errorCode}`);
+
                 document.getElementById('login-error').classList.remove('d-none');
                 loginBtn.disabled = false;
                 loginBtn.textContent = TRANSLATIONS["login_button"][currentLang];
@@ -1381,6 +1386,7 @@ setupLogin() {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
