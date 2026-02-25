@@ -64,6 +64,12 @@ exports.sendChatNotification = onDocumentCreated("chats/{chatRoomId}/messages/{m
         console.log("Chat Notification sent to:", recipientId);
     } catch (error) {
         console.error("Error sending notification:", error);
+        // 🛡️ 無効なトークンを自動でDBから削除する（アプリ削除済みユーザー等）
+        if (error.code === 'messaging/registration-token-not-registered' ||
+            error.code === 'messaging/invalid-registration-token') {
+            await db.collection("users").doc(recipientId).update({ fcmToken: "" });
+            console.log("Invalid token removed for:", recipientId);
+        }
     }
 });
 
