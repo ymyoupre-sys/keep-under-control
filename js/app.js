@@ -816,18 +816,15 @@ setupLogin() {
 
                 let imagesBlock = '';
                 if(msg.images && msg.images.length > 0) {
-                    let imgs = '';
-                    msg.images.forEach(img => {
-                        imgs += `<img src="${img}" class="img-fluid rounded clickable" style="width: 100px; height: 100px; object-fit: cover;" onclick="event.stopPropagation(); window.openFullscreenImage('${img}')">`;
-                    });
-
+                    // 🛡️ XSS対策：画像URLをinnerHTMLに直接埋め込まず、後からcreateElementで安全に追加する
+                    const imgPlaceholderId = `img-${msg.id}-${Date.now()}`;
+                    
                     if (!msg.text) {
                         imagesBlock = `
                             <div class="d-flex align-items-end">
                                 ${isMe ? timeHtml : ''}
                                 <div style="position: relative;" class="chat-bubble-content">
-                                    <div class="d-flex flex-wrap gap-1 mt-1 ${isMe ? 'justify-content-end' : 'justify-content-start'}" style="max-width: 210px;" onclick="event.stopPropagation();">
-                                        ${imgs}
+                                    <div id="${imgPlaceholderId}" class="d-flex flex-wrap gap-1 mt-1 ${isMe ? 'justify-content-end' : 'justify-content-start'}" style="max-width: 210px;" onclick="event.stopPropagation();">
                                     </div>
                                     ${reactionHtml}
                                 </div>
@@ -836,11 +833,28 @@ setupLogin() {
                         `;
                     } else {
                         imagesBlock = `
-                            <div class="d-flex flex-wrap gap-1 ${isMe ? 'justify-content-end' : 'justify-content-start'}" style="max-width: 210px;" onclick="event.stopPropagation();">
-                                ${imgs}
+                            <div id="${imgPlaceholderId}" class="d-flex flex-wrap gap-1 ${isMe ? 'justify-content-end' : 'justify-content-start'}" style="max-width: 210px;" onclick="event.stopPropagation();">
                             </div>
                         `;
                     }
+
+                    // 🛡️ DOMに追加された後に、安全な方法で画像を挿入するための予約処理
+                    setTimeout(() => {
+                        const placeholder = document.getElementById(imgPlaceholderId);
+                        if (placeholder) {
+                            msg.images.forEach(imgUrl => {
+                                const imgEl = document.createElement('img');
+                                imgEl.src = imgUrl;
+                                imgEl.className = 'img-fluid rounded clickable';
+                                imgEl.style.cssText = 'width: 100px; height: 100px; object-fit: cover;';
+                                imgEl.onclick = (e) => {
+                                    e.stopPropagation();
+                                    window.openFullscreenImage(imgUrl);
+                                };
+                                placeholder.appendChild(imgEl);
+                            });
+                        }
+                    }, 0);
                 }
 
                 const div = document.createElement('div');
@@ -1386,6 +1400,7 @@ setupLogin() {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
