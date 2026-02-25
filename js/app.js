@@ -246,11 +246,28 @@ const App = {
         });
     },
 
-setupLogin() {
+    setupLogin() {
         const storedUser = localStorage.getItem('app_user_v3');
         if (storedUser) {
             CURRENT_USER = JSON.parse(storedUser);
             this.showMainScreen();
+            
+            // 🛡️ バックグラウンドでFirestoreから最新のユーザー情報を取得し、localStorageを同期する
+            // （UI表示は先に出し、裏で最新データに更新するため体感速度は変わらない）
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    try {
+                        const freshData = await DB.getUserByAuthUid(user.uid);
+                        if (freshData) {
+                            CURRENT_USER = freshData;
+                            const userToSave = { ...CURRENT_USER };
+                            delete userToSave.password;
+                            localStorage.setItem('app_user_v3', JSON.stringify(userToSave));
+                        }
+                    } catch (e) { console.warn("バックグラウンド同期エラー:", e); }
+                }
+            });
+            
             return;
         }
 
@@ -706,6 +723,18 @@ setupLogin() {
         });
 
         window.openFullscreenImage = (src) => {
+            // 🛡️ 許可されたURLだけ表示する（外部の悪意あるURLをブロック）
+            const isAllowed = 
+                src.startsWith('https://firebasestorage.googleapis.com/') ||
+                src.startsWith('https://storage.googleapis.com/') ||
+                src.startsWith('data:image/') ||
+                src.startsWith('images/');
+            
+            if (!isAllowed) {
+                console.warn('許可されていない画像URLをブロックしました:', src);
+                return;
+            }
+            
             document.getElementById('fullscreen-img').src = src;
             const modal = new bootstrap.Modal(document.getElementById('imageFullscreenModal'));
             modal.show();
@@ -1270,15 +1299,24 @@ setupLogin() {
         imageArray.forEach((img, index) => {
             const wrapper = document.createElement('div');
             wrapper.style.position = 'relative';
-            wrapper.innerHTML = `
-                <img src="${img}" class="image-preview-item clickable" onclick="window.openFullscreenImage('${img}')">
-                <div class="custom-close-preview"><i class="bi bi-x"></i></div>
-            `;
-            wrapper.querySelector('.custom-close-preview').onclick = (e) => {
+            
+            // 🛡️ XSS対策：createElementで安全に画像を追加
+            const imgEl = document.createElement('img');
+            imgEl.src = img;
+            imgEl.className = 'image-preview-item clickable';
+            imgEl.onclick = () => window.openFullscreenImage(img);
+            wrapper.appendChild(imgEl);
+            
+            const closeBtn = document.createElement('div');
+            closeBtn.className = 'custom-close-preview';
+            closeBtn.innerHTML = '<i class="bi bi-x"></i>';
+            closeBtn.onclick = (e) => {
                 e.stopPropagation(); 
                 imageArray.splice(index, 1);
                 this.updateImagePreview(containerId, imageArray, inputId); 
             };
+            wrapper.appendChild(closeBtn);
+            
             container.appendChild(wrapper);
         });
     },
@@ -1400,6 +1438,7 @@ setupLogin() {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
