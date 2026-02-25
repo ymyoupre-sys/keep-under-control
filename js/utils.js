@@ -25,8 +25,10 @@ export const Utils = {
     
     // 画像を圧縮する（容量制限対策）
     compressImage(base64Str, maxWidth = 800) {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             const img = new Image();
+            // 🛡️ 画像読み込みエラー時にPromiseが永久に止まらないようにする
+            img.onerror = () => reject(new Error('画像の読み込みに失敗しました'));
             img.src = base64Str;
             img.onload = () => {
                 const canvas = document.createElement('canvas');
@@ -42,7 +44,7 @@ export const Utils = {
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-                resolve(canvas.toDataURL('image/jpeg', 0.7)); // JPEG品質0.7で圧縮
+                resolve(canvas.toDataURL('image/jpeg', 0.7));
             };
         });
     }
