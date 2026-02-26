@@ -253,16 +253,28 @@ const App = {
             this.showMainScreen();
             
             // 🛡️ バックグラウンドでFirestoreから最新のユーザー情報を取得し、localStorageを同期する
-            // （UI表示は先に出し、裏で最新データに更新するため体感速度は変わらない）
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     try {
                         const freshData = await DB.getUserByAuthUid(user.uid);
                         if (freshData) {
+                            // 🛡️ Firestoreの最新データでCURRENT_USERを更新
                             CURRENT_USER = freshData;
                             const userToSave = { ...CURRENT_USER };
                             delete userToSave.password;
                             localStorage.setItem('app_user_v3', JSON.stringify(userToSave));
+                            
+                            // 🛡️ もしlocalStorageでは規約未同意だったが、Firestore側では同意済みだった場合
+                            //    → 規約モーダルが出ていたら自動で閉じる（iOS等でlocalStorageが消えた時の救済）
+                            if (freshData.agreedTermsVersion === 4) {
+                                const termsModalEl = document.getElementById('termsModal');
+                                const termsModalInstance = bootstrap.Modal.getInstance(termsModalEl);
+                                if (termsModalInstance) {
+                                    termsModalInstance.hide();
+                                    // 規約モーダルで止まっていた場合、メイン画面の初期化をやり直す
+                                    this.showMainScreen();
+                                }
+                            }
                         }
                     } catch (e) { console.warn("バックグラウンド同期エラー:", e); }
                 }
@@ -1438,6 +1450,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
