@@ -122,15 +122,19 @@ export const DB = {
     async saveUserToken(user, token) {
         if (!user || !user.id) return;
         const userRef = doc(db, "users", user.id);
+        // 🛡️ Firestoreルールで禁止されている role, group を書き込まないようにする
+        // （トークン保存がサイレントにブロックされるのを防止）
         const updateData = {
             name: user.name || "名称未設定",
-            role: user.role,
-            group: user.group, 
             icon: user.icon || "👤",
             updatedAt: serverTimestamp()
         };
         if (token) updateData.fcmToken = token;
-        await setDoc(userRef, updateData, { merge: true });
+        try {
+            await setDoc(userRef, updateData, { merge: true });
+        } catch (e) {
+            console.error("トークン保存エラー:", e);
+        }
     },
 
     getChatRoomId(groupId, id1, id2) { return getRoomId(groupId, id1, id2); },
@@ -313,3 +317,4 @@ export const DB = {
         return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 };
+
