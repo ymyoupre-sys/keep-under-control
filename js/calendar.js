@@ -187,7 +187,8 @@ export const Calendar = {
         const title = document.getElementById('event-title-input').value.trim();
         
         // 👇 変更：エラー時のアラート文言を英語に統一
-        if (!title || !startDate || !endDate) { alert('Please enter the date and details.'); return; }
+        if (!startDate || !endDate) { alert('日付を選択してください / Please select the dates.'); return; }
+        if (!title) { alert('予定の内容を入力してください / Please enter the event title.'); return; }
         if (startDate > endDate) { alert('End date must be after start date.'); return; }
 
         try {
@@ -215,6 +216,7 @@ export const Calendar = {
         try { await DB.deleteEvent(id); } catch (e) { console.error("Delete Error", e); }
     }
 };
+
 
 
 
