@@ -1469,28 +1469,35 @@ const App = {
 window.app = App;
 window.onload = () => App.init();
 
+// 🛡️ iOS Safari ブラウザモード対策：ツールバーの高さを動的に計算して下部余白を調整
+(function adjustBrowserBottomPadding() {
+    // PWA（standalone）モードなら何もしない
+    if (window.matchMedia('(display-mode: standalone)').matches) return;
+    if (window.navigator.standalone === true) return;
 
+    function update() {
+        // visualViewport が使える場合はそちらから正確な値を取得
+        const viewportHeight = window.visualViewport 
+            ? window.visualViewport.height 
+            : window.innerHeight;
+        const fullHeight = document.documentElement.clientHeight;
+        
+        // ツールバー分の差分を計算（ツールバーがない場合は0）
+        const toolbarHeight = Math.max(fullHeight - viewportHeight, 0);
+        
+        // 最低でも安全な余白を確保（ツールバーが検出できない場合のフォールバック）
+        const extraPadding = Math.max(toolbarHeight, 0);
+        
+        document.querySelectorAll('.bottom-nav, #chat-input-area').forEach(el => {
+            el.style.paddingBottom = `calc(env(safe-area-inset-bottom, 0px) + ${extraPadding}px)`;
+            el.style.minHeight = `calc(60px + env(safe-area-inset-bottom, 0px) + ${extraPadding}px)`;
+        });
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    // 初回実行 + ビューポート変化時に再計算
+    update();
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', update);
+    }
+    window.addEventListener('resize', update);
+})();
