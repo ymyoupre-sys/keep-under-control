@@ -189,6 +189,19 @@ header {
     overflow-wrap: break-word;
 }
 
+/* ⑤ iOS Safari のラバーバンドスクロールでヘッダー/ナビが引っ張られるのを防止 */
+header, .bottom-nav, #chat-input-area {
+    position: sticky;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* メインスクロール領域だけがスクロールするようにする */
+#scrollable-content, #chat-detail-container {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+
 
 
 
