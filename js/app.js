@@ -358,8 +358,8 @@ const App = {
                     const pwdModal = new bootstrap.Modal(document.getElementById('passwordChangeModal'));
                     pwdModal.show();
 
-                    const changeBtn = document.getElementById('btn-change-password');
                     changeBtn.onclick = async () => {
+                    document.activeElement?.blur(); // 🛡️ iOS対策
                         const newPwd = document.getElementById('new-password').value.trim();
                         const confirmPwd = document.getElementById('new-password-confirm').value.trim();
                         const errorMsg = document.getElementById('password-error');
@@ -962,6 +962,7 @@ const App = {
                             saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
                             
                             newSaveBtn.onclick = () => {
+                                document.activeElement?.blur(); // 🛡️ iOS対策
                                 const newText = textarea.value;
                                 if (newText.trim() !== "" && newText !== msg.text) {
                                     DB.updateMessage(groupId, myId, targetId, msg.id, newText);
@@ -1120,6 +1121,7 @@ const App = {
                             modal.show();
 
                             newSubmitBtn.onclick = async () => {
+                                document.activeElement?.blur(); // 🛡️ iOS対策
                                 const comment = document.getElementById('completion-comment').value.trim();
                                 
                                 if (!comment && completionImagesBase64.length === 0) {
@@ -1242,10 +1244,12 @@ const App = {
                     document.getElementById('btn-cancel-judge').classList.add('d-none');
                     
                     document.getElementById('btn-approve').onclick = async () => {
+                        document.activeElement?.blur(); // 🛡️ iOS対策
                         await DB.updateStatus(appData.id, 'approved', commentInput.value, CURRENT_USER.id);
                         closeModal(); 
                     };
                     document.getElementById('btn-reject').onclick = async () => {
+                        document.activeElement?.blur(); // 🛡️ iOS対策
                         await DB.updateStatus(appData.id, 'rejected', commentInput.value, CURRENT_USER.id);
                         closeModal(); 
                     };
@@ -1450,6 +1454,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
