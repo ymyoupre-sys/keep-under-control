@@ -932,7 +932,7 @@ const App = {
                                 editModalEl.className = 'modal fade';
                                 editModalEl.tabIndex = -1;
                                 editModalEl.innerHTML = `
-                                    <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-dialog">
                                         <div class="modal-content">
                                             <div class="modal-header">
                                                 <h5 class="modal-title">メッセージの編集</h5>
@@ -1450,6 +1450,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
