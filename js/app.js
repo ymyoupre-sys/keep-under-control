@@ -918,6 +918,8 @@ const App = {
                             pressTimer = setTimeout(() => { DB.toggleReaction(groupId, myId, targetId, msg.id, CURRENT_USER.id); }, 500);
                         }, {passive:true});
                         bubble.addEventListener('touchend', () => clearTimeout(pressTimer));
+                        // 🛡️ iOS対策：スクロール中の誤リアクションを防止
+                        bubble.addEventListener('touchmove', () => clearTimeout(pressTimer), {passive:true});
                     });
                 }
 
@@ -1346,6 +1348,16 @@ const App = {
             this.style.height = newHeight + "px";
             if(newHeight >= 100) this.style.overflowY = 'auto';
         }, false);
+        
+        // 🛡️ iOS対策：キーボード表示時にチャットを最下部にスクロールする
+        tx.addEventListener('focus', () => {
+            setTimeout(() => {
+                const container = document.getElementById('chat-detail-container');
+                if (container && !container.classList.contains('d-none')) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            }, 300); // iOS キーボードアニメーション完了を待つ
+        });
     },
 
     async handleFormSubmit() {
@@ -1454,6 +1466,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
