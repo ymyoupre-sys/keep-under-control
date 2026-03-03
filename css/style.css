@@ -174,6 +174,17 @@ header {
     min-height: calc(60px + env(safe-area-inset-bottom));
 }
 
+/* ④ ブラウザモード時の追加対策：iOS Safariのツールバー（URL欄）に被らないようにする */
+/* PWAとしてインストール済みの場合はこのルールは無視される */
+@media all and (display-mode: browser) {
+    .bottom-nav, #chat-input-area {
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 50px) !important;
+        min-height: calc(60px + env(safe-area-inset-bottom, 0px) + 50px);
+    }
+}
+
+/* 長い英数字が連続入力されても画面外に突き抜けないようにする保険 */
+
 /* 長い英数字が連続入力されても画面外に突き抜けないようにする保険 */
 .chat-bubble, #detail-content {
     word-wrap: break-word;
@@ -192,6 +203,7 @@ header, .bottom-nav, #chat-input-area {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
 }
+
 
 
 
