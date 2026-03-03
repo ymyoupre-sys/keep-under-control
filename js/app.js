@@ -354,15 +354,12 @@ const App = {
                 }
                 
                 if (inputPass === INITIAL_PASS) {
-                    // 🚨 テストユーザーの特権スキップを削除！全員必ず「パスワード変更画面」へ行くようにしました
                     const pwdModal = new bootstrap.Modal(document.getElementById('passwordChangeModal'));
                     pwdModal.show();
 
                     const changeBtn = document.getElementById('btn-change-password');
                     changeBtn.onclick = async () => {
-
-                    changeBtn.onclick = async () => {
-                    document.activeElement?.blur(); // 🛡️ iOS対策
+                        document.activeElement?.blur(); // 🛡️ iOS対策
                         const newPwd = document.getElementById('new-password').value.trim();
                         const confirmPwd = document.getElementById('new-password-confirm').value.trim();
                         const errorMsg = document.getElementById('password-error');
@@ -1504,4 +1501,5 @@ window.onload = () => App.init();
     }
     window.addEventListener('resize', update);
 })();
+
 
