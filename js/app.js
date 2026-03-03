@@ -1003,6 +1003,8 @@ const App = {
             input.style.height = '38px'; 
             chatImagesBase64 = [];
             this.updateImagePreview('chat-image-preview', chatImagesBase64, 'chat-image-file');
+            // 🛡️ iOS対策：キーボードを閉じてから最下部にスクロール
+            input.blur();
             setTimeout(() => { detailContainer.scrollTop = detailContainer.scrollHeight; }, 100);
         };
     },
@@ -1466,6 +1468,7 @@ const App = {
 
 window.app = App;
 window.onload = () => App.init();
+
 
 
 
