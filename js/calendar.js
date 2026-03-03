@@ -179,6 +179,9 @@ export const Calendar = {
     },
 
     async saveEvent() {
+        // 🛡️ iOS対策：キーボードが開いている場合、先に閉じてモーダルの位置ズレを防止
+        document.activeElement?.blur();
+        
         const startDate = document.getElementById('event-start-date').value;
         const endDate = document.getElementById('event-end-date').value;
         const title = document.getElementById('event-title-input').value.trim();
@@ -212,6 +215,7 @@ export const Calendar = {
         try { await DB.deleteEvent(id); } catch (e) { console.error("Delete Error", e); }
     }
 };
+
 
 
 
