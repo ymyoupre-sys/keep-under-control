@@ -8,67 +8,80 @@ const { getMessaging } = require("firebase-admin/messaging");
 initializeApp();
 const db = getFirestore();
 
-// ■ チャット通知
+// ■ チャット通知 — 🛡️ 修正済み：宛先判定ロジックを修正
 exports.sendChatNotification = onDocumentCreated("chats/{chatRoomId}/messages/{messageId}", async (event) => {
     const newMessage = event.data.data();
     const chatRoomId = event.params.chatRoomId; 
     
     if (!newMessage) return;
 
-    const [groupId, memberId] = chatRoomId.split('_');
+    const parts = chatRoomId.split('_');
+    const groupId = parts[0];
 
-    let recipientId = null;
+    // 🛡️ 通知を送る相手のリストを組み立てる
+    let recipientIds = [];
 
-    if (newMessage.senderId === memberId) {
-        const usersRef = db.collection("users");
-        // 👇【修正1】検索対象のフィールドを "groupId" から "group" に変更
-        const snapshot = await usersRef
-            .where("group", "==", groupId) 
-            .where("role", "==", "leader")
+    if (parts[1] === 'ALL') {
+        // グループ全体チャット → グループ全員（送信者以外）に通知
+        const snapshot = await db.collection("users")
+            .where("group", "==", groupId)
             .get();
-        
-        if (!snapshot.empty) {
-            recipientId = snapshot.docs[0].id;
-        }
+        snapshot.forEach(doc => {
+            if (doc.id !== newMessage.senderId) {
+                recipientIds.push(doc.id);
+            }
+        });
     } else {
-        recipientId = memberId;
+        // 🛡️ 1対1チャット → ルームIDから送信者以外のIDを取り出す
+        // ルームID例: E_u009_u010 → ['E', 'u009', 'u010'] → 送信者でないほうが宛先
+        const userIds = parts.slice(1);
+        recipientIds = userIds.filter(id => id !== newMessage.senderId);
     }
 
-    if (!recipientId) {
-        console.log("Recipient not found");
+    if (recipientIds.length === 0) {
+        console.log("No recipients found for room:", chatRoomId);
         return;
     }
 
-    const userDoc = await db.collection("users").doc(recipientId).get();
-    const fcmToken = userDoc.data()?.fcmToken;
+    // 各受信者に通知を送信
+    for (const recipientId of recipientIds) {
+        const userDoc = await db.collection("users").doc(recipientId).get();
+        if (!userDoc.exists) {
+            console.log("User not found:", recipientId);
+            continue;
+        }
+        const fcmToken = userDoc.data()?.fcmToken;
 
-    if (!fcmToken) {
-        console.log("No FCM Token for user:", recipientId);
-        return;
-    }
+        if (!fcmToken) {
+            console.log("No FCM Token for user:", recipientId);
+            continue;
+        }
 
-    const message = {
-        notification: {
-            title: newMessage.senderName, 
-            body: newMessage.text || "画像が送信されました",
-        },
-        data: {
-            url: `https://ymyoupre-sys.github.io/keep-under-control/`, 
-            chatId: chatRoomId
-        },
-        token: fcmToken
-    };
+        const message = {
+            notification: {
+                title: newMessage.senderName, 
+                body: newMessage.text || "画像が送信されました",
+            },
+            data: {
+                url: `https://ymyoupre-sys.github.io/keep-under-control/`, 
+                chatId: chatRoomId,
+                senderId: newMessage.senderId || "",
+                tab: "chat"
+            },
+            token: fcmToken
+        };
 
-    try {
-        await getMessaging().send(message);
-        console.log("Chat Notification sent to:", recipientId);
-    } catch (error) {
-        console.error("Error sending notification:", error);
-        // 🛡️ 無効なトークンを自動でDBから削除する（アプリ削除済みユーザー等）
-        if (error.code === 'messaging/registration-token-not-registered' ||
-            error.code === 'messaging/invalid-registration-token') {
-            await db.collection("users").doc(recipientId).update({ fcmToken: "" });
-            console.log("Invalid token removed for:", recipientId);
+        try {
+            await getMessaging().send(message);
+            console.log("Chat Notification sent to:", recipientId);
+        } catch (error) {
+            console.error("Error sending notification to", recipientId, ":", error);
+            // 🛡️ 無効なトークンを自動でDBから削除する
+            if (error.code === 'messaging/registration-token-not-registered' ||
+                error.code === 'messaging/invalid-registration-token') {
+                await db.collection("users").doc(recipientId).update({ fcmToken: "" });
+                console.log("Invalid token removed for:", recipientId);
+            }
         }
     }
 });
@@ -82,12 +95,10 @@ exports.sendApplicationNotification = onDocumentCreated("applications/{appId}", 
     let recipientQuery = null;
     
     if (appData.role === 'leader' || appData.type === 'instruction') {
-         // 👇【修正2】検索対象のフィールドを "groupId" から "group" に変更
          recipientQuery = db.collection("users")
              .where("group", "==", appData.groupId)
              .where("role", "==", "member");
     } else {
-         // 👇【修正3】検索対象のフィールドを "groupId" から "group" に変更
          recipientQuery = db.collection("users")
              .where("group", "==", appData.groupId)
              .where("role", "==", "leader");
@@ -112,7 +123,8 @@ exports.sendApplicationNotification = onDocumentCreated("applications/{appId}", 
             body: `${appData.userName}さんが「${appData.title}」を作成しました。`,
         },
         data: {
-            url: `https://ymyoupre-sys.github.io/keep-under-control/`
+            url: `https://ymyoupre-sys.github.io/keep-under-control/`,
+            tab: "inbox"
         }
     };
 
@@ -153,7 +165,8 @@ exports.sendStatusNotification = onDocumentUpdated("applications/{appId}", async
         },
         token: fcmToken,
         data: {
-             url: `https://ymyoupre-sys.github.io/keep-under-control/`
+             url: `https://ymyoupre-sys.github.io/keep-under-control/`,
+             tab: "inbox"
         }
     };
 
