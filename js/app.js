@@ -358,6 +358,9 @@ const App = {
                     const pwdModal = new bootstrap.Modal(document.getElementById('passwordChangeModal'));
                     pwdModal.show();
 
+                    const changeBtn = document.getElementById('btn-change-password');
+                    changeBtn.onclick = async () => {
+
                     changeBtn.onclick = async () => {
                     document.activeElement?.blur(); // 🛡️ iOS対策
                         const newPwd = document.getElementById('new-password').value.trim();
@@ -1501,3 +1504,4 @@ window.onload = () => App.init();
     }
     window.addEventListener('resize', update);
 })();
+
