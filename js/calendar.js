@@ -185,20 +185,22 @@ export const Calendar = {
         const startDate = document.getElementById('event-start-date').value;
         const endDate = document.getElementById('event-end-date').value;
         const title = document.getElementById('event-title-input').value.trim();
+        const saveBtn = document.getElementById('save-event-btn');
         
         // 👇 変更：エラー時のアラート文言を英語に統一
         if (!startDate || !endDate) { alert('日付を選択してください / Please select the dates.'); return; }
         if (!title) { alert('予定の内容を入力してください / Please enter the event title.'); return; }
         if (startDate > endDate) { alert('End date must be after start date.'); return; }
 
+        saveBtn.disabled = true;
         try {
             await DB.addEvent({
                 groupId: this.currentUser.group,
                 userId: this.currentUser.id,
-                userName: this.currentUser.name || "名称未設定", // 👈 追加：名前欠落エラー防止
+                userName: this.currentUser.name || "名称未設定",
                 userRole: this.currentUser.role,
-                startDate: (startDate || "").replace(/-/g, '/'), // 👈 追加：クラッシュ防止
-                endDate: (endDate || "").replace(/-/g, '/'),     // 👈 追加：クラッシュ防止
+                startDate: (startDate || "").replace(/-/g, '/'),
+                endDate: (endDate || "").replace(/-/g, '/'),
                 title: title
             });
             
@@ -207,13 +209,18 @@ export const Calendar = {
         } catch (e) {
             console.error("カレンダー保存エラー:", e); 
             alert('Failed to save.'); 
-        } 
+        } finally {
+            saveBtn.disabled = false;
+        }
     }, 
 
     async deleteEvent(id, title) {
-        // 👇 変更：削除確認のアラート文言を英語に統一
+        // 🛡️ 連打防止
+        if (this._deleting) return;
         if(!confirm(`Delete event "${title}"?`)) return;
+        this._deleting = true;
         try { await DB.deleteEvent(id); } catch (e) { console.error("Delete Error", e); }
+        finally { this._deleting = false; }
     }
 };
 

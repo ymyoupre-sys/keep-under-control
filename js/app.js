@@ -733,6 +733,8 @@ const App = {
                 return; 
             }
             if(confirm(TRANSLATIONS["msg_confirm_withdraw"][currentLang])) { 
+                const btn = document.getElementById('btn-show-withdraw');
+                btn.disabled = true;
                 try {
                     await DB.deleteUserAccount(CURRENT_USER);
                     
@@ -746,6 +748,7 @@ const App = {
                     
                 } catch (e) {
                     console.error("退会エラー:", e);
+                    btn.disabled = false;
                     if (e.code === 'auth/requires-recent-login') {
                         alert(TRANSLATIONS["msg_withdraw_relogin"][currentLang]); 
                     } else {
@@ -1086,11 +1089,14 @@ const App = {
                             const newSaveBtn = saveBtn.cloneNode(true);
                             saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
                             
-                            newSaveBtn.onclick = () => {
+                            newSaveBtn.onclick = async () => {
                                 document.activeElement?.blur();
                                 const newText = textarea.value;
                                 if (newText.trim() !== "" && newText !== msg.text) {
-                                    DB.updateMessage(groupId, myId, targetId, msg.id, newText);
+                                    newSaveBtn.disabled = true;
+                                    try { await DB.updateMessage(groupId, myId, targetId, msg.id, newText); }
+                                    catch(e) { console.error("Edit Error:", e); }
+                                    finally { newSaveBtn.disabled = false; }
                                 }
                                 editModal.hide();
                             };
@@ -1102,7 +1108,10 @@ const App = {
                             
                             newDeleteBtn.onclick = async () => {
                                 if (confirm(TRANSLATIONS["msg_confirm_delete_msg"][currentLang])) {
-                                    await DB.deleteMessage(groupId, myId, targetId, msg.id);
+                                    newDeleteBtn.disabled = true;
+                                    try { await DB.deleteMessage(groupId, myId, targetId, msg.id); }
+                                    catch(e) { console.error("Delete Error:", e); }
+                                    finally { newDeleteBtn.disabled = false; }
                                     editModal.hide();
                                 }
                             };
@@ -1146,16 +1155,21 @@ const App = {
         
         document.getElementById('chat-send-btn').onclick = async () => {
             const input = document.getElementById('chat-message-input');
+            const sendBtn = document.getElementById('chat-send-btn');
             const text = input.value;
             if(!text && chatImagesBase64.length === 0) return;
             
-            await DB.sendMessage(groupId, myId, targetId, CURRENT_USER, text, chatImagesBase64);
-            input.value = '';
-            input.style.height = '38px'; 
-            chatImagesBase64 = [];
-            self.updateImagePreview('chat-image-preview', chatImagesBase64, 'chat-image-file');
-            input.blur();
-            setTimeout(() => { detailContainer.scrollTop = detailContainer.scrollHeight; }, 100);
+            sendBtn.disabled = true;
+            try {
+                await DB.sendMessage(groupId, myId, targetId, CURRENT_USER, text, chatImagesBase64);
+                input.value = '';
+                input.style.height = '38px'; 
+                chatImagesBase64 = [];
+                self.updateImagePreview('chat-image-preview', chatImagesBase64, 'chat-image-file');
+                input.blur();
+                setTimeout(() => { detailContainer.scrollTop = detailContainer.scrollHeight; }, 100);
+            } catch(e) { console.error("Send Error:", e); }
+            finally { sendBtn.disabled = false; }
         };
     },
     
@@ -1257,7 +1271,10 @@ const App = {
                     deleteBtn.onclick = async (e) => {
                         e.stopPropagation(); 
                         if(confirm(TRANSLATIONS["msg_confirm_delete"][currentLang])) { 
-                            await DB.deleteApplication(app.id);
+                            deleteBtn.disabled = true;
+                            try { await DB.deleteApplication(app.id); }
+                            catch(err) { console.error("Delete Error:", err); }
+                            finally { deleteBtn.disabled = false; }
                         }
                     };
                     const container = div.querySelector(`#delete-btn-container-${app.id}`);
@@ -1324,7 +1341,10 @@ const App = {
                     onCheckAction = async (e) => {
                         e.stopPropagation(); 
                         if(confirm(TRANSLATIONS["msg_confirm_mark_read"][currentLang])) { 
-                            await DB.markAsConfirmed(app.id);
+                            const target = e.currentTarget;
+                            target.disabled = true;
+                            try { await DB.markAsConfirmed(app.id); }
+                            catch(err) { console.error("Confirm Error:", err); target.disabled = false; }
                         }
                     };
                 }
@@ -1442,21 +1462,27 @@ const App = {
                     
                     document.getElementById('btn-approve').onclick = async () => {
                         document.activeElement?.blur(); // 🛡️ iOS対策
-                        await DB.updateStatus(appData.id, 'approved', commentInput.value, CURRENT_USER.id);
-                        closeModal(); 
+                        const btn = document.getElementById('btn-approve');
+                        btn.disabled = true;
+                        try { await DB.updateStatus(appData.id, 'approved', commentInput.value, CURRENT_USER.id); closeModal(); }
+                        catch(e) { console.error("Approve Error:", e); btn.disabled = false; }
                     };
                     document.getElementById('btn-reject').onclick = async () => {
                         document.activeElement?.blur(); // 🛡️ iOS対策
-                        await DB.updateStatus(appData.id, 'rejected', commentInput.value, CURRENT_USER.id);
-                        closeModal(); 
+                        const btn = document.getElementById('btn-reject');
+                        btn.disabled = true;
+                        try { await DB.updateStatus(appData.id, 'rejected', commentInput.value, CURRENT_USER.id); closeModal(); }
+                        catch(e) { console.error("Reject Error:", e); btn.disabled = false; }
                     };
                 } else {
                     document.getElementById('judge-btn-group').classList.add('d-none');
                     document.getElementById('btn-cancel-judge').classList.remove('d-none');
                     
                     document.getElementById('btn-cancel-judge').onclick = async () => {
-                        await DB.updateStatus(appData.id, 'pending', '', CURRENT_USER.id);
-                        closeModal(); 
+                        const btn = document.getElementById('btn-cancel-judge');
+                        btn.disabled = true;
+                        try { await DB.updateStatus(appData.id, 'pending', '', CURRENT_USER.id); closeModal(); }
+                        catch(e) { console.error("Cancel Judge Error:", e); btn.disabled = false; }
                     };
                 }
             } else {
@@ -1600,6 +1626,10 @@ const App = {
         };
         
         try {
+            const submitBtn = document.getElementById('form-submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = TRANSLATIONS["login_authenticating"]?.[currentLang] || "送信中...";
+            
             await DB.submitForm(data);
             alert(TRANSLATIONS["msg_submit_success"][currentLang]); 
             document.getElementById('form-content').value = '';
@@ -1609,6 +1639,10 @@ const App = {
         } catch(e) { 
             console.error(e); 
             alert(TRANSLATIONS["msg_submit_fail"][currentLang]); 
+        } finally {
+            const submitBtn = document.getElementById('form-submit-btn');
+            submitBtn.disabled = false;
+            submitBtn.textContent = TRANSLATIONS["form_submit"][currentLang] || "送信";
         }
     },
 
