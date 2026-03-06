@@ -913,19 +913,42 @@ const App = {
         let currentMessages = [];
         let prevMessageCount = 0;
         let isFirstLoad = true;
-        let metaTriggeredRender = false;
 
-        // 🌟 既読情報のリアルタイム購読
+        // 🌟 レンダリングの一元管理（競合防止）
+        let renderScheduled = false;
+        let pendingScrollToBottom = false;
+
+        function scheduleRender(scrollToBottom = false) {
+            if (scrollToBottom) pendingScrollToBottom = true;
+            if (renderScheduled) return;
+            renderScheduled = true;
+            requestAnimationFrame(() => {
+                renderScheduled = false;
+                const doScroll = pendingScrollToBottom;
+                pendingScrollToBottom = false;
+                renderChatMessages(currentMessages, roomMeta, doScroll);
+            });
+        }
+
+        // 🌟 既読情報のリアルタイム購読（メタ変更時は既読ラベルだけ更新）
         unsubscribeRoomMeta = DB.subscribeRoomMeta(currentChatTargetId, (meta) => {
             roomMeta = meta;
             if (currentMessages.length > 0) {
-                metaTriggeredRender = true;
-                renderChatMessages(currentMessages, roomMeta);
+                scheduleRender(false);
             }
         });
 
-        // 🌟 自分の既読時刻を更新
-        DB.updateLastRead(currentChatTargetId, CURRENT_USER.id);
+        // 🌟 既読時刻の更新（連続書き込み防止のためデバウンス）
+        let lastReadTimer = null;
+        function debouncedUpdateLastRead() {
+            if (lastReadTimer) clearTimeout(lastReadTimer);
+            lastReadTimer = setTimeout(() => {
+                DB.updateLastRead(currentChatTargetId, CURRENT_USER.id);
+            }, 500);
+        }
+        
+        // 初回の既読更新
+        debouncedUpdateLastRead();
 
         const self = this;
 
@@ -942,8 +965,9 @@ const App = {
             return count;
         }
 
-        function renderChatMessages(messages, meta) {
+        function renderChatMessages(messages, meta, scrollToBottom = false) {
             const msgContainer = document.getElementById('chat-messages');
+            if (!msgContainer) return;
             const previousScrollTop = detailContainer.scrollTop;
             msgContainer.innerHTML = '';
 
@@ -1190,28 +1214,27 @@ const App = {
                 msgContainer.appendChild(div);
             });
 
-            // スクロール制御
-            if (metaTriggeredRender) {
+            // 🌟 スクロール制御（一元管理）
+            if (scrollToBottom) {
+                setTimeout(() => { detailContainer.scrollTop = detailContainer.scrollHeight; }, 50);
+            } else {
                 detailContainer.scrollTop = previousScrollTop;
-                metaTriggeredRender = false;
             }
         }
 
         unsubscribeChat = DB.subscribeChat(groupId, myId, targetId, (messages) => {
             currentMessages = messages;
 
-            metaTriggeredRender = false;
-            renderChatMessages(messages, roomMeta);
-
-            // 🌟 既読時刻を更新
-            DB.updateLastRead(currentChatTargetId, CURRENT_USER.id);
-
             const currentMessageCount = messages.length;
-            if (isFirstLoad || currentMessageCount > prevMessageCount) {
-                setTimeout(() => { detailContainer.scrollTop = detailContainer.scrollHeight; }, 50);
-                isFirstLoad = false;
-            }
+            const shouldScroll = isFirstLoad || currentMessageCount > prevMessageCount;
+            
+            scheduleRender(shouldScroll);
+
+            if (isFirstLoad) isFirstLoad = false;
             prevMessageCount = currentMessageCount;
+
+            // 🌟 既読時刻を更新（デバウンス付き）
+            debouncedUpdateLastRead();
         });
         
         document.getElementById('back-to-chat-list').onclick = () => {
