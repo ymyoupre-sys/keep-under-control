@@ -34,6 +34,37 @@ const escapeHTML = (str) => {
     );
 };
 
+// 🌟 新規：触覚フィードバック（対応端末のみ）
+const haptic = (duration = 10) => {
+    try { if (navigator.vibrate) navigator.vibrate(duration); } catch(e) {}
+};
+
+// 🌟 新規：スケルトンスクリーン生成
+const showSkeleton = (containerId, type = 'list', count = 4) => {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    let html = '';
+    for (let i = 0; i < count; i++) {
+        if (type === 'list') {
+            html += `<div class="skeleton-row"><div class="skeleton-avatar"></div><div style="flex:1;"><div class="skeleton-line long"></div><div class="skeleton-line short"></div></div></div>`;
+        } else if (type === 'card') {
+            html += `<div class="skeleton-card"><div class="skeleton-line medium"></div><div class="skeleton-line long"></div><div class="skeleton-line short"></div></div>`;
+        }
+    }
+    container.innerHTML = html;
+};
+
+// 🌟 新規：プログレッシブ画像要素を生成
+const createProgressiveImg = (src, className = '', style = '') => {
+    const img = document.createElement('img');
+    img.className = `progressive-img ${className}`;
+    if (style) img.style.cssText = style;
+    img.onload = () => img.classList.add('loaded');
+    img.onerror = () => { img.classList.add('loaded'); img.style.opacity = '0.5'; };
+    img.src = src;
+    return img;
+};
+
 const TRANSLATIONS = {
     "login_title": { ja: "利用開始", en: "Start Using", zh: "开始使用" },
     "login_notice": {
@@ -471,7 +502,7 @@ const App = {
             document.getElementById('btn-terms-withdraw').onclick = async () => {
                 // テストアカウントの誤爆防止
                 if (TEST_ACCOUNT_NAMES.includes(CURRENT_USER.name)) {
-                    alert(TRANSLATIONS["msg_test_acc_block"][currentLang]); 
+                    this.showToast(TRANSLATIONS["msg_test_acc_block"][currentLang], '', 'error'); 
                     return; 
                 }
 
@@ -586,17 +617,17 @@ const App = {
     // 👇 🔔ボタンを押したときに発動する「手動の」通知許可リクエスト
     async requestNotificationManual() {
         if (!('Notification' in window)) {
-            alert(TRANSLATIONS["msg_notif_unsupported"][currentLang]);
+            this.showToast(TRANSLATIONS["msg_notif_unsupported"][currentLang], '', 'error');
             return;
         }
 
         if (Notification.permission === 'denied') {
-            alert(TRANSLATIONS["msg_notif_denied"][currentLang]);
+            this.showToast(TRANSLATIONS["msg_notif_denied"][currentLang], '', 'error');
             return;
         }
 
         if (Notification.permission === 'granted') {
-            alert(TRANSLATIONS["msg_notif_already_on"][currentLang]);
+            this.showToast(TRANSLATIONS["msg_notif_already_on"][currentLang], '', 'info');
             return;
         }
 
@@ -612,12 +643,12 @@ const App = {
                 });
                 if (token) {
                     await DB.saveUserToken(CURRENT_USER, token);
-                    alert(TRANSLATIONS["msg_notif_enabled"][currentLang]);
+                    this.showToast(TRANSLATIONS["msg_notif_enabled"][currentLang], '', 'success');
                 }
             }
         } catch (error) {
             console.error(error);
-            alert(TRANSLATIONS["msg_notif_error"][currentLang]);
+            this.showToast(TRANSLATIONS["msg_notif_error"][currentLang], '', 'error');
         }
     },
 
@@ -673,6 +704,7 @@ const App = {
         document.querySelectorAll('.bottom-nav-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
+                haptic(5);
                 clearBadge(); 
 
                 document.querySelectorAll('.bottom-nav-item').forEach(nav => nav.classList.remove('active'));
@@ -729,7 +761,7 @@ const App = {
 
         document.getElementById('btn-show-withdraw').addEventListener('click', async () => {
             if (TEST_ACCOUNT_NAMES.includes(CURRENT_USER.name)) {
-                alert(TRANSLATIONS["msg_test_acc_block"][currentLang]); 
+                this.showToast(TRANSLATIONS["msg_test_acc_block"][currentLang], '', 'error'); 
                 return; 
             }
             if(confirm(TRANSLATIONS["msg_confirm_withdraw"][currentLang])) { 
@@ -778,6 +810,9 @@ const App = {
     },
 
     async renderChatList() {
+        // 🌟 スケルトン表示
+        showSkeleton('chat-list', 'list', 3);
+        
         const groupUsers = await DB.getGroupUsers(CURRENT_USER.group);
         const targets = groupUsers.filter(u => u.id !== CURRENT_USER.id);
         
@@ -853,7 +888,17 @@ const App = {
         currentChatTargetId = DB.getChatRoomId(groupId, myId, targetId);
 
         document.getElementById('chat-container').classList.add('d-none');
-        document.getElementById('chat-detail-container').classList.remove('d-none');
+        const chatDetailEl = document.getElementById('chat-detail-container');
+        chatDetailEl.classList.remove('d-none');
+        // 🌟 スライドインアニメーション
+        chatDetailEl.classList.add('slide-enter');
+        chatDetailEl.classList.remove('slide-active');
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                chatDetailEl.classList.remove('slide-enter');
+                chatDetailEl.classList.add('slide-active');
+            });
+        });
         document.getElementById('chat-target-name').textContent = targetName;
         document.getElementById('chat-input-area').classList.remove('d-none');
         document.querySelector('.bottom-nav').classList.add('d-none');
@@ -902,8 +947,33 @@ const App = {
             const previousScrollTop = detailContainer.scrollTop;
             msgContainer.innerHTML = '';
 
+            let lastDateStr = '';
+
             messages.forEach(msg => {
                 const isMe = msg.senderId === CURRENT_USER.id;
+
+                // 🌟 日付セパレーター
+                if (msg.createdAt) {
+                    const msgDate = msg.createdAt.toDate();
+                    const dateStr = `${msgDate.getFullYear()}/${msgDate.getMonth()+1}/${msgDate.getDate()}`;
+                    if (dateStr !== lastDateStr) {
+                        const separator = document.createElement('div');
+                        separator.className = 'chat-date-separator';
+                        const today = new Date();
+                        const yesterday = new Date(today);
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        
+                        let displayDate = dateStr;
+                        if (dateStr === `${today.getFullYear()}/${today.getMonth()+1}/${today.getDate()}`) {
+                            displayDate = currentLang === 'ja' ? '今日' : currentLang === 'zh' ? '今天' : 'Today';
+                        } else if (dateStr === `${yesterday.getFullYear()}/${yesterday.getMonth()+1}/${yesterday.getDate()}`) {
+                            displayDate = currentLang === 'ja' ? '昨日' : currentLang === 'zh' ? '昨天' : 'Yesterday';
+                        }
+                        separator.innerHTML = `<span>${displayDate}</span>`;
+                        msgContainer.appendChild(separator);
+                        lastDateStr = dateStr;
+                    }
+                }
                 
                 // 🌟 削除済みメッセージの表示
                 if (msg.isDeleted) {
@@ -1008,10 +1078,8 @@ const App = {
                         const placeholder = document.getElementById(imgPlaceholderId);
                         if (placeholder) {
                             msg.images.forEach(imgUrl => {
-                                const imgEl = document.createElement('img');
-                                imgEl.src = imgUrl;
-                                imgEl.className = 'img-fluid rounded clickable';
-                                imgEl.style.cssText = 'width: 100px; height: 100px; object-fit: cover;';
+                                // 🌟 プログレッシブ画像読み込み
+                                const imgEl = createProgressiveImg(imgUrl, 'img-fluid rounded clickable', 'width: 100px; height: 100px; object-fit: cover;');
                                 imgEl.onclick = (e) => {
                                     e.stopPropagation();
                                     window.openFullscreenImage(imgUrl);
@@ -1039,7 +1107,7 @@ const App = {
                     const bubbles = div.querySelectorAll('.chat-bubble-content');
                     bubbles.forEach(bubble => {
                         bubble.addEventListener('touchstart', () => {
-                            pressTimer = setTimeout(() => { DB.toggleReaction(groupId, myId, targetId, msg.id, CURRENT_USER.id); }, 500);
+                            pressTimer = setTimeout(() => { haptic(20); DB.toggleReaction(groupId, myId, targetId, msg.id, CURRENT_USER.id); }, 500);
                         }, {passive:true});
                         bubble.addEventListener('touchend', () => clearTimeout(pressTimer));
                         bubble.addEventListener('touchmove', () => clearTimeout(pressTimer), {passive:true});
@@ -1160,6 +1228,7 @@ const App = {
             if(!text && chatImagesBase64.length === 0) return;
             
             sendBtn.disabled = true;
+            haptic();
             try {
                 await DB.sendMessage(groupId, myId, targetId, CURRENT_USER, text, chatImagesBase64);
                 input.value = '';
@@ -1175,6 +1244,9 @@ const App = {
     
     startInboxListener() {
         if(unsubscribeInbox) unsubscribeInbox();
+        
+        // 🌟 スケルトン表示
+        showSkeleton('inbox-list', 'card', 4);
         
         unsubscribeInbox = DB.subscribeApplications(CURRENT_USER.group, (apps) => {
             const listContainer = document.getElementById('inbox-list');
@@ -1312,7 +1384,7 @@ const App = {
                                 const comment = document.getElementById('completion-comment').value.trim();
                                 
                                 if (!comment && completionImagesBase64.length === 0) {
-                                    alert(TRANSLATIONS["msg_completion_error"][currentLang]); 
+                                    App.showToast(TRANSLATIONS["msg_completion_error"][currentLang], '', 'error'); 
                                     return;
                                 }
                                 
@@ -1328,7 +1400,7 @@ const App = {
                                     modal.hide();
                                 } catch(err) {
                                     console.error(err);
-                                    alert(TRANSLATIONS["msg_report_fail"][currentLang]); 
+                                    App.showToast(TRANSLATIONS["msg_report_fail"][currentLang], '', 'error'); 
                                     newSubmitBtn.disabled = false;
                                     newSubmitBtn.textContent = TRANSLATIONS["btn_completion_submit"][currentLang] || "報告して完了にする";
                                 }
@@ -1379,9 +1451,7 @@ const App = {
         imgContainer.innerHTML = '';
         if(appData.images && appData.images.length > 0) {
             appData.images.forEach(img => {
-                const el = document.createElement('img');
-                el.src = img;
-                el.className = 'image-preview-item clickable';
+                const el = createProgressiveImg(img, 'image-preview-item clickable');
                 el.onclick = () => window.openFullscreenImage(img);
                 imgContainer.appendChild(el);
             });
@@ -1419,9 +1489,7 @@ const App = {
                     
                     if (report.images && report.images.length > 0) {
                         report.images.forEach(img => {
-                            const el = document.createElement('img');
-                            el.src = img;
-                            el.className = 'image-preview-item clickable';
+                            const el = createProgressiveImg(img, 'image-preview-item clickable');
                             el.onclick = () => window.openFullscreenImage(img);
                             completionImagesContainer.appendChild(el);
                         });
@@ -1433,9 +1501,7 @@ const App = {
                 completionComment.textContent = appData.completionComment || '（コメントなし）';
                 if(appData.completionImages && appData.completionImages.length > 0) {
                     appData.completionImages.forEach(img => {
-                        const el = document.createElement('img');
-                        el.src = img;
-                        el.className = 'image-preview-item clickable';
+                        const el = createProgressiveImg(img, 'image-preview-item clickable');
                         el.onclick = () => window.openFullscreenImage(img);
                         completionImagesContainer.appendChild(el);
                     });
@@ -1462,6 +1528,7 @@ const App = {
                     
                     document.getElementById('btn-approve').onclick = async () => {
                         document.activeElement?.blur(); // 🛡️ iOS対策
+                        haptic();
                         const btn = document.getElementById('btn-approve');
                         btn.disabled = true;
                         try { await DB.updateStatus(appData.id, 'approved', commentInput.value, CURRENT_USER.id); closeModal(); }
@@ -1469,6 +1536,7 @@ const App = {
                     };
                     document.getElementById('btn-reject').onclick = async () => {
                         document.activeElement?.blur(); // 🛡️ iOS対策
+                        haptic();
                         const btn = document.getElementById('btn-reject');
                         btn.disabled = true;
                         try { await DB.updateStatus(appData.id, 'rejected', commentInput.value, CURRENT_USER.id); closeModal(); }
@@ -1501,7 +1569,7 @@ const App = {
     setupImageInputs() {
         const handleFiles = async (files, arrayRef, previewId, inputId) => {
             if (files.length + arrayRef.length > 4) { 
-                alert(TRANSLATIONS["msg_max_images"][currentLang]); 
+                App.showToast(TRANSLATIONS["msg_max_images"][currentLang], '', 'error'); 
                 return; 
             }
             for (let i = 0; i < files.length; i++) {
@@ -1631,14 +1699,15 @@ const App = {
             submitBtn.textContent = TRANSLATIONS["login_authenticating"]?.[currentLang] || "送信中...";
             
             await DB.submitForm(data);
-            alert(TRANSLATIONS["msg_submit_success"][currentLang]); 
+            this.showToast(TRANSLATIONS["msg_submit_success"][currentLang], '', 'success');
+            haptic();
             document.getElementById('form-content').value = '';
             formImagesBase64 = [];
             this.updateImagePreview('form-image-preview', formImagesBase64, 'form-image-file');
             document.querySelector('.bottom-nav-item[href="#tab-inbox"]').click(); 
         } catch(e) { 
             console.error(e); 
-            alert(TRANSLATIONS["msg_submit_fail"][currentLang]); 
+            this.showToast(TRANSLATIONS["msg_submit_fail"][currentLang], '', 'error'); 
         } finally {
             const submitBtn = document.getElementById('form-submit-btn');
             submitBtn.disabled = false;
@@ -1662,17 +1731,32 @@ const App = {
         }
     },
 
-    showToast(title, body) {
+    showToast(title, body, type = 'info') {
         const container = document.getElementById('toast-container');
         if (!container) return;
-        const toast = document.createElement('div');
-        toast.className = 'bg-dark text-white p-3 rounded shadow-lg mb-2 d-flex align-items-center';
-        toast.style.pointerEvents = 'auto'; 
-        toast.innerHTML = `<i class="bi bi-bell-fill text-warning me-3 fs-4"></i><div><strong class="d-block">${escapeHTML(title)}</strong><span class="small">${escapeHTML(body)}</span></div>`;
         
-        toast.onclick = () => toast.remove();
+        const iconMap = {
+            success: 'bi-check-circle-fill',
+            error: 'bi-exclamation-triangle-fill',
+            info: 'bi-bell-fill'
+        };
+        
+        const toast = document.createElement('div');
+        toast.className = `app-toast toast-${type}`;
+        toast.innerHTML = `<i class="bi ${iconMap[type] || iconMap.info} me-3 fs-4"></i><div><strong class="d-block">${escapeHTML(title)}</strong>${body ? `<span class="small">${escapeHTML(body)}</span>` : ''}</div>`;
+        
+        toast.onclick = () => {
+            toast.classList.add('toast-exit');
+            setTimeout(() => toast.remove(), 300);
+        };
         container.appendChild(toast);
-        setTimeout(() => { if (toast.parentNode) toast.remove(); }, 4000);
+        
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.classList.add('toast-exit');
+                setTimeout(() => { if (toast.parentNode) toast.remove(); }, 300);
+            }
+        }, 3500);
     },
 
     async setupNotifications() {
