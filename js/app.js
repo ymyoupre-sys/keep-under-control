@@ -11,6 +11,7 @@ let CURRENT_USER = null;
 
 let unsubscribeInbox = null;
 let unsubscribeChat = null;
+let unsubscribeRoomMeta = null;
 
 let currentChatTargetId = null; 
 let chatImagesBase64 = []; 
@@ -150,7 +151,26 @@ const TRANSLATIONS = {
     "terms_p5": { ja: "本アプリは取り扱うコンテンツの性質上、18歳未満の方の利用を固く禁じます。本規約に同意して利用を開始した時点で、ユーザーは18歳以上であることを確約したものとみなします。年齢を偽って利用したことにより生じたトラブルや不利益について、管理者は一切の責任を負いません。", en: "Due to the nature of the content, use by individuals under 18 is strictly prohibited. By agreeing to these terms, the user confirms they are 18 or older. The administrator assumes no responsibility for any trouble or disadvantages caused by falsifying age.", zh: "由于内容的性质，严禁18岁以下人员使用本应用。同意本条款即表示用户确认其已满18岁。对于因虚报年龄而引发的纠纷或不利后果，管理员概不负责。" },
     "terms_btn_logout": { ja: "ログアウト", en: "Logout", zh: "退出登录" },
     "terms_btn_withdraw": { ja: "退会する", en: "Delete Account", zh: "注销账户" },
-    "terms_btn_agree": { ja: "同意して利用を開始", en: "Agree & Start", zh: "同意并开始使用" }
+    "terms_btn_agree": { ja: "同意して利用を開始", en: "Agree & Start", zh: "同意并开始使用" },
+
+    // 🌟 新規：メッセージ削除
+    "msg_deleted": { ja: "メッセージが削除されました", en: "This message was deleted", zh: "此消息已被删除" },
+    "msg_confirm_delete_msg": { ja: "このメッセージを削除しますか？\n削除すると元に戻せません。", en: "Delete this message?\nThis cannot be undone.", zh: "删除此消息？\n删除后无法恢复。" },
+    "edit_modal_title": { ja: "メッセージの編集", en: "Edit Message", zh: "编辑消息" },
+    "edit_modal_delete": { ja: "削除", en: "Delete", zh: "删除" },
+    "edit_modal_save": { ja: "保存", en: "Save", zh: "保存" },
+    "edit_modal_cancel": { ja: "キャンセル", en: "Cancel", zh: "取消" },
+
+    // 🌟 新規：既読表示
+    "read_label": { ja: "既読", en: "Read", zh: "已读" },
+
+    // 🌟 新規：複数メンバー完了管理
+    "completion_progress": { ja: "完了", en: "done", zh: "已完成" },
+    "completion_you_done": { ja: "報告済み", en: "Reported", zh: "已汇报" },
+
+    // 🌟 新規：チャット一覧
+    "chat_tap_to_open": { ja: "タップして会話を開く", en: "Tap to open", zh: "点击打开对话" },
+    "chat_image_sent": { ja: "画像が送信されました", en: "Image sent", zh: "发送了图片" }
 
 };
 
@@ -241,6 +261,7 @@ const App = {
                  document.getElementById('chat-container').classList.remove('d-none');
                  document.querySelector('.bottom-nav').classList.remove('d-none');
                  if(unsubscribeChat) unsubscribeChat();
+                 if(unsubscribeRoomMeta) unsubscribeRoomMeta();
                  currentChatTargetId = null;
              }
         });
@@ -760,33 +781,67 @@ const App = {
         const container = document.getElementById('chat-list');
         container.innerHTML = '';
         if (groupUsers.length >= 3) {
+            const roomId = DB.getChatRoomId(CURRENT_USER.group, CURRENT_USER.id, "ALL");
+            const meta = await DB.getRoomMeta(roomId);
+            const hasUnread = meta && meta.updatedAt && (
+                !meta[`lastRead_${CURRENT_USER.id}`] || 
+                meta.updatedAt.toMillis() > meta[`lastRead_${CURRENT_USER.id}`].toMillis()
+            ) && meta.lastSenderId !== CURRENT_USER.id;
+
             const allDiv = document.createElement('div');
             allDiv.className = 'p-3 border-bottom d-flex align-items-center clickable';
-            allDiv.style.backgroundColor = '#e8f5e9';
+            allDiv.style.backgroundColor = hasUnread ? '#e0f2e0' : '#e8f5e9';
+            
+            let previewHtml = `<div class="small text-muted">${TRANSLATIONS["chat_tap_to_open"][currentLang]}</div>`;
+            if (meta && meta.lastMessage) {
+                const senderIcon = meta.lastSenderIcon || '👤';
+                const senderName = escapeHTML(meta.lastSenderName || '');
+                const preview = escapeHTML(meta.lastMessage.substring(0, 30)) + (meta.lastMessage.length > 30 ? '...' : '');
+                previewHtml = `<div class="small text-muted text-truncate" style="max-width: 200px;">${hasUnread ? senderIcon + ' ' : ''}${senderName}: ${preview}</div>`;
+            }
+
             allDiv.innerHTML = `
-                <div class="rounded-circle text-white d-flex align-items-center justify-content-center me-3 shadow-sm" style="width:40px; height:40px; font-size:20px; background-color: var(--primary-color);">📢</div>
-                <div>
+                <div class="rounded-circle text-white d-flex align-items-center justify-content-center me-3 shadow-sm position-relative" style="width:40px; height:40px; font-size:20px; background-color: var(--primary-color);">📢
+                    ${hasUnread ? '<span class="chat-unread-dot"></span>' : ''}
+                </div>
+                <div class="flex-grow-1 overflow-hidden">
                     <div class="fw-bold">グループ全体チャット <span class="badge bg-secondary ms-1">全員</span></div>
-                    <div class="small text-muted">参加者全員にメッセージを送信できます</div>
+                    ${previewHtml}
                 </div>
             `;
             allDiv.onclick = () => this.openChat(CURRENT_USER.group, CURRENT_USER.id, "ALL", "グループ全体チャット");
             container.appendChild(allDiv);
         }
-        targets.forEach(target => {
+        for (const target of targets) {
             const safeIcon = target.icon || "👤";
+            const roomId = DB.getChatRoomId(CURRENT_USER.group, CURRENT_USER.id, target.id);
+            const meta = await DB.getRoomMeta(roomId);
+            const hasUnread = meta && meta.updatedAt && (
+                !meta[`lastRead_${CURRENT_USER.id}`] || 
+                meta.updatedAt.toMillis() > meta[`lastRead_${CURRENT_USER.id}`].toMillis()
+            ) && meta.lastSenderId !== CURRENT_USER.id;
+
+            let previewHtml = `<div class="small text-muted">${TRANSLATIONS["chat_tap_to_open"][currentLang]}</div>`;
+            if (meta && meta.lastMessage) {
+                const preview = escapeHTML(meta.lastMessage.substring(0, 30)) + (meta.lastMessage.length > 30 ? '...' : '');
+                previewHtml = `<div class="small ${hasUnread ? 'text-dark fw-bold' : 'text-muted'} text-truncate" style="max-width: 200px;">${preview}</div>`;
+            }
+
             const div = document.createElement('div');
-            div.className = 'p-3 border-bottom d-flex align-items-center bg-white clickable';
+            div.className = 'p-3 border-bottom d-flex align-items-center clickable';
+            div.style.backgroundColor = hasUnread ? '#f0f8ff' : 'white';
             div.innerHTML = `
-                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-3" style="width:40px; height:40px; font-size:20px;">${safeIcon}</div>
-                <div>
+                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-3 position-relative" style="width:40px; height:40px; font-size:20px;">${safeIcon}
+                    ${hasUnread ? '<span class="chat-unread-dot"></span>' : ''}
+                </div>
+                <div class="flex-grow-1 overflow-hidden">
                     <div class="fw-bold">${escapeHTML(target.name)} <span class="badge bg-light text-dark ms-1">${target.role === 'leader' ? 'master' : 'slave'}</span></div>
-                    <div class="small text-muted">タップして会話を開く</div>
+                    ${previewHtml}
                 </div>
             `;
             div.onclick = () => this.openChat(CURRENT_USER.group, CURRENT_USER.id, target.id, target.name);
             container.appendChild(div);
-        });
+        }
     },
 
     openChat(groupId, myId, targetId, targetName) {
@@ -801,19 +856,74 @@ const App = {
         document.querySelector('.bottom-nav').classList.add('d-none');
 
         if(unsubscribeChat) unsubscribeChat();
+        if(unsubscribeRoomMeta) unsubscribeRoomMeta();
 
         const detailContainer = document.getElementById('chat-detail-container');
+        const isGroupChat = targetId === "ALL";
         
+        let roomMeta = {};
+        let currentMessages = [];
         let prevMessageCount = 0;
         let isFirstLoad = true;
+        let metaTriggeredRender = false;
 
-        unsubscribeChat = DB.subscribeChat(groupId, myId, targetId, (messages) => {
+        // 🌟 既読情報のリアルタイム購読
+        unsubscribeRoomMeta = DB.subscribeRoomMeta(currentChatTargetId, (meta) => {
+            roomMeta = meta;
+            if (currentMessages.length > 0) {
+                metaTriggeredRender = true;
+                renderChatMessages(currentMessages, roomMeta);
+            }
+        });
+
+        // 🌟 自分の既読時刻を更新
+        DB.updateLastRead(currentChatTargetId, CURRENT_USER.id);
+
+        const self = this;
+
+        function getReadCount(msg, meta) {
+            if (!msg.createdAt) return 0;
+            let count = 0;
+            for (const [key, value] of Object.entries(meta)) {
+                if (key.startsWith('lastRead_') && key !== `lastRead_${CURRENT_USER.id}`) {
+                    if (value && value.toMillis && msg.createdAt.toMillis && value.toMillis() >= msg.createdAt.toMillis()) {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        function renderChatMessages(messages, meta) {
             const msgContainer = document.getElementById('chat-messages');
             const previousScrollTop = detailContainer.scrollTop;
-
             msgContainer.innerHTML = '';
+
             messages.forEach(msg => {
                 const isMe = msg.senderId === CURRENT_USER.id;
+                
+                // 🌟 削除済みメッセージの表示
+                if (msg.isDeleted) {
+                    const iconHtml = !isMe ? `
+                        <div class="flex-shrink-0 me-2 mt-1 d-flex flex-column align-items-center" style="width: 45px;">
+                            <div style="font-size:28px; line-height:1;">${msg.senderIcon || '👤'}</div>
+                            <div style="font-size: 0.55rem; color: #666; margin-top: 2px; text-align: center; line-height: 1.1; word-break: break-all;">${escapeHTML(msg.senderName || '')}</div>
+                        </div>
+                    ` : '';
+                    const div = document.createElement('div');
+                    div.className = `d-flex align-items-start chat-row ${isMe ? 'justify-content-end' : 'justify-content-start'}`;
+                    div.innerHTML = `
+                        ${iconHtml}
+                        <div style="max-width: 75%;">
+                            <div class="p-2 rounded deleted-message">
+                                <i class="bi bi-trash3"></i> ${TRANSLATIONS["msg_deleted"][currentLang]}
+                            </div>
+                        </div>
+                    `;
+                    msgContainer.appendChild(div);
+                    return;
+                }
+
                 const reactionsCount = msg.reactions ? msg.reactions.length : 0;
                 const hasReacted = msg.reactions && msg.reactions.includes(CURRENT_USER.id);
                 
@@ -826,7 +936,20 @@ const App = {
                     const min = String(date.getMinutes()).padStart(2, '0');
                     timeStr = `${m}/${d} ${h}:${min}`;
                 }
-                const timeHtml = timeStr ? `<div style="font-size: 0.65rem; color: #888; margin: 0 4px; align-self: flex-end; padding-bottom: 2px; white-space: nowrap;">${timeStr}</div>` : '';
+
+                // 🌟 既読表示の生成
+                let readHtml = '';
+                if (isMe && msg.createdAt) {
+                    const readCount = getReadCount(msg, meta);
+                    if (readCount > 0) {
+                        const readText = isGroupChat 
+                            ? `${TRANSLATIONS["read_label"][currentLang]}${readCount}` 
+                            : TRANSLATIONS["read_label"][currentLang];
+                        readHtml = `<div style="font-size: 0.6rem; color: #4CAF50; white-space: nowrap; text-align: right;">${readText}</div>`;
+                    }
+                }
+
+                const timeHtml = timeStr ? `<div style="font-size: 0.65rem; color: #888; margin: 0 4px; align-self: flex-end; padding-bottom: 2px; white-space: nowrap;">${readHtml}${timeStr}</div>` : '';
 
                 const reactionHtml = reactionsCount > 0 ? `<div class="reaction-badge"><i class="${hasReacted ? 'bi bi-heart-fill' : 'bi bi-heart'}"></i> ${reactionsCount}</div>` : '';
 
@@ -857,7 +980,6 @@ const App = {
 
                 let imagesBlock = '';
                 if(msg.images && msg.images.length > 0) {
-                    // 🛡️ XSS対策：画像URLをinnerHTMLに直接埋め込まず、後からcreateElementで安全に追加する
                     const imgPlaceholderId = `img-${msg.id}-${Date.now()}`;
                     
                     if (!msg.text) {
@@ -879,7 +1001,6 @@ const App = {
                         `;
                     }
 
-                    // 🛡️ DOMに追加された後に、安全な方法で画像を挿入するための予約処理
                     setTimeout(() => {
                         const placeholder = document.getElementById(imgPlaceholderId);
                         if (placeholder) {
@@ -918,11 +1039,11 @@ const App = {
                             pressTimer = setTimeout(() => { DB.toggleReaction(groupId, myId, targetId, msg.id, CURRENT_USER.id); }, 500);
                         }, {passive:true});
                         bubble.addEventListener('touchend', () => clearTimeout(pressTimer));
-                        // 🛡️ iOS対策：スクロール中の誤リアクションを防止
                         bubble.addEventListener('touchmove', () => clearTimeout(pressTimer), {passive:true});
                     });
                 }
 
+                // 🌟 変更：自分のメッセージをタップ → 編集＋削除モーダル
                 if (isMe && msg.text) {
                     const bubble = div.querySelector('.chat-bubble-content .p-2');
                     if (bubble) {
@@ -937,15 +1058,16 @@ const App = {
                                     <div class="modal-dialog">
                                         <div class="modal-content">
                                             <div class="modal-header">
-                                                <h5 class="modal-title">メッセージの編集</h5>
+                                                <h5 class="modal-title">${TRANSLATIONS["edit_modal_title"][currentLang]}</h5>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
                                             <div class="modal-body">
                                                 <textarea id="chat-edit-textarea" class="form-control" rows="5" style="resize: none;"></textarea>
                                             </div>
                                             <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
-                                                <button type="button" class="btn btn-primary" id="chat-edit-save-btn">保存</button>
+                                                <button type="button" class="btn btn-outline-danger me-auto" id="chat-delete-btn"><i class="bi bi-trash3"></i> ${TRANSLATIONS["edit_modal_delete"][currentLang]}</button>
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${TRANSLATIONS["edit_modal_cancel"][currentLang]}</button>
+                                                <button type="button" class="btn btn-primary" id="chat-edit-save-btn">${TRANSLATIONS["edit_modal_save"][currentLang]}</button>
                                             </div>
                                         </div>
                                     </div>
@@ -959,17 +1081,30 @@ const App = {
                             const editModal = new bootstrap.Modal(editModalEl);
                             editModal.show();
 
+                            // 保存ボタン
                             const saveBtn = document.getElementById('chat-edit-save-btn');
                             const newSaveBtn = saveBtn.cloneNode(true);
                             saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
                             
                             newSaveBtn.onclick = () => {
-                                document.activeElement?.blur(); // 🛡️ iOS対策
+                                document.activeElement?.blur();
                                 const newText = textarea.value;
                                 if (newText.trim() !== "" && newText !== msg.text) {
                                     DB.updateMessage(groupId, myId, targetId, msg.id, newText);
                                 }
                                 editModal.hide();
+                            };
+
+                            // 🌟 削除ボタン
+                            const deleteBtn = document.getElementById('chat-delete-btn');
+                            const newDeleteBtn = deleteBtn.cloneNode(true);
+                            deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+                            
+                            newDeleteBtn.onclick = async () => {
+                                if (confirm(TRANSLATIONS["msg_confirm_delete_msg"][currentLang])) {
+                                    await DB.deleteMessage(groupId, myId, targetId, msg.id);
+                                    editModal.hide();
+                                }
                             };
                         };
                     }
@@ -977,19 +1112,35 @@ const App = {
 
                 msgContainer.appendChild(div);
             });
-            
+
+            // スクロール制御
+            if (metaTriggeredRender) {
+                detailContainer.scrollTop = previousScrollTop;
+                metaTriggeredRender = false;
+            }
+        }
+
+        unsubscribeChat = DB.subscribeChat(groupId, myId, targetId, (messages) => {
+            currentMessages = messages;
+
+            metaTriggeredRender = false;
+            renderChatMessages(messages, roomMeta);
+
+            // 🌟 既読時刻を更新
+            DB.updateLastRead(currentChatTargetId, CURRENT_USER.id);
+
             const currentMessageCount = messages.length;
             if (isFirstLoad || currentMessageCount > prevMessageCount) {
                 setTimeout(() => { detailContainer.scrollTop = detailContainer.scrollHeight; }, 50);
                 isFirstLoad = false;
-            } else {
-                detailContainer.scrollTop = previousScrollTop;
             }
             prevMessageCount = currentMessageCount;
         });
         
         document.getElementById('back-to-chat-list').onclick = () => {
-            document.querySelector('.bottom-nav').classList.remove('d-none'); // 👇 戻る時にナビを復活
+            document.querySelector('.bottom-nav').classList.remove('d-none');
+            // 🌟 チャット一覧に戻る時にリストを更新（既読状態の反映）
+            this.renderChatList();
             history.back();
         };
         
@@ -1002,8 +1153,7 @@ const App = {
             input.value = '';
             input.style.height = '38px'; 
             chatImagesBase64 = [];
-            this.updateImagePreview('chat-image-preview', chatImagesBase64, 'chat-image-file');
-            // 🛡️ iOS対策：キーボードを閉じてから最下部にスクロール
+            self.updateImagePreview('chat-image-preview', chatImagesBase64, 'chat-image-file');
             input.blur();
             setTimeout(() => { detailContainer.scrollTop = detailContainer.scrollHeight; }, 100);
         };
@@ -1052,6 +1202,18 @@ const App = {
                     ? `<span class="badge ${CONFIG_SETTINGS.statusLabels[app.status]?.color || 'bg-secondary'}">${CONFIG_SETTINGS.statusLabels[app.status]?.label || app.status}</span>`
                     : '';
 
+                // 🌟 新規：複数メンバー完了進捗の表示
+                let progressHtml = '';
+                if (isInstruction) {
+                    const completedByList = app.completedByList || [];
+                    const targetMemberIds = app.targetMemberIds || [];
+                    if (targetMemberIds.length > 1) {
+                        progressHtml = `<span class="badge ${completedByList.length >= targetMemberIds.length ? 'bg-secondary' : 'bg-info'} ms-1">${completedByList.length}/${targetMemberIds.length} ${TRANSLATIONS["completion_progress"][currentLang]}</span>`;
+                    } else if (isInstructionCompleted) {
+                        progressHtml = `<span class="badge bg-secondary ms-1">${TRANSLATIONS["completion_progress"][currentLang]}</span>`;
+                    }
+                }
+
                 const hasContent = app.content && app.content.trim() !== '';
                 const hasImages = app.images && app.images.length > 0;
                 
@@ -1076,6 +1238,7 @@ const App = {
                         <div class="d-flex align-items-center gap-2">
                             ${badgeHtml}
                             ${statusBadgeHtml}
+                            ${progressHtml}
                         </div>
                         <div id="delete-btn-container-${app.id}" style="width: 24px; text-align: right;"></div>
                     </div>
@@ -1108,7 +1271,10 @@ const App = {
                 if (isInstruction) {
                     if (CURRENT_USER.role === 'member') {
                         showCheckBtn = true;
-                        btnStateCompleted = isInstructionCompleted;
+                        // 🌟 変更：自分が completedByList に含まれているかで判定
+                        const completedByList = app.completedByList || [];
+                        const myCompleted = completedByList.includes(CURRENT_USER.id);
+                        btnStateCompleted = myCompleted;
                         
                         onCheckAction = (e) => {
                             e.stopPropagation(); 
@@ -1125,7 +1291,7 @@ const App = {
                             modal.show();
 
                             newSubmitBtn.onclick = async () => {
-                                document.activeElement?.blur(); // 🛡️ iOS対策
+                                document.activeElement?.blur();
                                 const comment = document.getElementById('completion-comment').value.trim();
                                 
                                 if (!comment && completionImagesBase64.length === 0) {
@@ -1214,19 +1380,46 @@ const App = {
         const completionComment = document.getElementById('detail-completion-comment');
         const completionImagesContainer = document.getElementById('detail-completion-images');
         
-        if (appData.type === 'instruction' && appData.status === 'completed') {
+        if (appData.type === 'instruction' && (appData.status === 'completed' || (appData.completedByList && appData.completedByList.length > 0))) {
             completionArea.classList.remove('d-none');
-            completionComment.textContent = appData.completionComment || '（コメントなし）';
             completionImagesContainer.innerHTML = '';
             
-            if(appData.completionImages && appData.completionImages.length > 0) {
-                appData.completionImages.forEach(img => {
-                    const el = document.createElement('img');
-                    el.src = img;
-                    el.className = 'image-preview-item clickable';
-                    el.onclick = () => window.openFullscreenImage(img);
-                    completionImagesContainer.appendChild(el);
-                });
+            // 🌟 変更：メンバーごとの完了報告を表示
+            const completionReports = appData.completionReports || {};
+            const completedByList = appData.completedByList || [];
+            
+            if (Object.keys(completionReports).length > 0) {
+                let reportsHtml = '';
+                for (const [userId, report] of Object.entries(completionReports)) {
+                    const memberName = completedByList.includes(userId) ? userId : userId;
+                    reportsHtml += `<div class="mb-2 p-2 bg-white rounded border">
+                        <div class="small fw-bold text-success"><i class="bi bi-person-check"></i> ${escapeHTML(memberName)}</div>
+                        <div style="white-space: pre-wrap; font-size: 0.9rem;">${escapeHTML(report.comment || '（コメントなし）')}</div>
+                    </div>`;
+                    
+                    if (report.images && report.images.length > 0) {
+                        report.images.forEach(img => {
+                            const el = document.createElement('img');
+                            el.src = img;
+                            el.className = 'image-preview-item clickable';
+                            el.onclick = () => window.openFullscreenImage(img);
+                            completionImagesContainer.appendChild(el);
+                        });
+                    }
+                }
+                completionComment.innerHTML = reportsHtml;
+            } else {
+                // 後方互換：旧形式の単一報告
+                completionComment.textContent = appData.completionComment || '（コメントなし）';
+                if(appData.completionImages && appData.completionImages.length > 0) {
+                    appData.completionImages.forEach(img => {
+                        const el = document.createElement('img');
+                        el.src = img;
+                        el.className = 'image-preview-item clickable';
+                        el.onclick = () => window.openFullscreenImage(img);
+                        completionImagesContainer.appendChild(el);
+                    });
+                }
             }
         } else {
             completionArea.classList.add('d-none');
@@ -1376,7 +1569,19 @@ const App = {
             if (targetSelect.selectedIndex >= 0) {
                 targetUserName = targetSelect.options[targetSelect.selectedIndex].text;
             } else {
-                targetUserName = "宛先不明"; // 安全のための予備テキスト
+                targetUserName = "宛先不明";
+            }
+        }
+
+        // 🌟 新規：命令の対象メンバーIDリストを生成
+        let targetMemberIds = [];
+        if (CURRENT_USER.role === 'leader') {
+            if (targetUserId) {
+                targetMemberIds = [targetUserId];
+            } else {
+                // 全員宛 → グループ内の全メンバーを対象にする
+                const groupUsers = await DB.getGroupUsers(CURRENT_USER.group);
+                targetMemberIds = groupUsers.filter(u => u.role === 'member').map(u => u.id);
             }
         }
         
@@ -1389,7 +1594,9 @@ const App = {
             type: CURRENT_USER.role === 'leader' ? 'instruction' : 'request',
             images: formImagesBase64,
             targetUserId: targetUserId,
-            targetUserName: targetUserName
+            targetUserName: targetUserName,
+            targetMemberIds: targetMemberIds,
+            completedByList: []
         };
         
         try {

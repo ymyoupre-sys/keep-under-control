@@ -122,8 +122,6 @@ export const DB = {
     async saveUserToken(user, token) {
         if (!user || !user.id) return;
         const userRef = doc(db, "users", user.id);
-        // 🛡️ Firestoreルールで禁止されている role, group を書き込まないようにする
-        // （トークン保存がサイレントにブロックされるのを防止）
         const updateData = {
             name: user.name || "名称未設定",
             icon: user.icon || "👤",
@@ -149,6 +147,34 @@ export const DB = {
         });
     },
 
+    // 🌟 新規：チャットルームのメタ情報（既読情報など）をリアルタイム購読
+    subscribeRoomMeta(chatRoomId, callback) {
+        return onSnapshot(doc(db, "chats", chatRoomId), (snap) => {
+            callback(snap.exists() ? snap.data() : {});
+        });
+    },
+
+    // 🌟 新規：チャットルームのメタ情報を1回だけ取得（チャット一覧用）
+    async getRoomMeta(chatRoomId) {
+        try {
+            const snap = await getDoc(doc(db, "chats", chatRoomId));
+            return snap.exists() ? snap.data() : null;
+        } catch (e) {
+            return null;
+        }
+    },
+
+    // 🌟 新規：既読情報を更新
+    async updateLastRead(chatRoomId, userId) {
+        try {
+            await setDoc(doc(db, "chats", chatRoomId), { 
+                [`lastRead_${userId}`]: serverTimestamp() 
+            }, { merge: true });
+        } catch (e) {
+            console.warn("lastRead update failed:", e);
+        }
+    },
+
     async uploadImage(base64String, folderName) {
         if (!base64String) return null;
         if (base64String.startsWith('http')) return base64String;
@@ -171,16 +197,36 @@ export const DB = {
 
         await addDoc(collection(db, "chats", chatRoomId, "messages"), {
             text: text, senderId: sender.id, senderName: sender.name || "名称未設定", senderIcon: sender.icon || "👤",
-            images: imageUrls, reactions: [], isEdited: false, createdAt: serverTimestamp()
+            images: imageUrls, reactions: [], isEdited: false, isDeleted: false, createdAt: serverTimestamp()
         });
         const lastMsgText = text || (imageUrls.length > 0 ? '画像が送信されました' : '');
-        await setDoc(doc(db, "chats", chatRoomId), { lastMessage: lastMsgText, updatedAt: serverTimestamp() }, { merge: true });
+        // 🌟 変更：最終送信者の情報もルームドキュメントに保存（チャット一覧での表示用）
+        await setDoc(doc(db, "chats", chatRoomId), { 
+            lastMessage: lastMsgText, 
+            lastSenderId: sender.id,
+            lastSenderName: sender.name || "名称未設定",
+            lastSenderIcon: sender.icon || "👤",
+            updatedAt: serverTimestamp() 
+        }, { merge: true });
     },
 
     async updateMessage(groupId, id1, id2, messageId, newText) {
         const safeGroup = groupId || "NONE";
         const chatRoomId = getRoomId(safeGroup, id1, id2);
         await updateDoc(doc(db, "chats", chatRoomId, "messages", messageId), { text: newText, isEdited: true, updatedAt: serverTimestamp() });
+    },
+
+    // 🌟 新規：メッセージの論理削除
+    async deleteMessage(groupId, id1, id2, messageId) {
+        const safeGroup = groupId || "NONE";
+        const chatRoomId = getRoomId(safeGroup, id1, id2);
+        await updateDoc(doc(db, "chats", chatRoomId, "messages", messageId), { 
+            text: "", 
+            images: [], 
+            isDeleted: true, 
+            isEdited: false,
+            updatedAt: serverTimestamp() 
+        });
     },
 
     async toggleReaction(groupId, id1, id2, messageId, userId) {
@@ -256,6 +302,7 @@ export const DB = {
 
     async deleteEvent(id) { await deleteDoc(doc(db, "events", id)); },
 
+    // 🌟 変更：複数メンバーの完了報告に対応
     async submitCompletionReport(docId, groupId, userId, comment, images = []) {
         const imageUrls = [];
         for (const imgBase64 of images) {
@@ -263,13 +310,41 @@ export const DB = {
             if (url) imageUrls.push(url);
         }
 
+        // 現在のドキュメントを取得して completedByList を更新
+        const appDoc = await getDoc(doc(db, "applications", docId));
+        const appData = appDoc.exists() ? appDoc.data() : {};
+        
+        const currentList = appData.completedByList || [];
+        if (!currentList.includes(userId)) {
+            currentList.push(userId);
+        }
+
+        // 全対象メンバーが完了したかチェック
+        const targetMemberIds = appData.targetMemberIds || [];
+        const allCompleted = targetMemberIds.length > 0 
+            ? targetMemberIds.every(id => currentList.includes(id))
+            : true;
+
         const updateData = {
-            status: 'completed',
             completedBy: userId,
+            completedByList: currentList,
             updatedAt: serverTimestamp()
         };
+
+        // メンバー個別の報告データをマップに保存
+        const reportData = {};
+        if (comment) reportData.comment = comment;
+        if (imageUrls.length > 0) reportData.images = imageUrls;
+        updateData[`completionReports.${userId}`] = reportData;
+
+        // 後方互換性のために従来のフィールドも更新
         if (comment) updateData.completionComment = comment;
         if (imageUrls.length > 0) updateData.completionImages = imageUrls;
+
+        // 全員完了の場合のみステータスを変更
+        if (allCompleted) {
+            updateData.status = 'completed';
+        }
         
         await updateDoc(doc(db, "applications", docId), updateData);
         
@@ -317,4 +392,3 @@ export const DB = {
         return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 };
-
