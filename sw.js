@@ -4,7 +4,7 @@ importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-comp
 // ==========================================
 // 🌟 1. キャッシュのバージョン管理（アップデート時はここを変更！）
 // ==========================================
-const CACHE_VERSION = 'app-v1.0.0'; // 👈 今後アップデートする際はこの文字を適当に変えるだけでOKです（例: v1.0.1）
+const CACHE_VERSION = 'app-v1.0.1'; // 👈 今後アップデートする際はこの文字を適当に変えるだけでOKです（例: v1.0.1）
 
 const firebaseConfig = {
   apiKey: "AIzaSyCWy_BjB9tr02viCSfAx93qeJyX4G0e2iw",
@@ -99,3 +99,4 @@ self.addEventListener('notificationclick', function(event) {
         })
     );
 });
+
