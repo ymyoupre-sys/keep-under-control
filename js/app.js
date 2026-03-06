@@ -18,6 +18,8 @@ let chatImagesBase64 = [];
 let formImagesBase64 = []; 
 let completionImagesBase64 = []; 
 
+let notificationListenerRegistered = false; // 🌟 onMessage重複登録防止フラグ
+
 const TEST_ACCOUNT_NAMES = ["リーダー", "メンバー", "领导者", "成员", "leader", "member"];
 
 // 👇 悪意のあるプログラム（タグ）を無害な文字に変換（消毒）するセキュリティ機能
@@ -1797,18 +1799,28 @@ const App = {
                 });
                 if (token) await DB.saveUserToken(CURRENT_USER, token);
                 
-                onMessage(messaging, (payload) => { 
-                    const senderId = payload.data?.senderId;
-                    if (senderId === CURRENT_USER.id) return; 
+                // 🌟 onMessageリスナーの重複登録を防止
+                if (!notificationListenerRegistered) {
+                    notificationListenerRegistered = true;
+                    onMessage(messaging, (payload) => { 
+                        const senderId = payload.data?.senderId;
+                        if (senderId === CURRENT_USER.id) return; 
 
-                    console.log('Foreground Message:', payload); 
-                    const title = payload.notification?.title || '新着通知';
-                    const body = payload.notification?.body || '';
-                    const tabType = payload.data?.tab || 'inbox'; 
-                    
-                    this.showToast(title, body);
-                    this.addTabBadge(`#tab-${tabType}`);
-                });
+                        console.log('Foreground Message:', payload); 
+                        const title = payload.notification?.title || '新着通知';
+                        const body = payload.notification?.body || '';
+                        const tabType = payload.data?.tab || 'inbox'; 
+                        
+                        // 🌟 チャット画面を開いている場合はトーストを抑制
+                        const chatDetail = document.getElementById('chat-detail-container');
+                        const isChatOpen = chatDetail && !chatDetail.classList.contains('d-none');
+                        
+                        if (!(isChatOpen && tabType === 'chat')) {
+                            this.showToast(title, body);
+                        }
+                        this.addTabBadge(`#tab-${tabType}`);
+                    });
+                }
             }
         } catch (error) { console.error('Notification setup failed:', error); }
     }
