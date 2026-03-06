@@ -14,6 +14,7 @@ let unsubscribeChat = null;
 let unsubscribeRoomMeta = null;
 
 let currentChatTargetId = null; 
+let currentChatContext = null; // 🌟 iOS復帰時の再接続用
 let chatImagesBase64 = []; 
 let formImagesBase64 = []; 
 let completionImagesBase64 = []; 
@@ -296,6 +297,7 @@ const App = {
                  if(unsubscribeChat) unsubscribeChat();
                  if(unsubscribeRoomMeta) unsubscribeRoomMeta();
                  currentChatTargetId = null;
+                 currentChatContext = null;
              }
         });
     },
@@ -700,7 +702,23 @@ const App = {
         };
 
         document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') clearBadge();
+            if (document.visibilityState === 'visible') {
+                clearBadge();
+                
+                // 🌟 iOS対策：バックグラウンド復帰時にFirestoreリスナーを再接続
+                if (CURRENT_USER) {
+                    // 受信箱のリスナーを再接続
+                    this.startInboxListener();
+                    
+                    // チャット画面が開いている場合はチャットリスナーも再接続
+                    if (currentChatContext) {
+                        const ctx = currentChatContext;
+                        if(unsubscribeChat) unsubscribeChat();
+                        if(unsubscribeRoomMeta) unsubscribeRoomMeta();
+                        this.openChat(ctx.groupId, ctx.myId, ctx.targetId, ctx.targetName, true);
+                    }
+                }
+            }
         });
 
         document.querySelectorAll('.bottom-nav-item').forEach(item => {
@@ -884,26 +902,31 @@ const App = {
         }
     },
 
-    openChat(groupId, myId, targetId, targetName) {
-        history.pushState({chat: true}, '', '#chat'); 
+    openChat(groupId, myId, targetId, targetName, isReconnect = false) {
+        if (!isReconnect) {
+            history.pushState({chat: true}, '', '#chat'); 
+        }
 
         currentChatTargetId = DB.getChatRoomId(groupId, myId, targetId);
+        currentChatContext = { groupId, myId, targetId, targetName }; // 🌟 復帰時の再接続用に保存
 
-        document.getElementById('chat-container').classList.add('d-none');
-        const chatDetailEl = document.getElementById('chat-detail-container');
-        chatDetailEl.classList.remove('d-none');
-        // 🌟 スライドインアニメーション
-        chatDetailEl.classList.add('slide-enter');
-        chatDetailEl.classList.remove('slide-active');
-        requestAnimationFrame(() => {
+        if (!isReconnect) {
+            document.getElementById('chat-container').classList.add('d-none');
+            const chatDetailEl = document.getElementById('chat-detail-container');
+            chatDetailEl.classList.remove('d-none');
+            // 🌟 スライドインアニメーション
+            chatDetailEl.classList.add('slide-enter');
+            chatDetailEl.classList.remove('slide-active');
             requestAnimationFrame(() => {
-                chatDetailEl.classList.remove('slide-enter');
-                chatDetailEl.classList.add('slide-active');
+                requestAnimationFrame(() => {
+                    chatDetailEl.classList.remove('slide-enter');
+                    chatDetailEl.classList.add('slide-active');
+                });
             });
-        });
-        document.getElementById('chat-target-name').textContent = targetName;
-        document.getElementById('chat-input-area').classList.remove('d-none');
-        document.querySelector('.bottom-nav').classList.add('d-none');
+            document.getElementById('chat-target-name').textContent = targetName;
+            document.getElementById('chat-input-area').classList.remove('d-none');
+            document.querySelector('.bottom-nav').classList.add('d-none');
+        }
 
         if(unsubscribeChat) unsubscribeChat();
         if(unsubscribeRoomMeta) unsubscribeRoomMeta();
@@ -1241,6 +1264,7 @@ const App = {
         
         document.getElementById('back-to-chat-list').onclick = () => {
             document.querySelector('.bottom-nav').classList.remove('d-none');
+            currentChatContext = null; // 🌟 復帰時再接続の対象外にする
             // 🌟 チャット一覧に戻る時にリストを更新（既読状態の反映）
             this.renderChatList();
             history.back();
