@@ -1198,6 +1198,10 @@ const App = {
                             const textarea = document.getElementById('chat-edit-textarea');
                             textarea.value = msg.text;
                             
+                            // 編集モーダルでは編集欄と保存ボタンを表示
+                            textarea.classList.remove('d-none');
+                            document.getElementById('chat-edit-save-btn').classList.remove('d-none');
+                            
                             const editModal = new bootstrap.Modal(editModalEl);
                             editModal.show();
 
@@ -1233,6 +1237,72 @@ const App = {
                                 }
                             };
                         };
+                    }
+                }
+                // 🌟 新規：画像のみメッセージの削除対応
+                else if (isMe && !msg.text && msg.images && msg.images.length > 0) {
+                    const imgContainer = div.querySelector('.chat-bubble-content');
+                    if (imgContainer) {
+                        imgContainer.onclick = (e) => {
+                            // 画像のフルスクリーン表示のクリックと区別するためstopPropagationされていない場合のみ
+                            if (e.target.tagName === 'IMG') return;
+                            
+                            let editModalEl = document.getElementById('chatEditModal');
+                            if (!editModalEl) {
+                                editModalEl = document.createElement('div');
+                                editModalEl.id = 'chatEditModal';
+                                editModalEl.className = 'modal fade';
+                                editModalEl.tabIndex = -1;
+                                editModalEl.innerHTML = `
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">${TRANSLATIONS["edit_modal_title"][currentLang]}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <textarea id="chat-edit-textarea" class="form-control d-none" rows="5" style="resize: none;"></textarea>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-outline-danger me-auto" id="chat-delete-btn"><i class="bi bi-trash3"></i> ${TRANSLATIONS["edit_modal_delete"][currentLang]}</button>
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${TRANSLATIONS["edit_modal_cancel"][currentLang]}</button>
+                                                <button type="button" class="btn btn-primary d-none" id="chat-edit-save-btn">${TRANSLATIONS["edit_modal_save"][currentLang]}</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                                document.body.appendChild(editModalEl);
+                            }
+                            
+                            // 画像のみモーダルでは編集欄と保存ボタンを非表示
+                            document.getElementById('chat-edit-textarea').classList.add('d-none');
+                            document.getElementById('chat-edit-save-btn').classList.add('d-none');
+                            
+                            const editModal = new bootstrap.Modal(editModalEl);
+                            editModal.show();
+
+                            const deleteBtn = document.getElementById('chat-delete-btn');
+                            const newDeleteBtn = deleteBtn.cloneNode(true);
+                            deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+                            
+                            newDeleteBtn.onclick = async () => {
+                                if (confirm(TRANSLATIONS["msg_confirm_delete_msg"][currentLang])) {
+                                    newDeleteBtn.disabled = true;
+                                    try { await DB.deleteMessage(groupId, myId, targetId, msg.id); }
+                                    catch(e) { console.error("Delete Error:", e); }
+                                    finally { newDeleteBtn.disabled = false; }
+                                    editModal.hide();
+                                }
+                            };
+                        };
+
+                        // 🌟 画像のみメッセージ：長押しでも削除モーダルを表示
+                        let imgPressTimer;
+                        imgContainer.addEventListener('touchstart', () => {
+                            imgPressTimer = setTimeout(() => { imgContainer.onclick({ target: imgContainer }); }, 500);
+                        }, {passive:true});
+                        imgContainer.addEventListener('touchend', () => clearTimeout(imgPressTimer));
+                        imgContainer.addEventListener('touchmove', () => clearTimeout(imgPressTimer), {passive:true});
                     }
                 }
 
