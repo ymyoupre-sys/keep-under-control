@@ -549,8 +549,8 @@ const App = {
         // ==========================================
 
         // （👇 ここから下は元々の処理がそのまま続きます）
-        document.getElementById('login-screen').classList.add('d-none');
-        document.getElementById('main-screen').classList.remove('d-none');
+        document.getElementById('login-screen')?.classList.add('d-none');
+        document.getElementById('main-screen')?.classList.remove('d-none'); 
         
         document.querySelectorAll('#user-name-display').forEach(el => el.textContent = CURRENT_USER.name);
 
