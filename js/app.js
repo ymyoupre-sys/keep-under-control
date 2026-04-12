@@ -563,6 +563,7 @@ const App = {
         }
 
         const typeSelect = document.getElementById('form-type-select');
+        if (!typeSelect) { console.error('form-type-select が見つかりません'); return; }
         typeSelect.innerHTML = '';
         
         const groupData = CONFIG_SETTINGS.groups && CONFIG_SETTINGS.groups[CURRENT_USER.group] 
