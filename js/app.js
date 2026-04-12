@@ -1929,29 +1929,34 @@ window.onload = () => App.init();
     if (window.navigator.standalone === true) return;
 
     function update() {
-        // 実際に見えているビューポートの高さを取得（Safariツールバーを除いた値）
-        const viewportHeight = window.visualViewport
+        const vh = window.visualViewport
             ? window.visualViewport.height
             : window.innerHeight;
 
-        // ① コンテナ自体を実ビューポート高さに合わせる（タブが隠れる根本原因の修正）
-        const mainContainer = document.querySelector('#main-screen > .d-flex');
-        if (mainContainer) {
-            mainContainer.style.height = viewportHeight + 'px';
-        }
+        // ログイン画面・メイン画面の両方にビューポート高さを適用
+        const loginScreen = document.getElementById('login-screen');
+        if (loginScreen) loginScreen.style.height = vh + 'px';
 
-        // bottom-nav / チャット入力欄はセーフエリアのみ考慮（JSでコンテナ高さを制御するためツールバー分は不要）
+        const mainContainer = document.querySelector('#main-screen > .d-flex');
+        if (mainContainer) mainContainer.style.height = vh + 'px';
+
         document.querySelectorAll('.bottom-nav, #chat-input-area').forEach(el => {
             el.style.paddingBottom = 'env(safe-area-inset-bottom, 0px)';
             el.style.minHeight = 'calc(60px + env(safe-area-inset-bottom, 0px))';
         });
     }
 
-    update();
+    // ① ビューポート変化時
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', update);
     }
     window.addEventListener('resize', update);
+
+    // ② ページ読み込み完了後に確定値で再計算（初回タイミング問題の対策）
+    window.addEventListener('load', update);
+
+    // ③ 念のため即時実行（DOMが既にある場合のフォールバック）
+    update();
 })();
 
 
