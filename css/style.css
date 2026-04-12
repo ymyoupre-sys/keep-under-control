@@ -27,7 +27,7 @@ html, body {
 #app-screen {
     display: flex;
     flex-direction: column;
-    height: 100dvh; 
+    height: 100svh;
     width: 100%;
     justify-content: flex-start !important; 
     align-items: stretch !important;
