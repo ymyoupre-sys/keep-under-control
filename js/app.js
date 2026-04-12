@@ -416,8 +416,8 @@ const App = {
                     const changeBtn = document.getElementById('btn-change-password');
                     changeBtn.onclick = async () => {
                         document.activeElement?.blur(); // 🛡️ iOS対策
-                        const newPwd = document.getElementById('new-password')?.value.trim();
-                        const confirmPwd = document.getElementById('new-password-confirm')?.value.trim();
+                        const newPwd = (document.getElementById('new-password') || {}).value.trim();
+                        const confirmPwd = (document.getElementById('new-password-confirm') || {}).value.trim();
                         const errorMsg = document.getElementById('password-error');
 
                         if (newPwd.length < 6 || newPwd !== confirmPwd) {
@@ -473,7 +473,7 @@ const App = {
             termsModal.show();
 
             // 「同意する」ボタンの処理
-            { const _el = document.getElementById('btn-terms-agree'); if (_el) _el.onclick = async () => {
+            (document.getElementById('btn-terms-agree') || {}).onclick = async () => {
                 const btn = document.getElementById('btn-terms-agree');
                 btn.disabled = true;
                 btn.textContent = "処理中..."; 
@@ -496,14 +496,14 @@ const App = {
             };
 
             // 「ログアウト」ボタンの処理
-            { const _el = document.getElementById('btn-terms-logout'); if (_el) _el.onclick = async () => {
+            (document.getElementById('btn-terms-logout') || {}).onclick = async () => {
                 try { await signOut(auth); } catch(e){}
                 localStorage.removeItem('app_user_v3');
                 location.reload();
             };
 
             // 🌟👇【新規追加】「退会する」ボタンの処理
-            { const _el = document.getElementById('btn-terms-withdraw'); if (_el) _el.onclick = async () => {
+            (document.getElementById('btn-terms-withdraw') || {}).onclick = async () => {
                 // テストアカウントの誤爆防止
                 if (TEST_ACCOUNT_NAMES.includes(CURRENT_USER.name)) {
                     this.showToast(TRANSLATIONS["msg_test_acc_block"][currentLang], '', 'error'); 
@@ -538,7 +538,7 @@ const App = {
                         } else {
                             alert(TRANSLATIONS["msg_withdraw_fail"][currentLang]); 
                         }
-                        { const _el = document.getElementById('btn-terms-withdraw'); if (_el) _el.disabled = false; }
+                        (document.getElementById('btn-terms-withdraw') || {}).disabled = false;
                     }
                 }
             };
@@ -746,7 +746,7 @@ const App = {
                     '#tab-form': CURRENT_USER.role === 'leader' ? TRANSLATIONS["nav_form_leader"][currentLang] : TRANSLATIONS["nav_form_member"][currentLang], 
                     '#tab-calendar': TRANSLATIONS["nav_calendar"][currentLang] 
                 };
-                { const _el = document.getElementById('header-title'); if (_el) _el.textContent = titleMap[targetId]; }
+                (document.getElementById('header-title') || {}).textContent = titleMap[targetId];
 
                 const chatInput = document.getElementById('chat-input-area');
                 const bottomNav = document.querySelector('.bottom-nav'); // 👇 追加
@@ -824,7 +824,7 @@ const App = {
                 return;
             }
             
-            { const _el = document.getElementById('fullscreen-img'); if (_el) _el.src = src; }
+            (document.getElementById('fullscreen-img') || {}).src = src;
             const modal = new bootstrap.Modal(document.getElementById('imageFullscreenModal'));
             modal.show();
         };
@@ -924,7 +924,7 @@ const App = {
                     chatDetailEl.classList.add('slide-active');
                 });
             });
-            { const _el = document.getElementById('chat-target-name'); if (_el) _el.textContent = targetName; }
+            (document.getElementById('chat-target-name') || {}).textContent = targetName;
             document.getElementById('chat-input-area')?.classList.remove('d-none');
             document.querySelector('.bottom-nav').classList.add('d-none');
         }
@@ -1333,7 +1333,7 @@ const App = {
             debouncedUpdateLastRead();
         });
         
-        { const _el = document.getElementById('back-to-chat-list'); if (_el) _el.onclick = () => {
+        (document.getElementById('back-to-chat-list') || {}).onclick = () => {
             document.querySelector('.bottom-nav').classList.remove('d-none');
             currentChatContext = null; // 🌟 復帰時再接続の対象外にする
             // 🌟 チャット一覧に戻る時にリストを更新（既読状態の反映）
@@ -1341,7 +1341,7 @@ const App = {
             history.back();
         };
         
-        { const _el = document.getElementById('chat-send-btn'); if (_el) _el.onclick = async () => {
+        (document.getElementById('chat-send-btn') || {}).onclick = async () => {
             const input = document.getElementById('chat-message-input');
             const sendBtn = document.getElementById('chat-send-btn');
             const text = input.value;
@@ -1488,7 +1488,7 @@ const App = {
                         onCheckAction = (e) => {
                             e.stopPropagation(); 
                             
-                            { const _el = document.getElementById('completion-comment'); if (_el) _el.value = ''; }
+                            (document.getElementById('completion-comment') || {}).value = '';
                             completionImagesBase64 = [];
                             this.updateImagePreview('completion-image-preview', completionImagesBase64, 'completion-image-file');
 
@@ -1501,7 +1501,7 @@ const App = {
 
                             newSubmitBtn.onclick = async () => {
                                 document.activeElement?.blur();
-                                const comment = document.getElementById('completion-comment')?.value.trim();
+                                const comment = (document.getElementById('completion-comment') || {}).value.trim();
                                 
                                 if (!comment && completionImagesBase64.length === 0) {
                                     App.showToast(TRANSLATIONS["msg_completion_error"][currentLang], '', 'error'); 
@@ -1562,10 +1562,10 @@ const App = {
     },
 
     showInboxDetail(appData) {
-        { const _el = document.getElementById('detail-title'); if (_el) _el.textContent = appData.title; }
-        { const _el = document.getElementById('detail-sender'); if (_el) _el.textContent = appData.userName; }
-        { const _el = document.getElementById('detail-date'); if (_el) _el.textContent = appData.createdDateStr; }
-        { const _el = document.getElementById('detail-content'); if (_el) _el.textContent = appData.content || TRANSLATIONS["detail_no_content"][currentLang]; }
+        (document.getElementById('detail-title') || {}).textContent = appData.title;
+        (document.getElementById('detail-sender') || {}).textContent = appData.userName;
+        (document.getElementById('detail-date') || {}).textContent = appData.createdDateStr;
+        (document.getElementById('detail-content') || {}).textContent = appData.content || TRANSLATIONS["detail_no_content"][currentLang];
 
         const imgContainer = document.getElementById('detail-images');
         imgContainer.innerHTML = '';
@@ -1646,7 +1646,7 @@ const App = {
                     document.getElementById('judge-btn-group')?.classList.remove('d-none');
                     document.getElementById('btn-cancel-judge')?.classList.add('d-none');
                     
-                    { const _el = document.getElementById('btn-approve'); if (_el) _el.onclick = async () => {
+                    (document.getElementById('btn-approve') || {}).onclick = async () => {
                         document.activeElement?.blur(); // 🛡️ iOS対策
                         haptic();
                         const btn = document.getElementById('btn-approve');
@@ -1654,7 +1654,7 @@ const App = {
                         try { await DB.updateStatus(appData.id, 'approved', commentInput.value, CURRENT_USER.id); closeModal(); }
                         catch(e) { console.error("Approve Error:", e); btn.disabled = false; }
                     };
-                    { const _el = document.getElementById('btn-reject'); if (_el) _el.onclick = async () => {
+                    (document.getElementById('btn-reject') || {}).onclick = async () => {
                         document.activeElement?.blur(); // 🛡️ iOS対策
                         haptic();
                         const btn = document.getElementById('btn-reject');
@@ -1666,7 +1666,7 @@ const App = {
                     document.getElementById('judge-btn-group')?.classList.add('d-none');
                     document.getElementById('btn-cancel-judge')?.classList.remove('d-none');
                     
-                    { const _el = document.getElementById('btn-cancel-judge'); if (_el) _el.onclick = async () => {
+                    (document.getElementById('btn-cancel-judge') || {}).onclick = async () => {
                         const btn = document.getElementById('btn-cancel-judge');
                         btn.disabled = true;
                         try { await DB.updateStatus(appData.id, 'pending', '', CURRENT_USER.id); closeModal(); }
@@ -1770,8 +1770,8 @@ const App = {
     },
 
     async handleFormSubmit() {
-        const title = document.getElementById('form-type-select')?.value;
-        const content = document.getElementById('form-content')?.value;
+        const title = (document.getElementById('form-type-select') || {}).value;
+        const content = (document.getElementById('form-content') || {}).value;
         
         const targetContainer = document.getElementById('form-target-container');
         const targetSelect = document.getElementById('form-target-select');
@@ -1821,7 +1821,7 @@ const App = {
             await DB.submitForm(data);
             this.showToast(TRANSLATIONS["msg_submit_success"][currentLang], '', 'success');
             haptic();
-            { const _el = document.getElementById('form-content'); if (_el) _el.value = ''; }
+            (document.getElementById('form-content') || {}).value = '';
             formImagesBase64 = [];
             this.updateImagePreview('form-image-preview', formImagesBase64, 'form-image-file');
             document.querySelector('.bottom-nav-item[href="#tab-inbox"]').click(); 
