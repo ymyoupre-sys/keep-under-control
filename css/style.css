@@ -186,6 +186,8 @@ header, .bottom-nav, #chat-input-area {
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
 }
+header { top: 0; }
+.bottom-nav, #chat-input-area { bottom: 0; }
 
 /* メインスクロール領域だけがスクロールするようにする */
 #scrollable-content, #chat-detail-container {
