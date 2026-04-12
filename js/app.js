@@ -291,8 +291,8 @@ const App = {
              const chatDetail = document.getElementById('chat-detail-container');
              if (chatDetail && !chatDetail.classList.contains('d-none')) {
                  chatDetail.classList.add('d-none');
-                 document.getElementById('chat-input-area').classList.add('d-none');
-                 document.getElementById('chat-container').classList.remove('d-none');
+                 document.getElementById('chat-input-area')?.classList.add('d-none');
+                 document.getElementById('chat-container')?.classList.remove('d-none');
                  document.querySelector('.bottom-nav').classList.remove('d-none');
                  if(unsubscribeChat) unsubscribeChat();
                  if(unsubscribeRoomMeta) unsubscribeRoomMeta();
@@ -362,7 +362,7 @@ const App = {
 
             loginBtn.disabled = true;
             loginBtn.textContent = TRANSLATIONS["login_authenticating"][currentLang];
-            document.getElementById('login-error').classList.add('d-none');
+            document.getElementById('login-error')?.classList.add('d-none');
 
             const dummyEmail = safeHexEncode(inputName) + "@dummy.keep-under-control.com";
 
@@ -416,8 +416,8 @@ const App = {
                     const changeBtn = document.getElementById('btn-change-password');
                     changeBtn.onclick = async () => {
                         document.activeElement?.blur(); // 🛡️ iOS対策
-                        const newPwd = document.getElementById('new-password').value.trim();
-                        const confirmPwd = document.getElementById('new-password-confirm').value.trim();
+                        const newPwd = document.getElementById('new-password')?.value.trim();
+                        const confirmPwd = document.getElementById('new-password-confirm')?.value.trim();
                         const errorMsg = document.getElementById('password-error');
 
                         if (newPwd.length < 6 || newPwd !== confirmPwd) {
@@ -458,7 +458,7 @@ const App = {
                 const errorCode = error.code || error.message || "Unknown Error";
                 alert(`ログインできませんでした。\n何度も発生する場合は、以下をアプリ作成者までご報告ください。\n\n【エラー詳細】\n${errorCode}`);
 
-                document.getElementById('login-error').classList.remove('d-none');
+                document.getElementById('login-error')?.classList.remove('d-none');
                 loginBtn.disabled = false;
                 loginBtn.textContent = TRANSLATIONS["login_button"][currentLang];
             }
@@ -473,7 +473,7 @@ const App = {
             termsModal.show();
 
             // 「同意する」ボタンの処理
-            document.getElementById('btn-terms-agree').onclick = async () => {
+            document.getElementById('btn-terms-agree')?.onclick = async () => {
                 const btn = document.getElementById('btn-terms-agree');
                 btn.disabled = true;
                 btn.textContent = "処理中..."; 
@@ -496,14 +496,14 @@ const App = {
             };
 
             // 「ログアウト」ボタンの処理
-            document.getElementById('btn-terms-logout').onclick = async () => {
+            document.getElementById('btn-terms-logout')?.onclick = async () => {
                 try { await signOut(auth); } catch(e){}
                 localStorage.removeItem('app_user_v3');
                 location.reload();
             };
 
             // 🌟👇【新規追加】「退会する」ボタンの処理
-            document.getElementById('btn-terms-withdraw').onclick = async () => {
+            document.getElementById('btn-terms-withdraw')?.onclick = async () => {
                 // テストアカウントの誤爆防止
                 if (TEST_ACCOUNT_NAMES.includes(CURRENT_USER.name)) {
                     this.showToast(TRANSLATIONS["msg_test_acc_block"][currentLang], '', 'error'); 
@@ -538,7 +538,7 @@ const App = {
                         } else {
                             alert(TRANSLATIONS["msg_withdraw_fail"][currentLang]); 
                         }
-                        document.getElementById('btn-terms-withdraw').disabled = false;
+                        document.getElementById('btn-terms-withdraw')?.disabled = false;
                     }
                 }
             };
@@ -550,7 +550,7 @@ const App = {
 
         // （👇 ここから下は元々の処理がそのまま続きます）
         document.getElementById('login-screen')?.classList.add('d-none');
-        document.getElementById('main-screen')?.classList.remove('d-none'); 
+        document.getElementById('main-screen')?.classList.remove('d-none');
         
         document.querySelectorAll('#user-name-display').forEach(el => el.textContent = CURRENT_USER.name);
 
@@ -563,7 +563,7 @@ const App = {
         }
 
         const typeSelect = document.getElementById('form-type-select');
-        if (!typeSelect) { console.error('form-type-select が見つかりません'); return; }
+        if (!typeSelect) { console.error('form-type-select not found'); return; }
         typeSelect.innerHTML = '';
         
         const groupData = CONFIG_SETTINGS.groups && CONFIG_SETTINGS.groups[CURRENT_USER.group] 
@@ -746,7 +746,7 @@ const App = {
                     '#tab-form': CURRENT_USER.role === 'leader' ? TRANSLATIONS["nav_form_leader"][currentLang] : TRANSLATIONS["nav_form_member"][currentLang], 
                     '#tab-calendar': TRANSLATIONS["nav_calendar"][currentLang] 
                 };
-                document.getElementById('header-title').textContent = titleMap[targetId];
+                document.getElementById('header-title')?.textContent = titleMap[targetId];
 
                 const chatInput = document.getElementById('chat-input-area');
                 const bottomNav = document.querySelector('.bottom-nav'); // 👇 追加
@@ -768,11 +768,11 @@ const App = {
         });
 
         // 👇 🔔ボタンがクリックされた時の処理を紐付け
-        document.getElementById('notification-btn').addEventListener('click', () => {
+        document.getElementById('notification-btn')?.addEventListener('click', () => {
             this.requestNotificationManual();
         });
 
-        document.getElementById('logout-btn').addEventListener('click', async () => {
+        document.getElementById('logout-btn')?.addEventListener('click', async () => {
             if(confirm(TRANSLATIONS["msg_confirm_logout"][currentLang])) { 
                 try { await signOut(auth); } catch(e){}
                 localStorage.removeItem('app_user_v3');
@@ -780,7 +780,7 @@ const App = {
             }
         });
 
-        document.getElementById('btn-show-withdraw').addEventListener('click', async () => {
+        document.getElementById('btn-show-withdraw')?.addEventListener('click', async () => {
             if (TEST_ACCOUNT_NAMES.includes(CURRENT_USER.name)) {
                 this.showToast(TRANSLATIONS["msg_test_acc_block"][currentLang], '', 'error'); 
                 return; 
@@ -824,7 +824,7 @@ const App = {
                 return;
             }
             
-            document.getElementById('fullscreen-img').src = src;
+            document.getElementById('fullscreen-img')?.src = src;
             const modal = new bootstrap.Modal(document.getElementById('imageFullscreenModal'));
             modal.show();
         };
@@ -912,7 +912,7 @@ const App = {
         currentChatContext = { groupId, myId, targetId, targetName }; // 🌟 復帰時の再接続用に保存
 
         if (!isReconnect) {
-            document.getElementById('chat-container').classList.add('d-none');
+            document.getElementById('chat-container')?.classList.add('d-none');
             const chatDetailEl = document.getElementById('chat-detail-container');
             chatDetailEl.classList.remove('d-none');
             // 🌟 スライドインアニメーション
@@ -924,8 +924,8 @@ const App = {
                     chatDetailEl.classList.add('slide-active');
                 });
             });
-            document.getElementById('chat-target-name').textContent = targetName;
-            document.getElementById('chat-input-area').classList.remove('d-none');
+            document.getElementById('chat-target-name')?.textContent = targetName;
+            document.getElementById('chat-input-area')?.classList.remove('d-none');
             document.querySelector('.bottom-nav').classList.add('d-none');
         }
 
@@ -1201,7 +1201,7 @@ const App = {
                             
                             // 編集モーダルでは編集欄と保存ボタンを表示
                             textarea.classList.remove('d-none');
-                            document.getElementById('chat-edit-save-btn').classList.remove('d-none');
+                            document.getElementById('chat-edit-save-btn')?.classList.remove('d-none');
                             
                             const editModal = new bootstrap.Modal(editModalEl);
                             editModal.show();
@@ -1276,8 +1276,8 @@ const App = {
                             }
                             
                             // 画像のみモーダルでは編集欄と保存ボタンを非表示
-                            document.getElementById('chat-edit-textarea').classList.add('d-none');
-                            document.getElementById('chat-edit-save-btn').classList.add('d-none');
+                            document.getElementById('chat-edit-textarea')?.classList.add('d-none');
+                            document.getElementById('chat-edit-save-btn')?.classList.add('d-none');
                             
                             const editModal = new bootstrap.Modal(editModalEl);
                             editModal.show();
@@ -1333,7 +1333,7 @@ const App = {
             debouncedUpdateLastRead();
         });
         
-        document.getElementById('back-to-chat-list').onclick = () => {
+        document.getElementById('back-to-chat-list')?.onclick = () => {
             document.querySelector('.bottom-nav').classList.remove('d-none');
             currentChatContext = null; // 🌟 復帰時再接続の対象外にする
             // 🌟 チャット一覧に戻る時にリストを更新（既読状態の反映）
@@ -1341,7 +1341,7 @@ const App = {
             history.back();
         };
         
-        document.getElementById('chat-send-btn').onclick = async () => {
+        document.getElementById('chat-send-btn')?.onclick = async () => {
             const input = document.getElementById('chat-message-input');
             const sendBtn = document.getElementById('chat-send-btn');
             const text = input.value;
@@ -1488,7 +1488,7 @@ const App = {
                         onCheckAction = (e) => {
                             e.stopPropagation(); 
                             
-                            document.getElementById('completion-comment').value = '';
+                            document.getElementById('completion-comment')?.value = '';
                             completionImagesBase64 = [];
                             this.updateImagePreview('completion-image-preview', completionImagesBase64, 'completion-image-file');
 
@@ -1501,7 +1501,7 @@ const App = {
 
                             newSubmitBtn.onclick = async () => {
                                 document.activeElement?.blur();
-                                const comment = document.getElementById('completion-comment').value.trim();
+                                const comment = document.getElementById('completion-comment')?.value.trim();
                                 
                                 if (!comment && completionImagesBase64.length === 0) {
                                     App.showToast(TRANSLATIONS["msg_completion_error"][currentLang], '', 'error'); 
@@ -1562,10 +1562,10 @@ const App = {
     },
 
     showInboxDetail(appData) {
-        document.getElementById('detail-title').textContent = appData.title;
-        document.getElementById('detail-sender').textContent = appData.userName;
-        document.getElementById('detail-date').textContent = appData.createdDateStr;
-        document.getElementById('detail-content').textContent = appData.content || TRANSLATIONS["detail_no_content"][currentLang];
+        document.getElementById('detail-title')?.textContent = appData.title;
+        document.getElementById('detail-sender')?.textContent = appData.userName;
+        document.getElementById('detail-date')?.textContent = appData.createdDateStr;
+        document.getElementById('detail-content')?.textContent = appData.content || TRANSLATIONS["detail_no_content"][currentLang];
 
         const imgContainer = document.getElementById('detail-images');
         imgContainer.innerHTML = '';
@@ -1638,15 +1638,15 @@ const App = {
             leaderArea.classList.remove('d-none');
             
             if (appData.type !== 'instruction') {
-                document.getElementById('judge-comment-area').classList.remove('d-none');
+                document.getElementById('judge-comment-area')?.classList.remove('d-none');
                 const commentInput = document.getElementById('judge-comment');
                 commentInput.value = appData.resultComment || '';
 
                 if (appData.status === 'pending') {
-                    document.getElementById('judge-btn-group').classList.remove('d-none');
-                    document.getElementById('btn-cancel-judge').classList.add('d-none');
+                    document.getElementById('judge-btn-group')?.classList.remove('d-none');
+                    document.getElementById('btn-cancel-judge')?.classList.add('d-none');
                     
-                    document.getElementById('btn-approve').onclick = async () => {
+                    document.getElementById('btn-approve')?.onclick = async () => {
                         document.activeElement?.blur(); // 🛡️ iOS対策
                         haptic();
                         const btn = document.getElementById('btn-approve');
@@ -1654,7 +1654,7 @@ const App = {
                         try { await DB.updateStatus(appData.id, 'approved', commentInput.value, CURRENT_USER.id); closeModal(); }
                         catch(e) { console.error("Approve Error:", e); btn.disabled = false; }
                     };
-                    document.getElementById('btn-reject').onclick = async () => {
+                    document.getElementById('btn-reject')?.onclick = async () => {
                         document.activeElement?.blur(); // 🛡️ iOS対策
                         haptic();
                         const btn = document.getElementById('btn-reject');
@@ -1663,10 +1663,10 @@ const App = {
                         catch(e) { console.error("Reject Error:", e); btn.disabled = false; }
                     };
                 } else {
-                    document.getElementById('judge-btn-group').classList.add('d-none');
-                    document.getElementById('btn-cancel-judge').classList.remove('d-none');
+                    document.getElementById('judge-btn-group')?.classList.add('d-none');
+                    document.getElementById('btn-cancel-judge')?.classList.remove('d-none');
                     
-                    document.getElementById('btn-cancel-judge').onclick = async () => {
+                    document.getElementById('btn-cancel-judge')?.onclick = async () => {
                         const btn = document.getElementById('btn-cancel-judge');
                         btn.disabled = true;
                         try { await DB.updateStatus(appData.id, 'pending', '', CURRENT_USER.id); closeModal(); }
@@ -1674,9 +1674,9 @@ const App = {
                     };
                 }
             } else {
-                document.getElementById('judge-comment-area').classList.add('d-none');
-                document.getElementById('judge-btn-group').classList.add('d-none');
-                document.getElementById('btn-cancel-judge').classList.add('d-none');
+                document.getElementById('judge-comment-area')?.classList.add('d-none');
+                document.getElementById('judge-btn-group')?.classList.add('d-none');
+                document.getElementById('btn-cancel-judge')?.classList.add('d-none');
             }
         } else {
             leaderArea.classList.add('d-none');
@@ -1700,19 +1700,19 @@ const App = {
             this.updateImagePreview(previewId, arrayRef, inputId);
         };
 
-        document.getElementById('chat-image-file').addEventListener('change', e => {
+        document.getElementById('chat-image-file')?.addEventListener('change', e => {
             handleFiles(e.target.files, chatImagesBase64, 'chat-image-preview', 'chat-image-file');
         });
 
-        document.getElementById('form-image-file').addEventListener('change', e => {
+        document.getElementById('form-image-file')?.addEventListener('change', e => {
             handleFiles(e.target.files, formImagesBase64, 'form-image-preview', 'form-image-file');
         });
         
-        document.getElementById('completion-image-file').addEventListener('change', e => {
+        document.getElementById('completion-image-file')?.addEventListener('change', e => {
             handleFiles(e.target.files, completionImagesBase64, 'completion-image-preview', 'completion-image-file');
         });
 
-        document.getElementById('form-submit-btn').addEventListener('click', () => this.handleFormSubmit());
+        document.getElementById('form-submit-btn')?.addEventListener('click', () => this.handleFormSubmit());
     },
 
     updateImagePreview(containerId, imageArray, inputId) {
@@ -1770,8 +1770,8 @@ const App = {
     },
 
     async handleFormSubmit() {
-        const title = document.getElementById('form-type-select').value;
-        const content = document.getElementById('form-content').value;
+        const title = document.getElementById('form-type-select')?.value;
+        const content = document.getElementById('form-content')?.value;
         
         const targetContainer = document.getElementById('form-target-container');
         const targetSelect = document.getElementById('form-target-select');
@@ -1821,7 +1821,7 @@ const App = {
             await DB.submitForm(data);
             this.showToast(TRANSLATIONS["msg_submit_success"][currentLang], '', 'success');
             haptic();
-            document.getElementById('form-content').value = '';
+            document.getElementById('form-content')?.value = '';
             formImagesBase64 = [];
             this.updateImagePreview('form-image-preview', formImagesBase64, 'form-image-file');
             document.querySelector('.bottom-nav-item[href="#tab-inbox"]').click(); 
@@ -1924,3 +1924,35 @@ const App = {
 window.app = App;
 window.onload = () => App.init();
 
+// 🛡️ iOS Safari ブラウザモード対策：ツールバーの高さを動的に計算して下部余白を調整
+(function adjustBrowserBottomPadding() {
+    // PWA（standalone）モードなら何もしない
+    if (window.matchMedia('(display-mode: standalone)').matches) return;
+    if (window.navigator.standalone === true) return;
+
+    function update() {
+        // visualViewport が使える場合はそちらから正確な値を取得
+        const viewportHeight = window.visualViewport 
+            ? window.visualViewport.height 
+            : window.innerHeight;
+        const fullHeight = document.documentElement.clientHeight;
+        
+        // ツールバー分の差分を計算（ツールバーがない場合は0）
+        const toolbarHeight = Math.max(fullHeight - viewportHeight, 0);
+        
+        // 最低でも安全な余白を確保（ツールバーが検出できない場合のフォールバック）
+        const extraPadding = Math.max(toolbarHeight, 0);
+        
+        document.querySelectorAll('.bottom-nav, #chat-input-area').forEach(el => {
+            el.style.paddingBottom = `calc(env(safe-area-inset-bottom, 0px) + ${extraPadding}px)`;
+            el.style.minHeight = `calc(60px + env(safe-area-inset-bottom, 0px) + ${extraPadding}px)`;
+        });
+    }
+
+    // 初回実行 + ビューポート変化時に再計算
+    update();
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', update);
+    }
+    window.addEventListener('resize', update);
+})();
