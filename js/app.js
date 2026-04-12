@@ -1750,6 +1750,7 @@ const App = {
 
     setupTextareaAutoResize() {
         const tx = document.getElementById('chat-message-input');
+        if (!tx) return;
         tx.setAttribute('style', 'height:38px; overflow-y:hidden; resize:none;');
         tx.addEventListener("input", function() {
             this.style.height = 'auto';
